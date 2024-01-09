@@ -86,6 +86,10 @@
                             <key>sinttest.securityMode</key>
                             <value>disabled</value>
                         </systemProperty>
+                        <systemProperty>
+                            <key>sinttest.enabledTests</key>
+                            <value>AdHocCommandIntegrationTest</value>
+                        </systemProperty>
                     </systemProperties>
                 </configuration>
             </plugin>
