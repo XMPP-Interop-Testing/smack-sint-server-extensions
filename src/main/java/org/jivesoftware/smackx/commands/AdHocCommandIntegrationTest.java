@@ -6,8 +6,10 @@ import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
+import org.jivesoftware.smackx.xdata.form.SubmitForm;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import java.io.IOException;
@@ -112,10 +114,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#add-group" name="Create new group"
     @SmackIntegrationTest
     public void testCreateNewGroup() throws Exception {
-        RemoteCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), CREATE_NEW_GROUP);
-        command.execute();
-
-        FillableForm form = new FillableForm(command.getForm());
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), CREATE_NEW_GROUP);
+        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
+        FillableForm form = result.getFillableForm();
 
         form.setAnswer("group","testGroupName");
         form.setAnswer("desc", "testGroup Description");
@@ -124,10 +125,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         form.setAnswer("showInRoster", "nobody");
         form.setAnswer("displayName", "testGroup Display Name");
 
-        command.next(form);
-        AdHocCommandNote result = command.getNotes().get(0);
-        assertEquals(result.getType(), AdHocCommandNote.Type.info);
-        assertTrue(result.getValue().contains("Operation f00inished successfully"));
+        SubmitForm submitForm = form.getSubmitForm();
+
+        result = command.next(submitForm).asExecutingOrThrow();
+
+        AdHocCommandNote note = result.getResponse().getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation f00inished successfully"));
     }
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
@@ -147,9 +151,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
     @SmackIntegrationTest
     public void testGetOnlineUsersNumber() throws Exception {
-        RemoteCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), GET_NUMBER_OF_ACTIVE_USERS);
-        command.execute();
-        DataForm form = command.getForm();
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), GET_NUMBER_OF_ACTIVE_USERS);
+        AdHocCommandResult result = command.execute();
+        DataForm form = result.getResponse().getForm();
         assertEquals("4", form.getField("activeusersnum").getFirstValue());
     }
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
