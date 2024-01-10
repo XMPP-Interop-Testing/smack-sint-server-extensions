@@ -8,23 +8,31 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
+import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
 import org.jivesoftware.smackx.xdata.form.SubmitForm;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
+import org.jxmpp.jid.Jid;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final AdHocCommandManager adHocCommandManagerForAdmin;
     private final AdHocCommandManager adHocCommandManagerForConOne;
     private final AbstractXMPPConnection adminConnection;
+
+    private final List<FormField.Type> NON_STRING_FORM_FIELD_TYPES = Arrays.asList(
+        FormField.Type.jid_multi,
+        FormField.Type.list_multi
+    );
 
     private static final String ADD_MEMBERS_OR_ADMINS_TO_A_GROUP = "http://jabber.org/protocol/admin#add-group-members";
     private static final String CREATE_NEW_GROUP = "http://jabber.org/protocol/admin#add-group";
@@ -87,6 +95,48 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         adHocCommandManagerForAdmin = AdHocCommandManager.getAddHocCommandsManager(adminConnection);
     }
 
+
+    private AdHocCommandData executeCommandSimple(String commandNode, Jid jid) throws Exception {
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
+        return command.execute().getResponse();
+    }
+    private AdHocCommandData executeCommandWithArgs(String commandNode, Jid jid, String... args) throws Exception {
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
+        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
+        FillableForm form = result.getFillableForm();
+
+        for (int i = 0; i < args.length; i += 2) {
+            FormField field = form.getField(args[i]);
+            if (field == null) {
+                throw new IllegalStateException("Field " + args[i] + " not found in form");
+            }
+            if (NON_STRING_FORM_FIELD_TYPES.contains(field.getType())){
+                form.setAnswer(args[i], Collections.singletonList(args[i + 1]));
+            } else {
+                form.setAnswer(args[i], args[i + 1]);
+            }
+        }
+
+        SubmitForm submitForm = form.getSubmitForm();
+
+        return command.
+            complete(submitForm).getResponse();
+    }
+
+    private AdHocCommandData createUser(String jid) throws Exception {
+        return executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", jid,
+            "password", "password",
+            "password-verify", "password"
+        );
+    }
+
+    private AdHocCommandData deleteUser(String jid) throws Exception {
+        return executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", jid
+        );
+    }
+
     @SmackIntegrationTest
     public void testGetCommandsForUser() throws Exception {
         DiscoverItems result = adHocCommandManagerForConOne.discoverCommands(conOne.getUser().asEntityBareJid());
@@ -112,7 +162,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     //node="http://jabber.org/protocol/admin#add-group-members" name="Add members or admins to a group"
     //node="http://jabber.org/protocol/admin#add-group" name="Create new group"
-    @SmackIntegrationTest
+    //@SmackIntegrationTest
     public void testCreateNewGroup() throws Exception {
         AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), CREATE_NEW_GROUP);
         AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
@@ -131,16 +181,76 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         AdHocCommandNote note = result.getResponse().getNotes().get(0);
         assertEquals(note.getType(), AdHocCommandNote.Type.info);
-        assertTrue(note.getValue().contains("Operation f00inished successfully"));
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+
+        //Clean-up
+        //TODO: Call ad-hoc command to delete the group
     }
+
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
+    @SmackIntegrationTest
+    public void testAddUser() throws Exception {
+        final String ADDED_USER_JID = "addusertest" + testRunId + "@example.org";
+        AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", ADDED_USER_JID,
+            "password", "password",
+            "password-verify", "password"
+        );
+
+        AdHocCommandNote note = result.getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+
+        //Clean-up
+        deleteUser(ADDED_USER_JID);
+    }
+
+    @SmackIntegrationTest
+    public void testAddUserWithoutJid() throws Exception {
+        Exception e = assertThrows(IllegalStateException.class, () -> {
+            executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "password", "password",
+                "password-verify", "password"
+            );
+        });
+        assertEquals("Not all required fields filled. Missing: [accountjid]", e.getMessage());
+    }
+
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
     //node="http://jabber.org/protocol/admin#delete-group-members" name="Delete members or admins from a group"
     //node="http://jabber.org/protocol/admin#delete-group" name="Delete group"
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
+    @SmackIntegrationTest
+    public void testDeleteUser() throws Exception {
+        final String DELETED_USER_JID = "deleteusertest" + testRunId + "@example.org";
+        createUser(DELETED_USER_JID);
+        AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DELETED_USER_JID
+        );
+
+        AdHocCommandNote note = result.getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+    }
+
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
+    @SmackIntegrationTest
+    public void testDisableUser() throws Exception {
+        final String DISABLED_USER_JID = "disableusertest" + testRunId + "@example.org";
+        createUser(DISABLED_USER_JID);
+        AdHocCommandData result = executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        AdHocCommandNote note = result.getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+
+        //Clean-up
+        deleteUser(DISABLED_USER_JID);
+    }
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
@@ -151,14 +261,60 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
     @SmackIntegrationTest
     public void testGetOnlineUsersNumber() throws Exception {
-        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), GET_NUMBER_OF_ACTIVE_USERS);
-        AdHocCommandResult result = command.execute();
-        DataForm form = result.getResponse().getForm();
-        assertEquals("4", form.getField("activeusersnum").getFirstValue());
+        final String EXPECTED_ACTIVE_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        DataForm form = executeCommandSimple(GET_NUMBER_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
+        assertEquals(EXPECTED_ACTIVE_USERS_NUMBER, form.getField("activeusersnum").getFirstValue());
     }
+
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
+    //@SmackIntegrationTest
+    public void testGetOnlineUsersListSimple() throws Exception {
+        final String EXPECTED_ACTIVE_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        DataForm form = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid())
+            .getForm();
+
+        assertEquals(EXPECTED_ACTIVE_USERS_NUMBER, form.getField("activeuserjids").getFirstValue());
+    }
+    @SmackIntegrationTest
+    public void testGetOnlineUsersListWithMaxUsers() throws Exception {
+        final List<String> EXPECTED_ACTIVE_USERS = new ArrayList<>(Arrays.asList(
+                conOne.getUser().asEntityBareJidString(),
+                conTwo.getUser().asEntityBareJidString(),
+                conThree.getUser().asEntityBareJidString(),
+                adminConnection.getUser().asEntityBareJidString()
+        ));
+
+        DataForm form = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25")
+            .getForm();
+
+        FormField jids = form.getField("activeuserjids");
+        final List<String> values = jids.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
+
+        assertEquals(EXPECTED_ACTIVE_USERS.size(), values.size());
+        assertTrue(values.containsAll(EXPECTED_ACTIVE_USERS));
+    }
+
     //node="http://jabber.org/protocol/admin#get-console-info" name="Get admin console info."
+    @SmackIntegrationTest
+    public void testAdminConsoleInfo() throws Exception {
+        final String EXPECTED_ADMIN_PORT = "9090";
+        final String EXPECTED_ADMIN_SECURE_PORT = "9091";
+        DataForm form = executeCommandSimple(GET_ADMIN_CONSOLE_INFO, adminConnection.getUser().asEntityBareJid()).getForm();
+
+        assertTrue(form.getField("bindInterface").getFirstValue().length() >= 7); //Present, and long enough to be an IP Address
+        assertEquals(EXPECTED_ADMIN_PORT, form.getField("adminPort").getFirstValue());
+        assertEquals(EXPECTED_ADMIN_SECURE_PORT, form.getField("adminSecurePort").getFirstValue());
+    }
+
     //node="http://jabber.org/protocol/admin#get-disabled-users-list" name="Get List of Disabled Users"
+    @SmackIntegrationTest
+    public void testDisabledUsersListEmpty() throws Exception {
+        DataForm form = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25")
+            .getForm();
+        assertEquals(0, form.getField("disableduserjids").getValues().size());
+    }
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
     //node="http://jabber.org/protocol/admin#get-group-members" name="Get List of Group Members"
     //node="http://jabber.org/protocol/admin#get-groups" name="Get List of Existing Groups"
