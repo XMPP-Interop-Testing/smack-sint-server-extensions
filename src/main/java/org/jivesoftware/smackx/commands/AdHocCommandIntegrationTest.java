@@ -162,29 +162,24 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     //node="http://jabber.org/protocol/admin#add-group-members" name="Add members or admins to a group"
     //node="http://jabber.org/protocol/admin#add-group" name="Create new group"
-    //@SmackIntegrationTest
+    @SmackIntegrationTest
     public void testCreateNewGroup() throws Exception {
-        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(adminConnection.getUser().asEntityBareJid(), CREATE_NEW_GROUP);
-        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
-        FillableForm form = result.getFillableForm();
+        AdHocCommandData result = executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", "testGroupName",
+            "desc", "testGroup Description",
+            "members", "admin@example.org",
+            "showInRoster", "nobody",
+            "displayName", "testGroup Display Name"
+        );
 
-        form.setAnswer("group","testGroupName");
-        form.setAnswer("desc", "testGroup Description");
-        form.setAnswer("members", "admin@example.org");
-
-        form.setAnswer("showInRoster", "nobody");
-        form.setAnswer("displayName", "testGroup Display Name");
-
-        SubmitForm submitForm = form.getSubmitForm();
-
-        result = command.next(submitForm).asExecutingOrThrow();
-
-        AdHocCommandNote note = result.getResponse().getNotes().get(0);
+        AdHocCommandNote note = result.getNotes().get(0);
         assertEquals(note.getType(), AdHocCommandNote.Type.info);
         assertTrue(note.getValue().contains("Operation finished successfully"));
 
         //Clean-up
-        //TODO: Call ad-hoc command to delete the group
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", "testGroupName"
+        );
     }
 
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
@@ -267,13 +262,22 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
-    //@SmackIntegrationTest
+    @SmackIntegrationTest
     public void testGetOnlineUsersListSimple() throws Exception {
-        final String EXPECTED_ACTIVE_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        final List<String> EXPECTED_ACTIVE_USERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString(),
+            conThree.getUser().asEntityBareJidString(),
+            adminConnection.getUser().asEntityBareJidString()
+        ));
+
         DataForm form = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid())
             .getForm();
+        FormField jids = form.getField("activeuserjids");
+        final List<String> values = jids.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
 
-        assertEquals(EXPECTED_ACTIVE_USERS_NUMBER, form.getField("activeuserjids").getFirstValue());
+        assertEquals(EXPECTED_ACTIVE_USERS.size(), values.size());
+        assertTrue(values.containsAll(EXPECTED_ACTIVE_USERS));
     }
     @SmackIntegrationTest
     public void testGetOnlineUsersListWithMaxUsers() throws Exception {
