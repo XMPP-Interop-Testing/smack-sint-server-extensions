@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -111,7 +112,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
                 throw new IllegalStateException("Field " + args[i] + " not found in form");
             }
             if (NON_STRING_FORM_FIELD_TYPES.contains(field.getType())){
-                form.setAnswer(args[i], Collections.singletonList(args[i + 1]));
+                form.setAnswer(args[i], Stream.of(args[i + 1]
+                    .split(",", -1))
+                    .map(String::trim)
+                    .collect(Collectors.toList()));
             } else {
                 form.setAnswer(args[i], args[i + 1]);
             }
@@ -135,6 +139,19 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         return executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjids", jid
         );
+    }
+
+    private List<String> getGroupMembers(String groupName) throws Exception {
+        DataForm form = executeCommandWithArgs(GET_LIST_OF_GROUP_MEMBERS, adminConnection.getUser().asEntityBareJid(),
+            "group", groupName
+        ).getForm();
+
+        //TODO: Find someone who understands streams and tidy this up
+        return form.getItems().stream()
+            .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("jid")).collect(Collectors.toList()))
+            .map(fields -> fields.get(0).getValues().get(0))
+            .map(CharSequence::toString)
+            .collect(Collectors.toList());
     }
 
     @SmackIntegrationTest
@@ -161,11 +178,45 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#add-group-members" name="Add members or admins to a group"
+    @SmackIntegrationTest
+    public void testAddGroupMembersNonAdmins() throws Exception {
+        final String GROUP_NAME = "testGroupMembers" + testRunId;
+        final List<String> NEW_MEMBERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString()
+        ));
+
+        //Create group
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_NAME + " Description",
+            "showInRoster", "nobody"
+        );
+
+        //Add members
+        AdHocCommandData result = executeCommandWithArgs(ADD_MEMBERS_OR_ADMINS_TO_A_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "admin", "false",
+            "users", String.join(",", NEW_MEMBERS)
+        );
+
+        AdHocCommandNote note = result.getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+
+        //Clean-up
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME
+        );
+    }
+
+
     //node="http://jabber.org/protocol/admin#add-group" name="Create new group"
     @SmackIntegrationTest
     public void testCreateNewGroup() throws Exception {
+        final String NEW_GROUP_NAME = "testGroup" + testRunId;
         AdHocCommandData result = executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
-            "group", "testGroupName",
+            "group", NEW_GROUP_NAME,
             "desc", "testGroup Description",
             "members", "admin@example.org",
             "showInRoster", "nobody",
@@ -178,7 +229,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         //Clean-up
         executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
-            "group", "testGroupName"
+            "group", NEW_GROUP_NAME
         );
     }
 
@@ -212,7 +263,25 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
+
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
+    //@SmackIntegrationTest
+    public void testAuthenticateUser() throws Exception {
+        final String USER_TO_AUTHENTICATE = "authenticateusertest-" + testRunId + "@example.org";
+        createUser(USER_TO_AUTHENTICATE);
+        AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_AUTHENTICATE,
+            "password", "password"
+        );
+
+        AdHocCommandNote note = result.getNotes().get(0);
+        assertEquals(note.getType(), AdHocCommandNote.Type.info);
+        assertTrue(note.getValue().contains("Operation finished successfully"));
+
+        //Clean-up
+        deleteUser(USER_TO_AUTHENTICATE);
+    }
+
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
     //node="http://jabber.org/protocol/admin#delete-group-members" name="Delete members or admins from a group"
     //node="http://jabber.org/protocol/admin#delete-group" name="Delete group"
@@ -320,7 +389,42 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals(0, form.getField("disableduserjids").getValues().size());
     }
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
+
     //node="http://jabber.org/protocol/admin#get-group-members" name="Get List of Group Members"
+    @SmackIntegrationTest
+    public void testGetGroupMembers() throws Exception {
+        final String GROUP_NAME = "testGroupMembers" + testRunId;
+        final List<String> GROUP_MEMBERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString()
+        ));
+
+        //Create group
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_NAME + " Description",
+            "showInRoster", "nobody"
+        );
+
+        //Add members
+        executeCommandWithArgs(ADD_MEMBERS_OR_ADMINS_TO_A_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "admin", "false",
+            "users", String.join(",", GROUP_MEMBERS)
+        );
+
+        //Get members
+        List<String> jids = getGroupMembers(GROUP_NAME);
+
+        assertEquals(GROUP_MEMBERS.size(), jids.size());
+        assertTrue(jids.containsAll(GROUP_MEMBERS));
+
+        //Clean-up
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME
+        );
+    }
+
     //node="http://jabber.org/protocol/admin#get-groups" name="Get List of Existing Groups"
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
