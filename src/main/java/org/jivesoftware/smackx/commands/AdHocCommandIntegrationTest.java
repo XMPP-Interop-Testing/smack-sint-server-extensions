@@ -523,7 +523,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         assertFormFieldEquals("onlineuserjids", EXPECTED_ONLINE_USERS, result);
     }
-    
+
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
     @SmackIntegrationTest
     public void testGetOnlineUsersNumber() throws Exception {
@@ -531,8 +531,31 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
         assertEquals(EXPECTED_ONLINE_USERS_NUMBER, form.getField("onlineusersnum").getFirstValue());
     }
+
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
+    // TODO: Disabled awaiting fixes on https://github.com/igniterealtime/Openfire/pull/2381
+    //@SmackIntegrationTest
+    public void testGetRegisteredUsersList() throws Exception {
+        final List<String> EXPECTED_REGISTERED_USERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString(),
+            conThree.getUser().asEntityBareJidString(),
+            adminConnection.getUser().asEntityBareJidString()
+        ));
+
+        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25");
+
+        assertFormFieldEquals("registereduserjids", EXPECTED_REGISTERED_USERS, result);
+    }
+
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
+    //@SmackIntegrationTest
+    public void testGetRegisteredUsersNumber() throws Exception {
+        final String EXPECTED_REGISTERED_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("registeredusersnum", EXPECTED_REGISTERED_USERS_NUMBER, result);
+    }
     //node="http://jabber.org/protocol/admin#get-server-stats" name="Get basic statistics of the server."
     //node="http://jabber.org/protocol/admin#get-sessions-num" name="Get Number of Connected User Sessions"
     //node="http://jabber.org/protocol/admin#get-user-properties" name="Get User Properties"
