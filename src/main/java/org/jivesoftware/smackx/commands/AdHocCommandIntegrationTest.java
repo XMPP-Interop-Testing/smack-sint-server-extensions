@@ -3,15 +3,21 @@ package org.jivesoftware.smackx.commands;
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.chat2.Chat;
+import org.jivesoftware.smack.chat2.ChatManager;
+import org.jivesoftware.smack.chat2.IncomingChatMessageListener;
+import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
 import org.jivesoftware.smackx.xdata.form.SubmitForm;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 
 import java.io.IOException;
@@ -279,6 +285,34 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
+    //@SmackIntegrationTest
+    //TODO: Why does this fail? Announcements doesn't trigger the IncomingChatMessageListener. Try adminConnection.addMessageInterceptor?
+    public void testSendAnnouncementToOnlineUsers() throws Exception {
+        final String ANNOUNCEMENT = "testAnnouncement" + testRunId;
+        final ChatManager adminChatManager = ChatManager.getInstanceFor(adminConnection);
+        final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
+
+        final IncomingChatMessageListener listener = new IncomingChatMessageListener() {
+            @Override
+            public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) {
+                //if (message.getBody().contains(ANNOUNCEMENT)) {
+                    syncPoint.signal();
+                //}
+            }
+        };
+
+        try {
+            adminChatManager.addIncomingListener(listener);
+            AdHocCommandData result = executeCommandWithArgs(SEND_ANNOUNCEMENT_TO_ONLINE_USERS, adminConnection.getUser().asEntityBareJid(),
+                "announcement", ANNOUNCEMENT
+            );
+            syncPoint.waitForResult(timeout);
+            assertNoteEquals("Operation finished successfully", result);
+        }
+        finally {
+            adminChatManager.removeIncomingListener(listener);
+        }
+    }
 
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
     //Disabled as it invalidates the session of the admin calling the command, and thus breaks the rest of the tests
