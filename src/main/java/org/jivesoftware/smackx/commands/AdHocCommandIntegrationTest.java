@@ -550,9 +550,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
-    //@SmackIntegrationTest
+    @SmackIntegrationTest
     public void testGetRegisteredUsersNumber() throws Exception {
-        final String EXPECTED_REGISTERED_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        final String EXPECTED_REGISTERED_USERS_NUMBER = "6"; // Three defaults (Admin, Jane, John), plus SINT's extra three temporary users
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
         assertFormFieldEquals("registeredusersnum", EXPECTED_REGISTERED_USERS_NUMBER, result);
     }
