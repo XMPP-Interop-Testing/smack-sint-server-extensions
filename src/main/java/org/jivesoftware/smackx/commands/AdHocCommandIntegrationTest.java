@@ -335,7 +335,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
     @SmackIntegrationTest
-    public void testGetOnlineUsersNumber() throws Exception {
+    public void testGetActiveUsersNumber() throws Exception {
         final String EXPECTED_ACTIVE_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
         assertEquals(EXPECTED_ACTIVE_USERS_NUMBER, form.getField("activeusersnum").getFirstValue());
@@ -343,7 +343,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
     @SmackIntegrationTest
-    public void testGetOnlineUsersListSimple() throws Exception {
+    public void testGetActiveUsersListSimple() throws Exception {
         final List<String> EXPECTED_ACTIVE_USERS = new ArrayList<>(Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
@@ -390,9 +390,44 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         assertFormFieldEquals("disableduserjids", new ArrayList<>(), result);
     }
-    //TODO: Now with actual disabled users
+
+    @SmackIntegrationTest
+    public void testDisabledUsersList() throws Exception {
+        final String DISABLED_USER_JID = "disableuserlisttest" + testRunId + "@example.org";
+        createUser(DISABLED_USER_JID);
+
+        executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25");
+
+        assertFormFieldEquals("disableduserjids", Collections.singletonList(DISABLED_USER_JID), result);
+
+        //Clean-up
+        deleteUser(DISABLED_USER_JID);
+    }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
+    @SmackIntegrationTest
+    public void testDisabledUsersNumber() throws Exception {
+        final String DISABLED_USER_JID = "disableusernumtest" + testRunId + "@example.org";
+
+        // Create and disable a user
+        createUser(DISABLED_USER_JID);
+        executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        // Get number of disabled users
+        AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid());
+
+        assertFormFieldEquals("disabledusersnum", "1", result);
+
+        //Clean-up
+        deleteUser(DISABLED_USER_JID);
+    }
 
     //node="http://jabber.org/protocol/admin#get-group-members" name="Get List of Group Members"
     @SmackIntegrationTest
@@ -430,9 +465,72 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-groups" name="Get List of Existing Groups"
+    @SmackIntegrationTest
+    public void testGetGroups() throws Exception {
+        final String GROUP_NAME = "testGetGroups" + testRunId;
+        final String GROUP_DESCRIPTION = "testGetGroups Description";
+        final String GROUP_DISPLAY_NAME = "testGetGroups Display Name";
+        final String GROUP_SHOW_IN_ROSTER = "nobody";
+
+        //Create group
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_DESCRIPTION,
+            "showInRoster", GROUP_SHOW_IN_ROSTER,
+            "displayName", GROUP_DISPLAY_NAME
+        );
+
+        //Get groups
+        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_EXISTING_GROUPS, adminConnection.getUser().asEntityBareJid());
+
+        List<String> groupNames = result.getForm().getItems().stream()
+            .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("name")).collect(Collectors.toList()))
+            .map(fields -> fields.get(0).getValues().get(0))
+            .map(CharSequence::toString)
+            .collect(Collectors.toList());
+
+        Map<String, String> group1Props = result.getForm().getItems().get(0).getFields().stream()
+            .collect(Collectors.toMap(
+                field -> field.getVariable(),
+                field -> field.getValues().get(0).toString()
+            ));
+
+        assertEquals(1, groupNames.size());
+        assertTrue(groupNames.contains(GROUP_NAME));
+        assertEquals(GROUP_NAME, group1Props.get("name"));
+        assertEquals(GROUP_DESCRIPTION, group1Props.get("desc"));
+        assertEquals("false", group1Props.get("shared"));
+        assertEquals("0", group1Props.get("count"));
+
+        //Clean-up
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME
+        );
+    }
+
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
+    @SmackIntegrationTest
+    public void testGetOnlineUsersListSimple() throws Exception {
+        final List<String> EXPECTED_ONLINE_USERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString(),
+            conThree.getUser().asEntityBareJidString(),
+            adminConnection.getUser().asEntityBareJidString()
+        ));
+
+        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid());
+
+        assertFormFieldEquals("onlineuserjids", EXPECTED_ONLINE_USERS, result);
+    }
+    
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
+    @SmackIntegrationTest
+    public void testGetOnlineUsersNumber() throws Exception {
+        final String EXPECTED_ONLINE_USERS_NUMBER = "4"; // Three defaults, plus this test's extra admin user
+        DataForm form = executeCommandSimple(GET_NUMBER_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
+        assertEquals(EXPECTED_ONLINE_USERS_NUMBER, form.getField("onlineusersnum").getFirstValue());
+    }
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
     //node="http://jabber.org/protocol/admin#get-server-stats" name="Get basic statistics of the server."
