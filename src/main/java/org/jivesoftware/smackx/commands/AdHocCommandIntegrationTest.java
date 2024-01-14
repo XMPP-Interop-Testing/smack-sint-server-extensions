@@ -26,8 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
@@ -174,7 +173,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     private void assertFormFieldExists(String fieldName, AdHocCommandData data) {
         FormField field = data.getForm().getField(fieldName);
-        assertTrue(field != null);
+        assertNotNull(field);
     }
 
     private void assertNoteType(AdHocCommandNote.Type expectedType, AdHocCommandData data) {
@@ -727,6 +726,57 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
+    //@SmackIntegrationTest
+    //TODO: Deal with commands with >2 stages
+    public void testUpdateGroupConfiguration() throws Exception {
+        final String GROUP_NAME = "testUpdateGroupConfiguration" + testRunId;
+        final String GROUP_DESCRIPTION = "testUpdateGroupConfiguration Description";
+        final String GROUP_SHOW_IN_ROSTER = "nobody";
+
+        //Create group
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_DESCRIPTION,
+            "showInRoster", GROUP_SHOW_IN_ROSTER
+        );
+
+        //Update group
+        AdHocCommandData result = executeCommandWithArgs(UPDATE_GROUP_CONFIGURATION, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_DESCRIPTION + " Updated",
+            "showInRoster", GROUP_SHOW_IN_ROSTER
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        //Get groups
+        result = executeCommandWithArgs(GET_LIST_OF_EXISTING_GROUPS, adminConnection.getUser().asEntityBareJid());
+
+        List<String> groupNames = result.getForm().getItems().stream()
+            .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("name")).collect(Collectors.toList()))
+            .map(fields -> fields.get(0).getValues().get(0))
+            .map(CharSequence::toString)
+            .collect(Collectors.toList());
+
+        Map<String, String> group1Props = result.getForm().getItems().get(0).getFields().stream()
+            .collect(Collectors.toMap(
+                field -> field.getVariable(),
+                field -> field.getValues().get(0).toString()
+            ));
+
+        assertEquals(1, groupNames.size());
+        assertTrue(groupNames.contains(GROUP_NAME));
+        assertEquals(GROUP_NAME, group1Props.get("name"));
+        assertEquals(GROUP_DESCRIPTION + " Updated", group1Props.get("desc"));
+        assertEquals("false", group1Props.get("shared"));
+
+        //Clean-up
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME
+        );
+    }
+
     //node="http://jabber.org/protocol/event#group-admin-added" name="Group admin added"
     //node="http://jabber.org/protocol/event#group-admin-removed" name="Group admin removed"
     //node="http://jabber.org/protocol/event#group-created" name="Group deleting"
