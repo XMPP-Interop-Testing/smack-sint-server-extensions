@@ -602,9 +602,48 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
         assertFormFieldEquals("registeredusersnum", EXPECTED_REGISTERED_USERS_NUMBER, result);
     }
+
     //node="http://jabber.org/protocol/admin#get-server-stats" name="Get basic statistics of the server."
+    @SmackIntegrationTest
+    public void testGetServerStats() throws Exception {
+        AdHocCommandData result = executeCommandSimple(GET_BASIC_STATISTICS_OF_THE_SERVER, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("name", "Openfire", result);
+        assertFormFieldExists("version", result);
+        assertFormFieldExists("domain", result);
+        assertFormFieldExists("os", result);
+        assertFormFieldExists("uptime", result);
+        assertFormFieldEquals("activeusersnum", "4", result); //Admin plus 3 SINT users
+        assertFormFieldEquals("sessionsnum", "5", result); //2 for Admin, plus 3 SINT users
+    }
+
     //node="http://jabber.org/protocol/admin#get-sessions-num" name="Get Number of Connected User Sessions"
+    @SmackIntegrationTest
+    public void testGetSessionsNumber() throws Exception {
+        final String EXPECTED_SESSIONS_NUMBER = "5"; // Three defaults, plus 2 sessions for Admin (one here, one in SINT core framework)
+        AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_CONNECTED_USER_SESSIONS, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("onlineuserssessionsnum", EXPECTED_SESSIONS_NUMBER, result);
+    }
+
     //node="http://jabber.org/protocol/admin#get-user-properties" name="Get User Properties"
+    @SmackIntegrationTest
+    public void testUserProperties() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", adminConnection.getUser().asEntityBareJidString()
+        );
+        assertFormFieldEquals("name", "Administrator", result);
+        assertFormFieldEquals("email", "admin@example.com", result);
+    }
+
+    @SmackIntegrationTest
+    public void testUserPropertiesWithMultipleUsers() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", adminConnection.getUser().asEntityBareJidString() + "," + conOne.getUser().asEntityBareJidString()
+        );
+        assertFormFieldEquals("name", new ArrayList<String>(Arrays.asList("Administrator", "")), result); // Because SINT users have no name
+        assertFormFieldEquals("email", new ArrayList<String>(Arrays.asList("admin@example.com", "")), result); // Because SINT users have no email
+
+    }
+
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
