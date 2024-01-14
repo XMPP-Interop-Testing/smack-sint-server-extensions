@@ -22,6 +22,8 @@ import org.jxmpp.jid.Jid;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -766,4 +768,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="ping" name="Request pong from server"
+    @SmackIntegrationTest
+    public void testPing() throws Exception {
+        AdHocCommandData result = executeCommandSimple(REQUEST_PONG_FROM_SERVER, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldExists("timestamp", result);
+        String timestampString = result.getForm().getField("timestamp").getFirstValue();
+        LocalDateTime timestamp = LocalDateTime.parse(timestampString, DateTimeFormatter.ISO_DATE_TIME);
+        assertTrue(timestamp.isAfter(LocalDateTime.now().minusMinutes(2)));
+        assertTrue(timestamp.isBefore(LocalDateTime.now().plusMinutes(2)));
+    }
 }
