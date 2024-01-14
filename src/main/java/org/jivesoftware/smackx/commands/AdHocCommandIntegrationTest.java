@@ -74,18 +74,6 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     private static final String REENABLE_A_USER = "http://jabber.org/protocol/admin#reenable-user";
     private static final String CURRENT_HTTP_BIND_STATUS = "http://jabber.org/protocol/admin#status-http-bind";
     private static final String UPDATE_GROUP_CONFIGURATION = "http://jabber.org/protocol/admin#update-group";
-    private static final String GROUP_ADMIN_ADDED = "http://jabber.org/protocol/event#group-admin-added";
-    private static final String GROUP_ADMIN_REMOVED = "http://jabber.org/protocol/event#group-admin-removed";
-    private static final String GROUP_DELETING = "http://jabber.org/protocol/event#group-created";
-    private static final String GROUP_MEMBER_ADDED = "http://jabber.org/protocol/event#group-member-added";
-    private static final String GROUP_MEMBER_REMOVED = "http://jabber.org/protocol/event#group-member-removed";
-    private static final String GROUP_MODIFIED = "http://jabber.org/protocol/event#group-modified";
-    private static final String USER_CREATED = "http://jabber.org/protocol/event#user-created";
-    private static final String DELETING_A_USER = "http://jabber.org/protocol/event#user-deleting";
-    private static final String USER_MODIFIED = "http://jabber.org/protocol/event#user-modified";
-    private static final String VCARD_CREATED = "http://jabber.org/protocol/event#vcard-created";
-    private static final String DELETING_A_VCARD = "http://jabber.org/protocol/event#vcard-deleting";
-    private static final String VCARD_MODIFIED = "http://jabber.org/protocol/event#vcard-modified";
     private static final String REQUEST_PONG_FROM_SERVER = "ping";
 
     public AdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -777,17 +765,5 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
     }
 
-    //node="http://jabber.org/protocol/event#group-admin-added" name="Group admin added"
-    //node="http://jabber.org/protocol/event#group-admin-removed" name="Group admin removed"
-    //node="http://jabber.org/protocol/event#group-created" name="Group deleting"
-    //node="http://jabber.org/protocol/event#group-member-added" name="Group member added"
-    //node="http://jabber.org/protocol/event#group-member-removed" name="Group member removed"
-    //node="http://jabber.org/protocol/event#group-modified" name="Group modified"
-    //node="http://jabber.org/protocol/event#user-created" name="User created"
-    //node="http://jabber.org/protocol/event#user-deleting" name="Deleting a User"
-    //node="http://jabber.org/protocol/event#user-modified" name="User modified"
-    //node="http://jabber.org/protocol/event#vcard-created" name="VCard created"
-    //node="http://jabber.org/protocol/event#vcard-deleting" name="Deleting a VCard"
-    //node="http://jabber.org/protocol/event#vcard-modified" name="VCard modified"
     //node="ping" name="Request pong from server"
 }
