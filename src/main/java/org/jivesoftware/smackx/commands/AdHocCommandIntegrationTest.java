@@ -177,9 +177,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertTrue(field != null);
     }
 
+    private void assertNoteType(AdHocCommandNote.Type expectedType, AdHocCommandData data) {
+        AdHocCommandNote note = data.getNotes().get(0);
+        assertEquals(expectedType, note.getType());
+    }
+
     private void assertNoteEquals(String expectedValue, AdHocCommandData data) {
         AdHocCommandNote note = data.getNotes().get(0);
-        assertEquals(note.getType(), AdHocCommandNote.Type.info);
         assertTrue(note.getValue().contains(expectedValue));
     }
 
@@ -229,6 +233,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "users", String.join(",", NEW_MEMBERS)
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
 
         //Clean-up
@@ -249,6 +254,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "displayName", "testGroup Display Name"
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
 
         //Clean-up
@@ -267,6 +273,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "password-verify", "password"
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
 
         //Clean-up
@@ -307,6 +314,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
                 "announcement", ANNOUNCEMENT
             );
             syncPoint.waitForResult(timeout);
+
+            assertNoteType(AdHocCommandNote.Type.info, result);
             assertNoteEquals("Operation finished successfully", result);
         }
         finally {
@@ -325,6 +334,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "password", "password"
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
 
         //Clean-up
@@ -343,6 +353,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "accountjids", DELETED_USER_JID
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
     }
 
@@ -355,6 +366,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "accountjids", DISABLED_USER_JID
         );
 
+        assertNoteType(AdHocCommandNote.Type.info, result);
         assertNoteEquals("Operation finished successfully", result);
 
         //Clean-up
