@@ -715,6 +715,17 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
+    @SmackIntegrationTest
+    public void testHttpBindStatus() throws Exception {
+        AdHocCommandData result = executeCommandSimple(CURRENT_HTTP_BIND_STATUS, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("httpbindenabled", "true", result);
+        assertFormFieldEquals("httpbindaddress", "http://example.org:7070/http-bind/", result);
+        assertFormFieldEquals("httpbindsecureaddress", "https://example.org:7443/http-bind/", result);
+        assertFormFieldEquals("javascriptaddress", "http://example.org:7070/scripts/", result);
+        assertFormFieldEquals("websocketaddress", "ws://example.org:7070/ws/", result);
+        assertFormFieldEquals("websocketsecureaddress", "wss://example.org:7443/ws/", result);
+    }
+
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
     //node="http://jabber.org/protocol/event#group-admin-added" name="Group admin added"
     //node="http://jabber.org/protocol/event#group-admin-removed" name="Group admin removed"
