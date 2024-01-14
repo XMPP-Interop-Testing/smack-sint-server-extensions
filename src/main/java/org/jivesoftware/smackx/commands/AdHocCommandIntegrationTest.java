@@ -645,6 +645,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
+    //@SmackIntegrationTest
+    //Disabled due to a bug in the Command, https://github.com/igniterealtime/Openfire/pull/2381/files#r1451758895
+    public void testUserRoster() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_ROSTER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", adminConnection.getUser().asEntityBareJidString()
+        );
+        assertFormFieldExists("accountjids", result);
+    }
+
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
