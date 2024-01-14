@@ -280,6 +280,43 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals("Not all required fields filled. Missing: [accountjid]", e.getMessage());
     }
 
+    @SmackIntegrationTest
+    public void testAddUserWithMismatchedPassword() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", "addusermismatchedpasswordtest" + testRunId + "@example.org",
+            "password", "password",
+            "password-verify", "password2"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Passwords do not match", result);
+    }
+
+    @SmackIntegrationTest
+    public void testAddUserWithRemoteJid() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", "adduserinvalidjidtest" + testRunId + "@somewhereelse.org",
+            "password", "password",
+            "password-verify", "password"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Cannot create remote user", result);
+    }
+
+    //@SmackIntegrationTest
+    //See: https://github.com/igniterealtime/Openfire/pull/2381#discussion_r1451816381
+    public void testAddUserWithInvalidJid() throws Exception {
+        AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", "adduserinvalidjidtest" + testRunId + "@invalid@domain",
+            "password", "password",
+            "password-verify", "password"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Invalid JID", result);
+    }
+
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
     //@SmackIntegrationTest
     //TODO: Why does this fail? Announcements doesn't trigger the IncomingChatMessageListener. Try adminConnection.addMessageInterceptor?
