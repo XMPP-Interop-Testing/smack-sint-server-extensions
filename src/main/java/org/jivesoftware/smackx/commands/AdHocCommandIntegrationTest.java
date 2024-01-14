@@ -655,6 +655,65 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
+    @SmackIntegrationTest
+    public void testReenableUser() throws Exception {
+        final String DISABLED_USER_JID = "reenableusertest" + testRunId + "@example.org";
+        createUser(DISABLED_USER_JID);
+        executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        //Clean-up
+        deleteUser(DISABLED_USER_JID);
+    }
+
+    @SmackIntegrationTest
+    public void testReenableNonDisabledUser() throws Exception {
+        final String DISABLED_USER_JID = "reenableusernondisabledtest" + testRunId + "@example.org";
+        createUser(DISABLED_USER_JID);
+
+        AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        //Clean-up
+        deleteUser(DISABLED_USER_JID);
+    }
+
+    @SmackIntegrationTest
+    public void testReenableNonExistingUser() throws Exception {
+        final String DISABLED_USER_JID = "reenablenonexistingusertest" + testRunId + "@example.org";
+
+        AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("User does not exist: " + DISABLED_USER_JID, result);
+    }
+
+    @SmackIntegrationTest
+    public void testReenableRemoteUser() throws Exception {
+        final String DISABLED_USER_JID = "reenableremoteusertest" + testRunId + "@elsewhere.org";
+
+        AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", DISABLED_USER_JID
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Cannot re-enable remote user: " + DISABLED_USER_JID, result);
+    }
+
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
     //node="http://jabber.org/protocol/event#group-admin-added" name="Group admin added"
