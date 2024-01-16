@@ -398,7 +398,41 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         //Clean-up
         deleteUser(DISABLED_USER_JID);
     }
+
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
+    @SmackIntegrationTest
+    public void testEditAdminList() throws Exception {
+        final String ADMIN_TO_ADD = "editadminlisttest" + testRunId + "@example.org";
+        createUser(ADMIN_TO_ADD);
+
+        // Pretend it's a 1-stage command initially, so that we can check that the current list of Admins is populated
+        AdHocCommandData result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("adminjids", Collections.singletonList(adminConnection.getUser().asEntityBareJidString()), result);
+
+
+        // Run the full 2-stage command to alter the list of Admins
+        result = executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
+            "adminjids", adminConnection.getUser().asEntityBareJidString() + "," + ADMIN_TO_ADD
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        // Pretend it's a 1-stage command again, so that we can check that the new list of Admins is correct
+        result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("adminjids", new ArrayList<>(Arrays.asList(
+            adminConnection.getUser().asEntityBareJidString(),
+            ADMIN_TO_ADD
+        )), result);
+
+
+        //Clean-up
+        deleteUser(ADMIN_TO_ADD);
+        executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
+            "adminjids", adminConnection.getUser().asEntityBareJidString()
+        );
+    }
+
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
