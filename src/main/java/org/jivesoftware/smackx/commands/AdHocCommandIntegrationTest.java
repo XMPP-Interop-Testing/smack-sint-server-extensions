@@ -166,6 +166,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertNotNull(field);
     }
 
+    private void assertFormFieldHasValues(String fieldName, int valueCount, AdHocCommandData data) {
+        FormField field = data.getForm().getField(fieldName);
+        assertEquals(valueCount, field.getValues().size());
+    }
+
     private void assertNoteType(AdHocCommandNote.Type expectedType, AdHocCommandData data) {
         AdHocCommandNote note = data.getNotes().get(0);
         assertEquals(expectedType, note.getType());
@@ -434,6 +439,33 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
+    //@SmackIntegrationTest
+    // Disabled whilst we can't tidy up after ourselves.
+    public void testEditBlackList() throws Exception {
+        final String BLACKLIST_DOMAIN = "xmpp.someotherdomain.org";
+
+        // Pretend it's a 1-stage command initially, so that we can check that the current list of Blocked Users is populated
+        AdHocCommandData result = executeCommandSimple(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldHasValues("blacklistjids", 0, result);
+
+        result = executeCommandWithArgs(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid(),
+            "blacklistjids", BLACKLIST_DOMAIN
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        // Pretend it's a 1-stage command again, so that we can check that the new list of Blocked Users is correct
+        result = executeCommandSimple(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("blacklistjids", BLACKLIST_DOMAIN, result);
+
+        //Clean-up
+        //TODO: FIND A WAY TO RETURN THE BLACKLIST TO AN EMPTY STATE
+        //executeCommandWithArgs(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid(),
+        //    "blacklistjids", null
+        //);
+    }
+
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
     //node="http://jabber.org/protocol/admin#get-active-presences" name="Get Presence of Active Users"
