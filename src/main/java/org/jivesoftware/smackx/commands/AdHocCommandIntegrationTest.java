@@ -854,6 +854,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
+    @SmackIntegrationTest
+    public void testGetIdleUsersNumber() throws Exception {
+        final String EXPECTED_IDLE_USERS_NUMBER = "0";
+        AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_IDLE_USERS, adminConnection.getUser().asEntityBareJid());
+        assertFormFieldEquals("idleusersnum", EXPECTED_IDLE_USERS_NUMBER, result);
+    }
+
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
     @SmackIntegrationTest
     public void testGetOnlineUsersListSimple() throws Exception {
