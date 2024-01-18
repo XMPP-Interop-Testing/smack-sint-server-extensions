@@ -355,7 +355,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
     //Disabled as it invalidates the session of the admin calling the command, and thus breaks the rest of the tests
-    //@SmackIntegrationTest
+    @SmackIntegrationTest
     public void testAuthenticateUser() throws Exception {
         final String USER_TO_AUTHENTICATE = "authenticateusertest-" + testRunId + "@example.org";
         createUser(USER_TO_AUTHENTICATE);
@@ -369,6 +369,46 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         //Clean-up
         deleteUser(USER_TO_AUTHENTICATE);
+    }
+
+    @SmackIntegrationTest
+    public void testAuthenticateUserWrongPassword() throws Exception {
+        final String USER_TO_AUTHENTICATE = "authenticateusertestwrongpassword-" + testRunId + "@example.org";
+        createUser(USER_TO_AUTHENTICATE);
+        AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_AUTHENTICATE,
+            "password", "password2"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Authentication failed", result);
+
+        //Clean-up
+        deleteUser(USER_TO_AUTHENTICATE);
+    }
+
+    @SmackIntegrationTest
+    public void testAuthenticateUserNonExistentUser() throws Exception {
+        final String USER_TO_AUTHENTICATE = "authenticateusertestnonexistentuser-" + testRunId + "@example.org";
+        AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_AUTHENTICATE,
+            "password", "password"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("User does not exist", result);
+    }
+
+    @SmackIntegrationTest
+    public void testAuthenticateUserWithRemoteJid() throws Exception {
+        final String USER_TO_AUTHENTICATE = "authenticateusertestremotejid-" + testRunId + "@somewhereelse.org";
+        AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_AUTHENTICATE,
+            "password", "password"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.error, result);
+        assertNoteEquals("Cannot authenticate remote user", result);
     }
 
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
