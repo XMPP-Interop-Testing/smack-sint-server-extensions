@@ -9,6 +9,10 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.util.PacketParserUtils;
+import org.jivesoftware.smack.xml.SmackXmlParser;
+import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.FormField;
@@ -18,6 +22,7 @@ import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.Jid;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -634,6 +639,43 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-active-presences" name="Get Presence of Active Users"
+    @SmackIntegrationTest
+    public void testGetPresenceOfActiveUsers() throws Exception {
+        final List<String> EXPECTED_PRESENCES = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString(),
+            conThree.getUser().asEntityBareJidString(),
+            adminConnection.getUser().asEntityBareJidString()
+        ));
+
+        AdHocCommandData result = executeCommandWithArgs(GET_PRESENCE_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25"
+        );
+
+        assertFormFieldHasValues("activeuserpresences", 5, result); //3 SINT users, plus 2 from the admin
+
+        List<Presence> presences = result.getForm().getField("activeuserpresences").getValues().stream()
+            .map(CharSequence::toString)
+            .map(s -> {
+                try {
+                    return SmackXmlParser.newXmlParser(new StringReader(s));
+                } catch (XmlPullParserException e) {
+                    throw new RuntimeException(e);
+                }
+            })
+            .map(parser -> {
+                try {
+                    parser.next();
+                    return PacketParserUtils.parsePresence(parser);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            })
+            .collect(Collectors.toList());
+
+        assertTrue(presences.stream().allMatch(presence -> presence.getType() == Presence.Type.available));
+        assertTrue(presences.stream().allMatch(presence -> EXPECTED_PRESENCES.contains(presence.getFrom().asEntityBareJidOrThrow().toString())));
+    }
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
