@@ -175,7 +175,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals(expectedType, note.getType());
     }
 
-    private void assertNoteEquals(String expectedValue, AdHocCommandData data) {
+    private void assertNoteContains(String expectedValue, AdHocCommandData data) {
         AdHocCommandNote note = data.getNotes().get(0);
         assertTrue(note.getValue().contains(expectedValue));
     }
@@ -227,7 +227,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -248,7 +248,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -267,7 +267,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(ADDED_USER_JID);
@@ -293,7 +293,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Passwords do not match", result);
+        assertNoteContains("Passwords do not match", result);
     }
 
     @SmackIntegrationTest
@@ -305,7 +305,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Cannot create remote user", result);
+        assertNoteContains("Cannot create remote user", result);
     }
 
     @SmackIntegrationTest
@@ -317,7 +317,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Please provide a valid JID", result);
+        assertNoteContains("Please provide a valid JID", result);
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
@@ -344,7 +344,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             syncPoint.waitForResult(timeout);
 
             assertNoteType(AdHocCommandNote.Type.info, result);
-            assertNoteEquals("Operation finished successfully", result);
+            assertNoteContains("Operation finished successfully", result);
         }
         finally {
             adminConnection.removeSyncStanzaListener(stanzaListener);
@@ -362,7 +362,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(USER_TO_AUTHENTICATE);
@@ -378,7 +378,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Authentication failed", result);
+        assertNoteContains("Authentication failed", result);
 
         //Clean-up
         deleteUser(USER_TO_AUTHENTICATE);
@@ -393,7 +393,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("User does not exist", result);
+        assertNoteContains("User does not exist", result);
     }
 
     @SmackIntegrationTest
@@ -405,7 +405,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Cannot authenticate remote user", result);
+        assertNoteContains("Cannot authenticate remote user", result);
     }
 
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
@@ -419,7 +419,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjid", USER_TO_CHANGE_PASSWORD,
@@ -427,7 +427,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(USER_TO_CHANGE_PASSWORD);
@@ -463,7 +463,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Get members
         List<String> jids = getGroupMembers(GROUP_NAME);
@@ -494,7 +494,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
     }
 
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
@@ -507,7 +507,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
     }
 
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
@@ -520,7 +520,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(DISABLED_USER_JID);
@@ -543,7 +543,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         // Pretend it's a 1-stage command again, so that we can check that the new list of Admins is correct
         result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
@@ -575,7 +575,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         // Pretend it's a 1-stage command again, so that we can check that the new list of Blocked Users is correct
         result = executeCommandSimple(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid());
@@ -621,7 +621,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
             "max_items", "25"
@@ -925,7 +925,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(DISABLED_USER_JID);
@@ -941,7 +941,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Clean-up
         deleteUser(DISABLED_USER_JID);
@@ -956,7 +956,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("User does not exist: " + DISABLED_USER_JID, result);
+        assertNoteContains("User does not exist: " + DISABLED_USER_JID, result);
     }
 
     @SmackIntegrationTest
@@ -968,7 +968,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Cannot re-enable remote user: " + DISABLED_USER_JID, result);
+        assertNoteContains("Cannot re-enable remote user: " + DISABLED_USER_JID, result);
     }
 
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
@@ -1006,7 +1006,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
-        assertNoteEquals("Operation finished successfully", result);
+        assertNoteContains("Operation finished successfully", result);
 
         //Get groups
         result = executeCommandWithArgs(GET_LIST_OF_EXISTING_GROUPS, adminConnection.getUser().asEntityBareJid());
