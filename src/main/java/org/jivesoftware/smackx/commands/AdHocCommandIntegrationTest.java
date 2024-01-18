@@ -36,6 +36,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     private final AdHocCommandManager adHocCommandManagerForAdmin;
     private final AdHocCommandManager adHocCommandManagerForConOne;
     private final AbstractXMPPConnection adminConnection;
+    SmackIntegrationTestEnvironment environment;
 
     private final List<FormField.Type> NON_STRING_FORM_FIELD_TYPES = Arrays.asList(
         FormField.Type.jid_multi,
@@ -81,6 +82,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     public AdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment)
         throws InvocationTargetException, InstantiationException, IllegalAccessException, SmackException, IOException, XMPPException, InterruptedException {
         super(environment);
+        this.environment = environment;
 
         adminConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
         adminConnection.connect();
@@ -591,7 +593,50 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
+    //TODO: Once we know how to fix the blacklist cleanup...
+
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
+    @SmackIntegrationTest
+    public void testEndUserSession() throws Exception {
+        final String USER_TO_END_SESSION = "endsessiontest" + testRunId + "@example.org";
+        createUser(USER_TO_END_SESSION);
+
+        // Fetch user details to get the user loaded
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", USER_TO_END_SESSION
+        );
+
+        assertFormFieldExists("accountjids", result);
+
+        // Login as the user to be able to end their session
+        AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        userConnection.connect();
+        userConnection.login(USER_TO_END_SESSION.split("@")[0], "password");
+
+        result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25"
+        );
+        List<String> jids = result.getForm().getField("activeuserjids").getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
+        assertTrue(jids.contains(userConnection.getUser().asEntityBareJidString()));
+
+        // End the user's session
+        result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", USER_TO_END_SESSION
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
+            "max_items", "25"
+        );
+        jids = result.getForm().getField("activeuserjids").getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
+        assertFalse(jids.contains(userConnection.getUser().asEntityBareJidString()));
+
+        //Clean-up
+        deleteUser(USER_TO_END_SESSION);
+    }
+
     //node="http://jabber.org/protocol/admin#get-active-presences" name="Get Presence of Active Users"
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
