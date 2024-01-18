@@ -309,8 +309,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertNoteEquals("Cannot create remote user", result);
     }
 
-    //@SmackIntegrationTest
-    //See: https://github.com/igniterealtime/Openfire/pull/2381#discussion_r1451816381
+    @SmackIntegrationTest
     public void testAddUserWithInvalidJid() throws Exception {
         AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjid", "adduserinvalidjidtest" + testRunId + "@invalid@domain",
@@ -319,7 +318,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteEquals("Invalid JID", result);
+        assertNoteEquals("Please provide a valid JID", result);
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
@@ -671,14 +670,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
-    // TODO: Disabled awaiting fixes on https://github.com/igniterealtime/Openfire/pull/2381
-    //@SmackIntegrationTest
+    @SmackIntegrationTest
     public void testGetRegisteredUsersList() throws Exception {
         final List<String> EXPECTED_REGISTERED_USERS = new ArrayList<>(Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString()
+            adminConnection.getUser().asEntityBareJidString(),
+            "jane@example.org",
+            "john@example.org"
         ));
 
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid(),
@@ -737,13 +737,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
-    //@SmackIntegrationTest
-    //Disabled due to a bug in the Command, https://github.com/igniterealtime/Openfire/pull/2381/files#r1451758895
+    @SmackIntegrationTest
     public void testUserRoster() throws Exception {
         AdHocCommandData result = executeCommandWithArgs(GET_USER_ROSTER, adminConnection.getUser().asEntityBareJid(),
             "accountjids", adminConnection.getUser().asEntityBareJidString()
         );
-        assertFormFieldExists("accountjids", result);
+        assertFormFieldEquals("accountjids", Collections.singletonList(adminConnection.getUser().asEntityBareJidString()), result);
     }
 
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
