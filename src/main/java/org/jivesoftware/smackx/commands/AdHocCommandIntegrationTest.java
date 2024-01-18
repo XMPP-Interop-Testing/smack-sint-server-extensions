@@ -412,8 +412,94 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
+    @SmackIntegrationTest
+    public void testChangePassword() throws Exception {
+        final String USER_TO_CHANGE_PASSWORD = "changepasswordtest" + testRunId + "@example.org";
+        createUser(USER_TO_CHANGE_PASSWORD);
+        AdHocCommandData result = executeCommandWithArgs(CHANGE_USER_PASSWORD, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_CHANGE_PASSWORD,
+            "password", "password2"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjid", USER_TO_CHANGE_PASSWORD,
+            "password", "password2"
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        //Clean-up
+        deleteUser(USER_TO_CHANGE_PASSWORD);
+    }
+
     //node="http://jabber.org/protocol/admin#delete-group-members" name="Delete members or admins from a group"
+    @SmackIntegrationTest
+    public void testDeleteGroupMembers() throws Exception {
+        final String GROUP_NAME = "testGroupMemberRemoval" + testRunId;
+        final List<String> GROUP_MEMBERS = new ArrayList<>(Arrays.asList(
+            conOne.getUser().asEntityBareJidString(),
+            conTwo.getUser().asEntityBareJidString()
+        ));
+
+        //Create group
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "desc", GROUP_NAME + " Description",
+            "showInRoster", "nobody"
+        );
+
+        //Add members
+        executeCommandWithArgs(ADD_MEMBERS_OR_ADMINS_TO_A_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "admin", "false",
+            "users", String.join(",", GROUP_MEMBERS)
+        );
+
+        //Remove members
+        AdHocCommandData result = executeCommandWithArgs(DELETE_MEMBERS_OR_ADMINS_FROM_A_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME,
+            "users", conOne.getUser().asEntityBareJidString()
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+
+        //Get members
+        List<String> jids = getGroupMembers(GROUP_NAME);
+
+        assertEquals(1, jids.size());
+        assertTrue(jids.contains(conTwo.getUser().asEntityBareJidString()));
+
+        //Clean-up
+        executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", GROUP_NAME
+        );
+    }
+
     //node="http://jabber.org/protocol/admin#delete-group" name="Delete group"
+    @SmackIntegrationTest
+    public void testDeleteGroup() throws Exception {
+        final String NEW_GROUP_NAME = "testGroup" + testRunId;
+        executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", NEW_GROUP_NAME,
+            "desc", "testGroup Description",
+            "members", "admin@example.org",
+            "showInRoster", "nobody",
+            "displayName", "testGroup Display Name"
+        );
+
+        AdHocCommandData result = executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
+            "group", NEW_GROUP_NAME
+        );
+
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteEquals("Operation finished successfully", result);
+    }
+
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
     @SmackIntegrationTest
     public void testDeleteUser() throws Exception {
