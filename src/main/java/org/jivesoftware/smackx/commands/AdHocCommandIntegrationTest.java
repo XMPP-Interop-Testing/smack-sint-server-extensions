@@ -354,7 +354,6 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
-    //Disabled as it invalidates the session of the admin calling the command, and thus breaks the rest of the tests
     @SmackIntegrationTest
     public void testAuthenticateUser() throws Exception {
         final String USER_TO_AUTHENTICATE = "authenticateusertest-" + testRunId + "@example.org";
