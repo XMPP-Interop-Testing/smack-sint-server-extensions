@@ -87,8 +87,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         adminConnection.login(sinttestConfiguration.adminAccountUsername,
             sinttestConfiguration.adminAccountPassword);
 
-        adHocCommandManagerForConOne = AdHocCommandManager.getAddHocCommandsManager(conOne);
-        adHocCommandManagerForAdmin = AdHocCommandManager.getAddHocCommandsManager(adminConnection);
+        adHocCommandManagerForConOne = AdHocCommandManager.getInstance(conOne);
+        adHocCommandManagerForAdmin = AdHocCommandManager.getInstance(adminConnection);
     }
 
 
@@ -122,16 +122,16 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             complete(submitForm).getResponse();
     }
 
-    private AdHocCommandData createUser(String jid) throws Exception {
-        return executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
+    private void createUser(String jid) throws Exception {
+        executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjid", jid,
             "password", "password",
             "password-verify", "password"
         );
     }
 
-    private AdHocCommandData deleteUser(String jid) throws Exception {
-        return executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+    private void deleteUser(String jid) throws Exception {
+        executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjids", jid
         );
     }
@@ -143,7 +143,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         //TODO: Find someone who understands streams and tidy this up
         return form.getItems().stream()
-            .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("jid")).collect(Collectors.toList()))
+            .map(item -> item.getFields().stream().filter(field -> field.getFieldName().equals("jid")).collect(Collectors.toList()))
             .map(fields -> fields.get(0).getValues().get(0))
             .map(CharSequence::toString)
             .collect(Collectors.toList());
