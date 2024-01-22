@@ -100,11 +100,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
         return command.execute().getResponse();
     }
-    private AdHocCommandData executeCommandWithArgs(String commandNode, Jid jid, String... args) throws Exception {
-        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
-        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
-        FillableForm form = result.getFillableForm();
 
+    private void fillForm(FillableForm form, String[] args){
         for (int i = 0; i < args.length; i += 2) {
             FormField field = form.getField(args[i]);
             if (field == null) {
@@ -112,15 +109,39 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             }
             if (NON_STRING_FORM_FIELD_TYPES.contains(field.getType())){
                 form.setAnswer(args[i], Stream.of(args[i + 1]
-                    .split(",", -1))
+                        .split(",", -1))
                     .map(String::trim)
                     .collect(Collectors.toList()));
             } else {
                 form.setAnswer(args[i], args[i + 1]);
             }
         }
+    }
+
+    private AdHocCommandData executeCommandWithArgs(String commandNode, Jid jid, String... args) throws Exception {
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
+        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
+        FillableForm form = result.getFillableForm();
+        fillForm(form, args);
 
         SubmitForm submitForm = form.getSubmitForm();
+
+        return command.
+            complete(submitForm).getResponse();
+    }
+
+    private AdHocCommandData executeMultistageCommandWithArgs(String commandNode, Jid jid, String[] args1, String[] args2) throws Exception {
+        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
+
+        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
+        FillableForm form = result.getFillableForm();
+        fillForm(form, args1);
+        SubmitForm submitForm = form.getSubmitForm();
+
+        result = command.next(submitForm).asExecutingOrThrow();
+        form = result.getFillableForm();
+        fillForm(form, args2);
+        submitForm = form.getSubmitForm();
 
         return command.
             complete(submitForm).getResponse();
@@ -1033,12 +1054,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
-    //@SmackIntegrationTest
-    //TODO: Deal with commands with >2 stages
+    @SmackIntegrationTest
     public void testUpdateGroupConfiguration() throws Exception {
         final String GROUP_NAME = "testUpdateGroupConfiguration" + testRunId;
         final String GROUP_DESCRIPTION = "testUpdateGroupConfiguration Description";
         final String GROUP_SHOW_IN_ROSTER = "nobody";
+        final String UPDATED_GROUP_NAME = "testUpdateGroupConfigurationUpdated" + testRunId;
+        final String UPDATED_GROUP_DESCRIPTION = "testUpdateGroupConfigurationUpdated Description";
 
         //Create group
         executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -1048,10 +1070,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
 
         //Update group
-        AdHocCommandData result = executeCommandWithArgs(UPDATE_GROUP_CONFIGURATION, adminConnection.getUser().asEntityBareJid(),
-            "group", GROUP_NAME,
-            "desc", GROUP_DESCRIPTION + " Updated",
-            "showInRoster", GROUP_SHOW_IN_ROSTER
+        AdHocCommandData result = executeMultistageCommandWithArgs(UPDATE_GROUP_CONFIGURATION, adminConnection.getUser().asEntityBareJid(),
+                new String[]{
+                    "group", GROUP_NAME
+                },
+                new String[]{
+                    //"group", UPDATED_GROUP_NAME,
+                    "desc", UPDATED_GROUP_DESCRIPTION,
+                    "showInRoster", GROUP_SHOW_IN_ROSTER
+                }
         );
 
         assertNoteType(AdHocCommandNote.Type.info, result);
@@ -1073,14 +1100,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             ));
 
         assertEquals(1, groupNames.size());
-        assertTrue(groupNames.contains(GROUP_NAME));
-        assertEquals(GROUP_NAME, group1Props.get("name"));
-        assertEquals(GROUP_DESCRIPTION + " Updated", group1Props.get("desc"));
+        //assertTrue(groupNames.contains(UPDATED_GROUP_NAME));
+        //assertEquals(UPDATED_GROUP_NAME, group1Props.get("name"));
+        assertEquals(UPDATED_GROUP_DESCRIPTION, group1Props.get("desc"));
         assertEquals("false", group1Props.get("shared"));
 
         //Clean-up
         executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
             "group", GROUP_NAME
+            //"group", UPDATED_GROUP_NAME
         );
     }
 
