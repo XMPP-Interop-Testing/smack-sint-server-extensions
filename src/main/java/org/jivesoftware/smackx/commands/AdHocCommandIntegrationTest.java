@@ -149,10 +149,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     private void createUser(String jid) throws Exception {
+        createUser(jid, "password");
+    }
+
+    private void createUser(String jid, String password) throws Exception {
         executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
             "accountjid", jid,
-            "password", "password",
-            "password-verify", "password"
+            "password", password,
+            "password-verify", password
         );
     }
 
@@ -426,14 +430,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     public void testAuthenticateUser() throws Exception {
         // Setup test fixture.
         final String USER_TO_AUTHENTICATE = "authenticateusertest-" + testRunId + "@example.org";
+        final String password = "password";
         try {
-            // TODO explicitly specify the password for the user-to-be created, as that's the subject of this test.
-            createUser(USER_TO_AUTHENTICATE);
+            createUser(USER_TO_AUTHENTICATE, password);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
                 "accountjid", USER_TO_AUTHENTICATE,
-                "password", "password"
+                password, password
             );
 
             // Verify results.
@@ -449,14 +453,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     public void testAuthenticateUserWrongPassword() throws Exception {
         // Setup test fixture.
         final String USER_TO_AUTHENTICATE = "authenticateusertestwrongpassword-" + testRunId + "@example.org";
+        final String password = "password";
         try {
-            // TODO explicitly specify the password for the user-to-be created, as that's the subject of this test.
-            createUser(USER_TO_AUTHENTICATE);
+            createUser(USER_TO_AUTHENTICATE, password);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
                 "accountjid", USER_TO_AUTHENTICATE,
-                "password", "password2"
+                password, password+"2"
             );
 
             // Verify results.
