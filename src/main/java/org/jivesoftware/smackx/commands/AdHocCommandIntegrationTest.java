@@ -201,6 +201,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals(expectedValue, Integer.parseInt(field.getFirstValue()));
     }
 
+    private void assertFormFieldContainsAll(String fieldName, Collection<Jid> expectedValues, AdHocCommandData data) {
+        FormField field = data.getForm().getField(fieldName);
+        List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
+        Set<Jid> reportedValues = fieldValues.stream().map(JidCreate::fromOrThrowUnchecked).collect(Collectors.toSet());
+        assertTrue(reportedValues.containsAll(expectedValues));
+    }
+
     private void assertFormFieldJidEquals(String fieldName, Set<Jid> expectedValues, AdHocCommandData data) {
         FormField field = data.getForm().getField(fieldName);
         List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
@@ -828,16 +835,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
     @SmackIntegrationTest
     public void testGetActiveUsersNumber() throws Exception {
-        // Setup test fixture.
-        final int expectedActiveUsersNumber = 4; // Three defaults, plus this test's extra admin user
-
         // Execute system under test.
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
 
         // Verify results.
-        // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
-        // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        assertEquals(expectedActiveUsersNumber, Integer.parseInt(form.getField("activeusersnum").getFirstValue()));
+        final int expectedMinimumCount = 3; // Each test runs with at least three test accounts (but more users might be active!)
+        assertTrue(Integer.parseInt(form.getField("activeusersnum").getFirstValue()) >= expectedMinimumCount);
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
@@ -847,15 +850,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
-        // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final Set<Jid> expectedActiveUsers = new HashSet<>(Arrays.asList(
+        final Collection<Jid> expectedActiveUsers = Arrays.asList(
             conOne.getUser().asEntityBareJid(),
             conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid(),
-            adminConnection.getUser().asEntityBareJid()
-        ));
-        assertFormFieldJidEquals("activeuserjids", expectedActiveUsers, result);
+            conThree.getUser().asEntityBareJid()
+        );
+        assertFormFieldContainsAll("activeuserjids", expectedActiveUsers, result);
     }
     @SmackIntegrationTest
     public void testGetOnlineUsersListWithMaxUsers() throws Exception {
@@ -864,15 +864,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "max_items", "25");
 
         // Verify results.
-        // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
-        // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final Set<Jid> expectedActiveUsers = new HashSet<>(Arrays.asList(
+        final Collection<Jid> expectedActiveUsers = Arrays.asList(
             conOne.getUser().asEntityBareJid(),
             conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid(),
-            adminConnection.getUser().asEntityBareJid()
-        ));
-        assertFormFieldJidEquals("activeuserjids", expectedActiveUsers, result);
+            conThree.getUser().asEntityBareJid()
+        );
+        assertFormFieldContainsAll("activeuserjids", expectedActiveUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-console-info" name="Get admin console info."
@@ -937,8 +934,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid());
 
             // Verify results.
-            // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
-            assertFormFieldEquals("disabledusersnum", 1, result);
+            assertTrue(Integer.parseInt(result.getForm().getField("disabledusersnum").getFirstValue()) >= 1);
         } finally {
             // Tear down test fixture.
             deleteUser(disabledUser);
@@ -1032,9 +1028,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_IDLE_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        final int expectedIdleUsersNumber = 0;
-        assertFormFieldEquals("idleusersnum", expectedIdleUsersNumber, result);
-        // TODO I'm not sure we can reliably state that there are no idle users. Maybe it's enough to simply check that this is a non-negative number?
+        assertTrue(Integer.parseInt(result.getForm().getField("idleusersnum").getFirstValue()) >= 0);
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
@@ -1044,15 +1038,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
-        // TODO: not every test invocation uses an admin user. Maybe not expect that user.
-        final Set<Jid> expectedOnlineUsers = new HashSet<>(Arrays.asList(
+        final Collection<Jid> expectedOnlineUsers = Arrays.asList(
             conOne.getUser().asEntityBareJid(),
             conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid(),
-            adminConnection.getUser().asEntityBareJid()
-        ));
-        assertFormFieldJidEquals("onlineuserjids", expectedOnlineUsers, result);
+            conThree.getUser().asEntityBareJid()
+        );
+        assertFormFieldContainsAll("onlineuserjids", expectedOnlineUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
@@ -1062,10 +1053,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
 
         // Verify results.
-        // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests.
-        // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
-        final int expectedOnlineUsersNumber = 4; // Three defaults, plus this test's extra admin user
-        assertEquals(expectedOnlineUsersNumber, Integer.parseInt(form.getField("onlineusersnum").getFirstValue()));
+        final int expectedMinimumCount = 3; // Each test runs with at least three test accounts (but more users might be active!)
+        assertTrue(Integer.parseInt(form.getField("onlineusersnum").getFirstValue()) >= expectedMinimumCount);
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
@@ -1076,18 +1065,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "max_items", "25");
 
         // Verify results.
-        // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
-        // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
-        // TODO: lets not expect the system-under-test to run Openfire demoboot.
-        final Set<Jid> expectedRegisteredUsers = new HashSet<>(Arrays.asList(
+        final Collection<Jid> expectedRegisteredUsers = Arrays.asList(
             conOne.getUser().asEntityBareJid(),
             conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid(),
-            adminConnection.getUser().asEntityBareJid(),
-            JidCreate.entityBareFrom("jane@example.org"),
-            JidCreate.entityBareFrom("john@example.org")
-        ));
-        assertFormFieldJidEquals("registereduserjids", expectedRegisteredUsers, result);
+            conThree.getUser().asEntityBareJid()
+        );
+        assertFormFieldContainsAll("registereduserjids", expectedRegisteredUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
@@ -1097,11 +1080,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
-        // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
-        // TODO: lets not expect the system-under-test to run Openfire demoboot.
-        final int expectedRegisteredUsersNumber = 6; // Three defaults (Admin, Jane, John), plus SINT's extra three temporary users
-        assertFormFieldEquals("registeredusersnum", expectedRegisteredUsersNumber, result);
+        final int expectedMinimumCount = 3; // Each test runs with at least three registered test accounts (but more users might be active!)
+        assertTrue(Integer.parseInt(result.getForm().getField("registeredusersnum").getFirstValue()) >= expectedMinimumCount);
     }
 
     //node="http://jabber.org/protocol/admin#get-server-stats" name="Get basic statistics of the server."
@@ -1116,8 +1096,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertFormFieldExists("domain", result);
         assertFormFieldExists("os", result);
         assertFormFieldExists("uptime", result);
-        assertFormFieldEquals("activeusersnum", 4, result); //Admin plus 3 SINT users
-        assertFormFieldEquals("sessionsnum", 5, result); //2 for Admin, plus 3 SINT users
+        assertTrue(Integer.parseInt(result.getForm().getField("activeusersnum").getFirstValue()) >= 3); // At _least_ 3 test users
+        assertTrue(Integer.parseInt(result.getForm().getField("sessionsnum").getFirstValue()) >= 3);  // At _least_ 3 test users
     }
 
     //node="http://jabber.org/protocol/admin#get-sessions-num" name="Get Number of Connected User Sessions"
@@ -1127,10 +1107,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_CONNECTED_USER_SESSIONS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        // TODO: change this to expect _at least_ this amount. This should help guard against concurrently running tests.
-        // TODO: not every test invocation uses an admin user. Maybe deduct those from the expected count.
-        final int expectedSessionsNumber = 5; // Three defaults, plus 2 sessions for Admin (one here, one in SINT core framework)
-        assertFormFieldEquals("onlineuserssessionsnum", expectedSessionsNumber, result);
+        final int expectedMinimumCount = 3; // Each test runs with at least three test accounts (but more users might be active!)
+        assertTrue(Integer.parseInt(result.getForm().getField("onlineuserssessionsnum").getFirstValue()) >= expectedMinimumCount);
     }
 
     //node="http://jabber.org/protocol/admin#get-user-properties" name="Get User Properties"
