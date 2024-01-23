@@ -166,11 +166,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "group", groupName
         ).getForm();
 
-        //TODO: Find someone who understands streams and tidy this up
         return form.getItems().stream()
-            .map(item -> item.getFields().stream().filter(field -> field.getFieldName().equals("jid")).collect(Collectors.toList()))
-            .map(fields -> fields.get(0).getValues().get(0))
-            .map(CharSequence::toString)
+            .map(DataForm.Item::getFields)
+            .flatMap(List::stream)
+            .filter(field -> field.getFieldName().equals("jid"))
+            .map(FormField::getFirstValue)
             .collect(Collectors.toList());
     }
 
