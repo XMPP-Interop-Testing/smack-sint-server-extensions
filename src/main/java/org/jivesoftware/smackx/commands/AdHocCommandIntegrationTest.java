@@ -19,8 +19,9 @@ import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
 import org.jivesoftware.smackx.xdata.form.SubmitForm;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
-import org.junit.jupiter.api.Test;
 import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -148,13 +149,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             complete(submitForm).getResponse();
     }
 
-    private void createUser(String jid) throws Exception {
+    private void createUser(Jid jid) throws Exception {
         createUser(jid, "password");
     }
 
-    private void createUser(String jid, String password) throws Exception {
+    private void createUser(Jid jid, String password) throws Exception {
         executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjid", jid,
+            "accountjid", jid.toString(),
             "password", password,
             "password-verify", password
         );
@@ -165,8 +166,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             "accountjids", jid
         );
     }
+    private void deleteUser(Jid jid) throws Exception {
+        executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", jid.toString()
+        );
+    }
 
-    private List<String> getGroupMembers(String groupName) throws Exception {
+    private Set<Jid> getGroupMembers(String groupName) throws Exception {
         DataForm form = executeCommandWithArgs(GET_LIST_OF_GROUP_MEMBERS, adminConnection.getUser().asEntityBareJid(),
             "group", groupName
         ).getForm();
@@ -176,7 +182,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             .flatMap(List::stream)
             .filter(field -> field.getFieldName().equals("jid"))
             .map(FormField::getFirstValue)
-            .collect(Collectors.toList());
+            .map(JidCreate::fromOrThrowUnchecked)
+            .collect(Collectors.toSet());
+    }
+
+    private void assertFormFieldEquals(String fieldName, Jid expectedValue, AdHocCommandData data) throws XmppStringprepException {
+        FormField field = data.getForm().getField(fieldName);
+        assertEquals(expectedValue, JidCreate.from(field.getFirstValue()));
     }
 
     private void assertFormFieldEquals(String fieldName, String expectedValue, AdHocCommandData data) {
@@ -184,11 +196,21 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals(expectedValue, field.getFirstValue());
     }
 
-    private void assertFormFieldEquals(String fieldName, List<String> expectedValues, AdHocCommandData data) {
+    private void assertFormFieldEquals(String fieldName, int expectedValue, AdHocCommandData data) {
+        FormField field = data.getForm().getField(fieldName);
+        assertEquals(expectedValue, Integer.parseInt(field.getFirstValue()));
+    }
+
+    private void assertFormFieldJidEquals(String fieldName, Set<Jid> expectedValues, AdHocCommandData data) {
         FormField field = data.getForm().getField(fieldName);
         List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
-        assertEquals(fieldValues.size(), expectedValues.size());
-        assertTrue(fieldValues.containsAll(expectedValues));
+        assertEquals(expectedValues, fieldValues.stream().map(JidCreate::fromOrThrowUnchecked).collect(Collectors.toSet()));
+    }
+
+    private void assertFormFieldEquals(String fieldName, Collection<String> expectedValues, AdHocCommandData data) {
+        FormField field = data.getForm().getField(fieldName);
+        List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
+        assertEquals(expectedValues, fieldValues);
     }
 
     private void assertFormFieldExists(String fieldName, AdHocCommandData data) {
@@ -298,11 +320,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAddUser() throws Exception {
         // Setup test fixture.
-        final String addedUserJid = "addusertest" + testRunId + "@example.org";
+        final Jid addedUser = JidCreate.bareFrom("addusertest" + testRunId + "@example.org");
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", addedUserJid,
+                "accountjid", addedUser.toString(),
                 "password", "password",
                 "password-verify", "password"
             );
@@ -312,29 +334,28 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Operation finished successfully", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(addedUserJid);
+            deleteUser(addedUser);
         }
     }
 
     @SmackIntegrationTest
     public void testAddUserWithoutJid() throws Exception {
-        Exception e = assertThrows(IllegalStateException.class, () -> {
+        Exception e = assertThrows(IllegalStateException.class, () ->
             executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
                 "password", "password",
                 "password-verify", "password"
-            );
-        });
+        ));
         assertEquals("Not all required fields filled. Missing: [accountjid]", e.getMessage());
     }
 
     @SmackIntegrationTest
     public void testAddUserWithMismatchedPassword() throws Exception {
         // Setup test fixture.
-        final String newUserJid = "addusermismatchedpasswordtest" + testRunId + "@example.org";
+        final Jid newUser = JidCreate.bareFrom("addusermismatchedpasswordtest" + testRunId + "@example.org");
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", newUserJid,
+                "accountjid", newUser.toString(),
                 "password", "password",
                 "password-verify", "password2"
             );
@@ -344,18 +365,18 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Passwords do not match", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(newUserJid);
+            deleteUser(newUser);
         }
     }
 
     @SmackIntegrationTest
     public void testAddUserWithRemoteJid() throws Exception {
         // Setup test fixture.
-        final String newUserJid = "adduserinvalidjidtest" + testRunId + "@somewhereelse.org";
+        final Jid newUser = JidCreate.bareFrom("adduserinvalidjidtest" + testRunId + "@somewhereelse.org");
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", newUserJid,
+                "accountjid", newUser.toString(),
                 "password", "password",
                 "password-verify", "password2"
             );
@@ -365,18 +386,18 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Cannot create remote user", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(newUserJid);
+            deleteUser(newUser);
         }
     }
 
     @SmackIntegrationTest
     public void testAddUserWithInvalidJid() throws Exception {
         // Setup test fixture.
-        final String newUserJid = "adduserinvalidjidtest" + testRunId + "@invalid@domain";
+        final String newUserInvalidJid = "adduserinvalidjidtest" + testRunId + "@invalid@domain";
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", newUserJid,
+                "accountjid", newUserInvalidJid,
                 "password", "password",
                 "password-verify", "password2"
             );
@@ -386,7 +407,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Please provide a valid JID", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(newUserJid);
+            deleteUser(newUserInvalidJid); // Should not exist, but just in case this somehow made it through, delete it.
         }
     }
 
@@ -429,14 +450,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAuthenticateUser() throws Exception {
         // Setup test fixture.
-        final String userToAuthenticate = "authenticateusertest-" + testRunId + "@example.org";
+        final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertest-" + testRunId + "@example.org");
         final String password = "password";
         try {
             createUser(userToAuthenticate, password);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", userToAuthenticate,
+                "accountjid", userToAuthenticate.toString(),
                 password, password
             );
 
@@ -452,14 +473,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAuthenticateUserWrongPassword() throws Exception {
         // Setup test fixture.
-        final String userToAuthenticate = "authenticateusertestwrongpassword-" + testRunId + "@example.org";
+        final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestwrongpassword-" + testRunId + "@example.org");
         final String password = "password";
         try {
             createUser(userToAuthenticate, password);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", userToAuthenticate,
+                "accountjid", userToAuthenticate.toString(),
                 password, password+"2"
             );
 
@@ -475,11 +496,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAuthenticateUserNonExistentUser() throws Exception {
         // Setup test fixture.
-        final String userToAuthenticate = "authenticateusertestnonexistentuser-" + testRunId + "@example.org";
+        final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestnonexistentuser-" + testRunId + "@example.org");
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjid", userToAuthenticate,
+            "accountjid", userToAuthenticate.toString(),
             "password", "password"
         );
 
@@ -491,11 +512,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAuthenticateUserWithRemoteJid() throws Exception {
         // Setup test fixture.
-        final String userToAuthenticate = "authenticateusertestremotejid-" + testRunId + "@somewhereelse.org";
+        final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestremotejid-" + testRunId + "@somewhereelse.org");
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjid", userToAuthenticate,
+            "accountjid", userToAuthenticate.toString(),
             "password", "password"
         );
 
@@ -508,11 +529,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testChangePassword() throws Exception {
         // Setup test fixture.
-        final String userToChangePassword = "changepasswordtest" + testRunId + "@example.org";
+        final Jid userToChangePassword = JidCreate.bareFrom("changepasswordtest" + testRunId + "@example.org");
         try {
             createUser(userToChangePassword);
             AdHocCommandData result = executeCommandWithArgs(CHANGE_USER_PASSWORD, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", userToChangePassword,
+                "accountjid", userToChangePassword.toString(),
                 "password", "password2"
             );
 
@@ -522,7 +543,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
             // Execute system under test.
             result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjid", userToChangePassword,
+                "accountjid", userToChangePassword.toString(),
                 "password", "password2"
             );
 
@@ -566,9 +587,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             // Verify results.
             assertNoteType(AdHocCommandNote.Type.info, result);
             assertNoteContains("Operation finished successfully", result);
-            List<String> jids = getGroupMembers(groupName);
-            assertEquals(1, jids.size());
-            assertTrue(jids.contains(conTwo.getUser().asEntityBareJidString()));
+            Set<Jid> members = getGroupMembers(groupName);
+            assertEquals(1, members.size());
+            assertTrue(members.contains(conTwo.getUser().asEntityBareJid()));
         } finally {
             // Tear down test fixture.
             executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -604,12 +625,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testDeleteUser() throws Exception {
         // Setup test fixture.
-        final String deletedUserJid = "deleteusertest" + testRunId + "@example.org";
-        createUser(deletedUserJid);
+        final Jid deletedUser = JidCreate.bareFrom("deleteusertest" + testRunId + "@example.org");
+        createUser(deletedUser);
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", deletedUserJid
+            "accountjids", deletedUser.toString()
         );
 
         // Verify results.
@@ -621,13 +642,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testDisableUser() throws Exception {
         // Setup test fixture.
-        final String disabledUserJid = "disableusertest" + testRunId + "@example.org";
+        final Jid disabledUser = JidCreate.bareFrom("disableusertest" + testRunId + "@example.org");
         try {
-            createUser(disabledUserJid);
+            createUser(disabledUser);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", disabledUserJid
+                "accountjids", disabledUser.toString()
             );
 
             // Verify results.
@@ -635,14 +656,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Operation finished successfully", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUserJid);
+            deleteUser(disabledUser);
         }
     }
 
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
     @SmackIntegrationTest
     public void testEditAdminList() throws Exception {
-        final String adminToAdd = "editadminlisttest" + testRunId + "@example.org";
+        final Jid adminToAdd = JidCreate.bareFrom("editadminlisttest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
             createUser(adminToAdd);
@@ -651,7 +672,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             AdHocCommandData result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
 
             // Verify results.
-            assertFormFieldEquals("adminjids", Collections.singletonList(adminConnection.getUser().asEntityBareJidString()), result);
+            assertFormFieldEquals("adminjids", adminConnection.getUser().asEntityBareJid(), result);
 
             // Execute system under test: Run the full 2-stage command to alter the list of Admins
             result = executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
@@ -666,10 +687,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
 
             // Verify results.
-            assertFormFieldEquals("adminjids", Arrays.asList(
-                adminConnection.getUser().asEntityBareJidString(),
+            assertFormFieldJidEquals("adminjids", new HashSet<>(Arrays.asList(
+                adminConnection.getUser().asEntityBareJid(),
                 adminToAdd
-            ), result);
+            )), result);
         } finally {
             // Tear down test fixture.
             deleteUser(adminToAdd);
@@ -721,13 +742,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
     @SmackIntegrationTest
     public void testEndUserSession() throws Exception {
-        final String userToEndSession = "endsessiontest" + testRunId + "@example.org";
+        final Jid userToEndSession = JidCreate.bareFrom("endsessiontest" + testRunId + "@example.org");
         try {
             createUser(userToEndSession);
 
             // Fetch user details to get the user loaded
             AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", userToEndSession
+                "accountjids", userToEndSession.toString()
             );
 
             assertFormFieldExists("accountjids", result);
@@ -735,7 +756,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             // Login as the user to be able to end their session
             AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
             userConnection.connect();
-            userConnection.login(userToEndSession.split("@")[0], "password");
+            userConnection.login(userToEndSession.getLocalpartOrThrow().toString(), "password");
 
             result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
                 "max_items", "25"
@@ -745,7 +766,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
             // End the user's session
             result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", userToEndSession
+                "accountjids", userToEndSession.toString()
             );
 
             assertNoteType(AdHocCommandNote.Type.info, result);
@@ -765,11 +786,11 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testGetPresenceOfActiveUsers() throws Exception {
         // Setup test fixture.
-        final List<String> expectedPresences = Arrays.asList(
-            conOne.getUser().asEntityBareJidString(),
-            conTwo.getUser().asEntityBareJidString(),
-            conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString()
+        final List<Jid> expectedPresences = Arrays.asList(
+            conOne.getUser().asEntityBareJid(),
+            conTwo.getUser().asEntityBareJid(),
+            conThree.getUser().asEntityBareJid(),
+            adminConnection.getUser().asEntityBareJid()
         );
 
         // Execute system under test.
@@ -800,7 +821,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             .collect(Collectors.toList());
 
         assertTrue(presences.stream().allMatch(presence -> presence.getType() == Presence.Type.available));
-        assertTrue(presences.stream().allMatch(presence -> expectedPresences.contains(presence.getFrom().asEntityBareJidOrThrow().toString())));
+        assertTrue(presences.stream().allMatch(presence -> expectedPresences.contains(presence.getFrom().asEntityBareJidOrThrow())));
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
@@ -808,7 +829,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testGetActiveUsersNumber() throws Exception {
         // Setup test fixture.
-        final String expectedActiveUsersNumber = "4"; // Three defaults, plus this test's extra admin user
+        final int expectedActiveUsersNumber = 4; // Three defaults, plus this test's extra admin user
 
         // Execute system under test.
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
@@ -816,7 +837,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
         // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        assertEquals(expectedActiveUsersNumber, form.getField("activeusersnum").getFirstValue());
+        assertEquals(expectedActiveUsersNumber, Integer.parseInt(form.getField("activeusersnum").getFirstValue()));
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
@@ -828,13 +849,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
         // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final List<String> expectedActiveUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJidString(),
-            conTwo.getUser().asEntityBareJidString(),
-            conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString()
-        );
-        assertFormFieldEquals("activeuserjids", expectedActiveUsers, result);
+        final Set<Jid> expectedActiveUsers = new HashSet<>(Arrays.asList(
+            conOne.getUser().asEntityBareJid(),
+            conTwo.getUser().asEntityBareJid(),
+            conThree.getUser().asEntityBareJid(),
+            adminConnection.getUser().asEntityBareJid()
+        ));
+        assertFormFieldJidEquals("activeuserjids", expectedActiveUsers, result);
     }
     @SmackIntegrationTest
     public void testGetOnlineUsersListWithMaxUsers() throws Exception {
@@ -845,13 +866,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
         // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final List<String> expectedActiveUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJidString(),
-            conTwo.getUser().asEntityBareJidString(),
-            conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString()
-        );
-        assertFormFieldEquals("activeuserjids", expectedActiveUsers, result);
+        final Set<Jid> expectedActiveUsers = new HashSet<>(Arrays.asList(
+            conOne.getUser().asEntityBareJid(),
+            conTwo.getUser().asEntityBareJid(),
+            conThree.getUser().asEntityBareJid(),
+            adminConnection.getUser().asEntityBareJid()
+        ));
+        assertFormFieldJidEquals("activeuserjids", expectedActiveUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-console-info" name="Get admin console info."
@@ -861,8 +882,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_ADMIN_CONSOLE_INFO, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        final String expectedAdminPort = "9090";
-        final String expectedAdminSecurePort = "9091";
+        final int expectedAdminPort = 9090;
+        final int expectedAdminSecurePort = 9091;
         assertFormFieldEquals("adminPort", expectedAdminPort, result);
         assertFormFieldEquals("adminSecurePort", expectedAdminSecurePort, result);
         assertFormFieldExists("bindInterface", result);
@@ -884,32 +905,32 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testDisabledUsersList() throws Exception {
-        final String disabledUserJid = "disableuserlisttest" + testRunId + "@example.org";
-        createUser(disabledUserJid);
+        final Jid disabledUser = JidCreate.bareFrom("disableuserlisttest" + testRunId + "@example.org");
+        createUser(disabledUser);
 
         executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", disabledUserJid
+            "accountjids", disabledUser.toString()
         );
 
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
             "max_items", "25");
 
-        assertFormFieldEquals("disableduserjids", Collections.singletonList(disabledUserJid), result);
+        assertFormFieldJidEquals("disableduserjids", Collections.singleton(disabledUser), result);
 
         //Clean-up
-        deleteUser(disabledUserJid);
+        deleteUser(disabledUser);
     }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
     @SmackIntegrationTest
     public void testDisabledUsersNumber() throws Exception {
         // Setup test fixture.
-        final String disabledUserJid = "disableusernumtest" + testRunId + "@example.org";
+        final Jid disabledUser = JidCreate.bareFrom("disableusernumtest" + testRunId + "@example.org");
         try {
             // Create and disable a user
-            createUser(disabledUserJid);
+            createUser(disabledUser);
             executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", disabledUserJid
+                "accountjids", disabledUser.toString()
             );
 
             // Execute system under test.
@@ -917,10 +938,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
             // Verify results.
             // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
-            assertFormFieldEquals("disabledusersnum", "1", result);
+            assertFormFieldEquals("disabledusersnum", 1, result);
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUserJid);
+            deleteUser(disabledUser);
             // TODO consider unmarking the user as being disabled, as deleting the user might not propagate.
         }
     }
@@ -931,10 +952,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         final String groupName = "testGroupMembers" + testRunId;
         try {
             // Setup test fixture.
-            final List<String> groupMembers = Arrays.asList(
-                conOne.getUser().asEntityBareJidString(),
-                conTwo.getUser().asEntityBareJidString()
-            );
+            final Set<Jid> groupMembers = new HashSet<>(Arrays.asList(
+                conOne.getUser().asEntityBareJid(),
+                conTwo.getUser().asEntityBareJid()
+            ));
             executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
                 "group", groupName,
                 "desc", groupName + " Description",
@@ -947,11 +968,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             );
 
             // Execute system under test.
-            List<String> jids = getGroupMembers(groupName);
+            Set<Jid> members = getGroupMembers(groupName);
 
             // Verify results.
-            assertEquals(groupMembers.size(), jids.size());
-            assertTrue(jids.containsAll(groupMembers));
+            assertEquals(groupMembers, members);
         } finally {
             // Tear down test fixture.
             executeCommandWithArgs(DELETE_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -1012,7 +1032,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_IDLE_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        final String expectedIdleUsersNumber = "0";
+        final int expectedIdleUsersNumber = 0;
         assertFormFieldEquals("idleusersnum", expectedIdleUsersNumber, result);
         // TODO I'm not sure we can reliably state that there are no idle users. Maybe it's enough to simply check that this is a non-negative number?
     }
@@ -1026,13 +1046,13 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe not expect that user.
-        final List<String> expectedOnlineUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJidString(),
-            conTwo.getUser().asEntityBareJidString(),
-            conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString()
-        );
-        assertFormFieldEquals("onlineuserjids", expectedOnlineUsers, result);
+        final Set<Jid> expectedOnlineUsers = new HashSet<>(Arrays.asList(
+            conOne.getUser().asEntityBareJid(),
+            conTwo.getUser().asEntityBareJid(),
+            conThree.getUser().asEntityBareJid(),
+            adminConnection.getUser().asEntityBareJid()
+        ));
+        assertFormFieldJidEquals("onlineuserjids", expectedOnlineUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
@@ -1044,8 +1064,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
-        final String expectedOnlineUsersNumber = "4"; // Three defaults, plus this test's extra admin user
-        assertEquals(expectedOnlineUsersNumber, form.getField("onlineusersnum").getFirstValue());
+        final int expectedOnlineUsersNumber = 4; // Three defaults, plus this test's extra admin user
+        assertEquals(expectedOnlineUsersNumber, Integer.parseInt(form.getField("onlineusersnum").getFirstValue()));
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
@@ -1059,15 +1079,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
         // TODO: lets not expect the system-under-test to run Openfire demoboot.
-        final List<String> expectedRegisteredUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJidString(),
-            conTwo.getUser().asEntityBareJidString(),
-            conThree.getUser().asEntityBareJidString(),
-            adminConnection.getUser().asEntityBareJidString(),
-            "jane@example.org",
-            "john@example.org"
-        );
-        assertFormFieldEquals("registereduserjids", expectedRegisteredUsers, result);
+        final Set<Jid> expectedRegisteredUsers = new HashSet<>(Arrays.asList(
+            conOne.getUser().asEntityBareJid(),
+            conTwo.getUser().asEntityBareJid(),
+            conThree.getUser().asEntityBareJid(),
+            adminConnection.getUser().asEntityBareJid(),
+            JidCreate.entityBareFrom("jane@example.org"),
+            JidCreate.entityBareFrom("john@example.org")
+        ));
+        assertFormFieldJidEquals("registereduserjids", expectedRegisteredUsers, result);
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
@@ -1080,7 +1100,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
         // TODO: lets not expect the system-under-test to run Openfire demoboot.
-        final String expectedRegisteredUsersNumber = "6"; // Three defaults (Admin, Jane, John), plus SINT's extra three temporary users
+        final int expectedRegisteredUsersNumber = 6; // Three defaults (Admin, Jane, John), plus SINT's extra three temporary users
         assertFormFieldEquals("registeredusersnum", expectedRegisteredUsersNumber, result);
     }
 
@@ -1096,8 +1116,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertFormFieldExists("domain", result);
         assertFormFieldExists("os", result);
         assertFormFieldExists("uptime", result);
-        assertFormFieldEquals("activeusersnum", "4", result); //Admin plus 3 SINT users
-        assertFormFieldEquals("sessionsnum", "5", result); //2 for Admin, plus 3 SINT users
+        assertFormFieldEquals("activeusersnum", 4, result); //Admin plus 3 SINT users
+        assertFormFieldEquals("sessionsnum", 5, result); //2 for Admin, plus 3 SINT users
     }
 
     //node="http://jabber.org/protocol/admin#get-sessions-num" name="Get Number of Connected User Sessions"
@@ -1109,7 +1129,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe deduct those from the expected count.
-        final String expectedSessionsNumber = "5"; // Three defaults, plus 2 sessions for Admin (one here, one in SINT core framework)
+        final int expectedSessionsNumber = 5; // Three defaults, plus 2 sessions for Admin (one here, one in SINT core framework)
         assertFormFieldEquals("onlineuserssessionsnum", expectedSessionsNumber, result);
     }
 
@@ -1136,8 +1156,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         // Verify results.
         // TODO: Find a way to not depend on hard-coded values.
-        assertFormFieldEquals("name", new ArrayList<String>(Arrays.asList("Administrator", "")), result); // Because SINT users have no name
-        assertFormFieldEquals("email", new ArrayList<String>(Arrays.asList("admin@example.com", "")), result); // Because SINT users have no email
+        assertFormFieldEquals("name", new ArrayList<>(Arrays.asList("Administrator", "")), result); // Because SINT users have no name
+        assertFormFieldEquals("email", new ArrayList<>(Arrays.asList("admin@example.com", "")), result); // Because SINT users have no email
     }
 
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
@@ -1150,23 +1170,23 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         // Verify results.
         // TODO: Actually populate a roster of one of the test accounts, instead of depending on an assumed state of the roster of the admin user.
-        assertFormFieldEquals("accountjids", Collections.singletonList(adminConnection.getUser().asEntityBareJidString()), result);
+        assertFormFieldJidEquals("accountjids", Collections.singleton(adminConnection.getUser().asEntityBareJid()), result);
     }
 
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
     @SmackIntegrationTest
     public void testReenableUser() throws Exception {
-        final String disabledUserJid = "reenableusertest" + testRunId + "@example.org";
+        final Jid disabledUser = JidCreate.entityBareFrom("reenableusertest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
-            createUser(disabledUserJid);
+            createUser(disabledUser);
             executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", disabledUserJid
+                "accountjids", disabledUser.toString()
             );
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", disabledUserJid
+                "accountjids", disabledUser.toString()
             );
 
             // Verify results.
@@ -1174,20 +1194,20 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Operation finished successfully", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUserJid);
+            deleteUser(disabledUser);
         }
     }
 
     @SmackIntegrationTest
     public void testReenableNonDisabledUser() throws Exception {
-        final String disabledUserJid = "reenableusernondisabledtest" + testRunId + "@example.org";
+        final Jid disabledUser = JidCreate.entityBareFrom("reenableusernondisabledtest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
-            createUser(disabledUserJid);
+            createUser(disabledUser);
 
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", disabledUserJid
+                "accountjids", disabledUser.toString()
             );
 
             // Verify results.
@@ -1195,38 +1215,38 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             assertNoteContains("Operation finished successfully", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUserJid);
+            deleteUser(disabledUser);
         }
     }
 
     @SmackIntegrationTest
     public void testReenableNonExistingUser() throws Exception {
         // Setup test fixture.
-        final String disabledUserJid = "reenablenonexistingusertest" + testRunId + "@example.org";
+        final Jid disabledUser = JidCreate.entityBareFrom("reenablenonexistingusertest" + testRunId + "@example.org");
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", disabledUserJid
+            "accountjids", disabledUser.toString()
         );
 
         // Verify results.
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteContains("User does not exist: " + disabledUserJid, result);
+        assertNoteContains("User does not exist: " + disabledUser, result);
     }
 
     @SmackIntegrationTest
     public void testReenableRemoteUser() throws Exception {
         // Setup test fixture.
-        final String disabledUserJid = "reenableremoteusertest" + testRunId + "@elsewhere.org";
+        final Jid disabledUser = JidCreate.entityBareFrom("reenableremoteusertest" + testRunId + "@elsewhere.org");
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", disabledUserJid
+            "accountjids", disabledUser.toString()
         );
 
         // Verify results.
         assertNoteType(AdHocCommandNote.Type.error, result);
-        assertNoteContains("Cannot re-enable remote user: " + disabledUserJid, result);
+        assertNoteContains("Cannot re-enable remote user: " + disabledUser, result);
     }
 
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
