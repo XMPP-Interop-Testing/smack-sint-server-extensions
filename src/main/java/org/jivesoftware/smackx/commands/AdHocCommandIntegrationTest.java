@@ -537,9 +537,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
                 "password", "password2"
             );
 
-            // TODO: This is not what's being tested in this method. These should not be assertions, but rather throw an error.
-            assertNoteType(AdHocCommandNote.Type.info, result);
-            assertNoteContains("Operation finished successfully", result);
+            if (result.getNotes().get(0).getType() != AdHocCommandNote.Type.info) {
+                throw new IllegalStateException("Bug in test implementation: problem while provisioning test user.");
+            }
 
             // Execute system under test.
             result = executeCommandWithArgs(AUTHENTICATE_USER, adminConnection.getUser().asEntityBareJid(),
