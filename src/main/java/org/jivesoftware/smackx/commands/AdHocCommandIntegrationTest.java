@@ -996,14 +996,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
             // Verify results.
             List<String> groupNames = result.getForm().getItems().stream()
-                .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("name")).collect(Collectors.toList()))
+                .map(item -> item.getFields().stream().filter(field -> field.getFieldName().equals("name")).collect(Collectors.toList()))
                 .map(fields -> fields.get(0).getValues().get(0))
                 .map(CharSequence::toString)
                 .collect(Collectors.toList());
 
             Map<String, String> group1Props = result.getForm().getItems().get(0).getFields().stream()
                 .collect(Collectors.toMap(
-                    field -> field.getVariable(),
+                    FormField::getFieldName,
                     field -> field.getValues().get(0).toString()
                 ));
 
@@ -1277,14 +1277,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             result = executeCommandWithArgs(GET_LIST_OF_EXISTING_GROUPS, adminConnection.getUser().asEntityBareJid());
 
             List<String> groupNames = result.getForm().getItems().stream()
-                .map(item -> item.getFields().stream().filter(field -> field.getVariable().equals("name")).collect(Collectors.toList()))
+                .map(item -> item.getFields().stream().filter(field -> field.getFieldName().equals("name")).collect(Collectors.toList()))
                 .map(fields -> fields.get(0).getValues().get(0))
                 .map(CharSequence::toString)
                 .collect(Collectors.toList());
 
             Map<String, String> group1Props = result.getForm().getItems().get(0).getFields().stream()
                 .collect(Collectors.toMap(
-                    field -> field.getVariable(),
+                    FormField::getFieldName,
                     field -> field.getValues().get(0).toString()
                 ));
 
