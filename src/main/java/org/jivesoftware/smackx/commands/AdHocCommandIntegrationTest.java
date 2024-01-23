@@ -234,10 +234,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testAddGroupMembersNonAdmins() throws Exception {
         final String GROUP_NAME = "testGroupMembers" + testRunId;
-        final List<String> NEW_MEMBERS = new ArrayList<>(Arrays.asList(
+        final List<String> NEW_MEMBERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString()
-        ));
+        );
         try {
             // Setup test fixture.
             executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -536,10 +536,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     public void testDeleteGroupMembers() throws Exception {
         // Setup test fixture.
         final String GROUP_NAME = "testGroupMemberRemoval" + testRunId;
-        final List<String> GROUP_MEMBERS = new ArrayList<>(Arrays.asList(
+        final List<String> GROUP_MEMBERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString()
-        ));
+        );
         try {
             executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
                 "group", GROUP_NAME,
@@ -662,10 +662,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
 
             // Verify results.
-            assertFormFieldEquals("adminjids", new ArrayList<>(Arrays.asList(
+            assertFormFieldEquals("adminjids", Arrays.asList(
                 adminConnection.getUser().asEntityBareJidString(),
                 ADMIN_TO_ADD
-            )), result);
+            ), result);
         } finally {
             // Tear down test fixture.
             deleteUser(ADMIN_TO_ADD);
@@ -761,12 +761,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest
     public void testGetPresenceOfActiveUsers() throws Exception {
         // Setup test fixture.
-        final List<String> EXPECTED_PRESENCES = new ArrayList<>(Arrays.asList(
+        final List<String> EXPECTED_PRESENCES = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
             adminConnection.getUser().asEntityBareJidString()
-        ));
+        );
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_PRESENCE_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
@@ -824,12 +824,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
         // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final List<String> EXPECTED_ACTIVE_USERS = new ArrayList<>(Arrays.asList(
+        final List<String> EXPECTED_ACTIVE_USERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
             adminConnection.getUser().asEntityBareJidString()
-        ));
+        );
         assertFormFieldEquals("activeuserjids", EXPECTED_ACTIVE_USERS, result);
     }
     @SmackIntegrationTest
@@ -841,12 +841,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ this amount of users. This should help guard against concurrently running tests
         // TODO: not every test invocation uses an admin user. Maybe deduct one of the count of expected users.
-        final List<String> EXPECTED_ACTIVE_USERS = new ArrayList<>(Arrays.asList(
+        final List<String> EXPECTED_ACTIVE_USERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
             adminConnection.getUser().asEntityBareJidString()
-        ));
+        );
         assertFormFieldEquals("activeuserjids", EXPECTED_ACTIVE_USERS, result);
     }
 
@@ -927,10 +927,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         final String GROUP_NAME = "testGroupMembers" + testRunId;
         try {
             // Setup test fixture.
-            final List<String> GROUP_MEMBERS = new ArrayList<>(Arrays.asList(
+            final List<String> GROUP_MEMBERS = Arrays.asList(
                 conOne.getUser().asEntityBareJidString(),
                 conTwo.getUser().asEntityBareJidString()
-            ));
+            );
             executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
                 "group", GROUP_NAME,
                 "desc", GROUP_NAME + " Description",
@@ -1022,12 +1022,12 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe not expect that user.
-        final List<String> EXPECTED_ONLINE_USERS = new ArrayList<>(Arrays.asList(
+        final List<String> EXPECTED_ONLINE_USERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
             adminConnection.getUser().asEntityBareJidString()
-        ));
+        );
         assertFormFieldEquals("onlineuserjids", EXPECTED_ONLINE_USERS, result);
     }
 
@@ -1055,14 +1055,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // TODO: change this to expect _at least_ these users. This should help guard against concurrently running tests.
         // TODO: not every test invocation uses an admin user. Maybe deduct one from the expected users.
         // TODO: lets not expect the system-under-test to run Openfire demoboot.
-        final List<String> EXPECTED_REGISTERED_USERS = new ArrayList<>(Arrays.asList(
+        final List<String> EXPECTED_REGISTERED_USERS = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
             conTwo.getUser().asEntityBareJidString(),
             conThree.getUser().asEntityBareJidString(),
             adminConnection.getUser().asEntityBareJidString(),
             "jane@example.org",
             "john@example.org"
-        ));
+        );
         assertFormFieldEquals("registereduserjids", EXPECTED_REGISTERED_USERS, result);
     }
 
