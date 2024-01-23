@@ -26,7 +26,7 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1311,8 +1311,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         assertFormFieldExists("timestamp", result);
         String timestampString = result.getForm().getField("timestamp").getFirstValue();
-        LocalDateTime timestamp = LocalDateTime.parse(timestampString, DateTimeFormatter.ISO_DATE_TIME);
-        assertTrue(timestamp.isAfter(LocalDateTime.now().minusMinutes(2)));
-        assertTrue(timestamp.isBefore(LocalDateTime.now().plusMinutes(2)));
+        ZonedDateTime timestamp = ZonedDateTime.parse(timestampString, DateTimeFormatter.ISO_DATE_TIME);
+        assertTrue(timestamp.isAfter(ZonedDateTime.now().minusMinutes(2)));
+        assertTrue(timestamp.isBefore(ZonedDateTime.now().plusMinutes(2)));
     }
 }
