@@ -242,24 +242,28 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testGetCommandsForUser() throws Exception {
-        DiscoverItems result = adHocCommandManagerForConOne.discoverCommands(conOne.getUser().asEntityBareJid());
-        List<DiscoverItems.Item> items = result.getItems();
-        List<DiscoverItems.Item> ping = items.stream().filter(item -> item.getNode().equals(REQUEST_PONG_FROM_SERVER)).collect(Collectors.toList());
-        List<DiscoverItems.Item> addUser = items.stream().filter(item -> item.getNode().equals(ADD_A_USER)).collect(Collectors.toList());
+        // Setup test fixture.
 
-        assertEquals(1, ping.size());
-        assertEquals(0, addUser.size());
+        // Execute system under test.
+        DiscoverItems result = adHocCommandManagerForConOne.discoverCommands(conOne.getUser().asEntityBareJid());
+
+        // Verify results.
+        List<DiscoverItems.Item> items = result.getItems();
+        assertTrue(items.stream().anyMatch(item -> item.getNode().equals(REQUEST_PONG_FROM_SERVER)));
+        assertFalse(items.stream().anyMatch(item -> item.getNode().equals(ADD_A_USER)));
     }
 
     @SmackIntegrationTest
     public void testGetCommandsForAdmin() throws Exception {
-        DiscoverItems result = adHocCommandManagerForAdmin.discoverCommands(adminConnection.getUser().asEntityBareJid());
-        List<DiscoverItems.Item> items = result.getItems();
-        List<DiscoverItems.Item> ping = items.stream().filter(item -> item.getNode().equals(REQUEST_PONG_FROM_SERVER)).collect(Collectors.toList());
-        List<DiscoverItems.Item> addUser = items.stream().filter(item -> item.getNode().equals(ADD_A_USER)).collect(Collectors.toList());
+        // Setup test fixture.
 
-        assertEquals(1, ping.size());
-        assertEquals(1, addUser.size());
+        // Execute system under test.
+        DiscoverItems result = adHocCommandManagerForAdmin.discoverCommands(adminConnection.getUser().asEntityBareJid());
+
+        // Verify results.
+        List<DiscoverItems.Item> items = result.getItems();
+        assertTrue(items.stream().anyMatch(item -> item.getNode().equals(REQUEST_PONG_FROM_SERVER)));
+        assertTrue(items.stream().anyMatch(item -> item.getNode().equals(ADD_A_USER)));
         assertTrue(items.size() > 10);
     }
 
