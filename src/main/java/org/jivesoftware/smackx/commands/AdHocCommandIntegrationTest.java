@@ -649,6 +649,25 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertNoteContains("Operation finished successfully", result);
     }
 
+    @SmackIntegrationTest
+    public void testDeleteUserWithFullJid() throws Exception {
+        // Setup test fixture.
+        final Jid deletedUser = JidCreate.bareFrom("deleteusertest2" + testRunId + "@example.org");
+        createUser(deletedUser);
+
+        // Execute system under test.
+        AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", deletedUser.toString() + "/resource"
+        );
+
+        // Verify results.
+        assertNoteType(AdHocCommandNote.Type.info, result);
+        assertNoteContains("Operation finished successfully", result);
+        // Although https://xmpp.org/extensions/xep-0133.html#delete-user specifies that the client should send the bare
+        // JID, there's no error handling specified for the case where the full JID is sent, and so it's expected that
+        // the server should handle it gracefully.
+    }
+
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
     @SmackIntegrationTest
     public void testDisableUser() throws Exception {
