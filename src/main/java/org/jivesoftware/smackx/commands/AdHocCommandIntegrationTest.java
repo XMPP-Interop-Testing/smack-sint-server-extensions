@@ -2,6 +2,7 @@ package org.jivesoftware.smackx.commands;
 
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
+import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
@@ -240,6 +241,17 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertTrue(note.getValue().contains(expectedValue));
     }
 
+    private boolean serverSupportsCommand(String commandNode) throws Exception {
+        DiscoverItems result = adHocCommandManagerForAdmin.discoverCommands(adminConnection.getUser().asEntityBareJid());
+        return result.getItems().stream().anyMatch(item -> item.getNode().equals(commandNode));
+    }
+
+    private void checkServerSupportCommand(String commandNode) throws Exception {
+        if(!serverSupportsCommand(commandNode)){
+            throw new TestNotPossibleException("Server does not support command " + commandNode);
+        }
+    }
+
     @SmackIntegrationTest
     public void testGetCommandsForUser() throws Exception {
         // Setup test fixture.
@@ -270,6 +282,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#add-group-members" name="Add members or admins to a group"
     @SmackIntegrationTest
     public void testAddGroupMembersNonAdmins() throws Exception {
+        checkServerSupportCommand(ADD_MEMBERS_OR_ADMINS_TO_A_GROUP);
         final String groupName = "testGroupMembers" + testRunId;
         final List<String> newMembers = Arrays.asList(
             conOne.getUser().asEntityBareJidString(),
@@ -304,6 +317,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#add-group" name="Create new group"
     @SmackIntegrationTest
     public void testCreateNewGroup() throws Exception {
+        checkServerSupportCommand(CREATE_NEW_GROUP);
         // Setup test fixture.
         final String newGroupName = "testGroup" + testRunId;
         try {
@@ -330,6 +344,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
     @SmackIntegrationTest
     public void testAddUser() throws Exception {
+        checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
         final Jid addedUser = JidCreate.bareFrom("addusertest" + testRunId + "@example.org");
         try {
@@ -351,6 +366,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAddUserWithoutJid() throws Exception {
+        checkServerSupportCommand(ADD_A_USER);
         Exception e = assertThrows(IllegalStateException.class, () ->
             executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
                 "password", "password",
@@ -361,6 +377,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAddUserWithMismatchedPassword() throws Exception {
+        checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
         final Jid newUser = JidCreate.bareFrom("addusermismatchedpasswordtest" + testRunId + "@example.org");
         try {
@@ -382,6 +399,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAddUserWithRemoteJid() throws Exception {
+        checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
         final Jid newUser = JidCreate.bareFrom("adduserinvalidjidtest" + testRunId + "@somewhereelse.org");
         try {
@@ -403,6 +421,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAddUserWithInvalidJid() throws Exception {
+        checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
         final String newUserInvalidJid = "adduserinvalidjidtest" + testRunId + "@invalid@domain";
         try {
@@ -425,6 +444,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
     @SmackIntegrationTest
     public void testSendAnnouncementToOnlineUsers() throws Exception {
+        checkServerSupportCommand(SEND_ANNOUNCEMENT_TO_ONLINE_USERS);
         // Setup test fixture.
         final String announcement = "testAnnouncement" + testRunId;
         final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
@@ -460,6 +480,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#authenticate-user" name="Authenticate User"
     @SmackIntegrationTest
     public void testAuthenticateUser() throws Exception {
+        checkServerSupportCommand(AUTHENTICATE_USER);
         // Setup test fixture.
         final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertest-" + testRunId + "@example.org");
         final String password = "password";
@@ -483,6 +504,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAuthenticateUserWrongPassword() throws Exception {
+        checkServerSupportCommand(AUTHENTICATE_USER);
         // Setup test fixture.
         final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestwrongpassword-" + testRunId + "@example.org");
         final String password = "password";
@@ -506,6 +528,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAuthenticateUserNonExistentUser() throws Exception {
+        checkServerSupportCommand(AUTHENTICATE_USER);
         // Setup test fixture.
         final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestnonexistentuser-" + testRunId + "@example.org");
 
@@ -522,6 +545,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testAuthenticateUserWithRemoteJid() throws Exception {
+        checkServerSupportCommand(AUTHENTICATE_USER);
         // Setup test fixture.
         final Jid userToAuthenticate = JidCreate.bareFrom("authenticateusertestremotejid-" + testRunId + "@somewhereelse.org");
 
@@ -539,6 +563,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
     @SmackIntegrationTest
     public void testChangePassword() throws Exception {
+        checkServerSupportCommand(CHANGE_USER_PASSWORD);
         // Setup test fixture.
         final Jid userToChangePassword = JidCreate.bareFrom("changepasswordtest" + testRunId + "@example.org");
         try {
@@ -570,6 +595,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#delete-group-members" name="Delete members or admins from a group"
     @SmackIntegrationTest
     public void testDeleteGroupMembers() throws Exception {
+        checkServerSupportCommand(DELETE_MEMBERS_OR_ADMINS_FROM_A_GROUP);
         // Setup test fixture.
         final String groupName = "testGroupMemberRemoval" + testRunId;
         final List<String> groupMembers = Arrays.asList(
@@ -612,6 +638,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#delete-group" name="Delete group"
     @SmackIntegrationTest
     public void testDeleteGroup() throws Exception {
+        checkServerSupportCommand(DELETE_GROUP);
         // Setup test fixture.
         final String newGroupName = "testGroup" + testRunId;
         executeCommandWithArgs(CREATE_NEW_GROUP, adminConnection.getUser().asEntityBareJid(),
@@ -635,6 +662,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
     @SmackIntegrationTest
     public void testDeleteUser() throws Exception {
+        checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
         final Jid deletedUser = JidCreate.bareFrom("deleteusertest" + testRunId + "@example.org");
         createUser(deletedUser);
@@ -651,6 +679,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testDeleteUserWithFullJid() throws Exception {
+        checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
         final Jid deletedUser = JidCreate.bareFrom("deleteusertest2" + testRunId + "@example.org");
         createUser(deletedUser);
@@ -671,6 +700,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
     @SmackIntegrationTest
     public void testDisableUser() throws Exception {
+        checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
         final Jid disabledUser = JidCreate.bareFrom("disableusertest" + testRunId + "@example.org");
         try {
@@ -693,6 +723,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
     @SmackIntegrationTest
     public void testEditAdminList() throws Exception {
+        checkServerSupportCommand(EDIT_ADMIN_LIST);
         final Jid adminToAdd = JidCreate.bareFrom("editadminlisttest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
@@ -734,6 +765,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //@SmackIntegrationTest
     // Disabled whilst we can't tidy up after ourselves.
     public void testEditBlackList() throws Exception {
+        checkServerSupportCommand(EDIT_BLOCKED_LIST);
         final String blacklistDomain = "xmpp.someotherdomain.org";
         try {
             // Setup test fixture.
@@ -772,6 +804,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
     @SmackIntegrationTest
     public void testEndUserSession() throws Exception {
+        checkServerSupportCommand(END_USER_SESSION);
         final Jid userToEndSession = JidCreate.bareFrom("endsessiontest" + testRunId + "@example.org");
         try {
             createUser(userToEndSession);
@@ -815,6 +848,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-active-presences" name="Get Presence of Active Users"
     @SmackIntegrationTest
     public void testGetPresenceOfActiveUsers() throws Exception {
+        checkServerSupportCommand(GET_PRESENCE_OF_ACTIVE_USERS);
+
         // Setup test fixture.
         final List<Jid> expectedPresences = Arrays.asList(
             conOne.getUser().asEntityBareJid(),
@@ -858,6 +893,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
     @SmackIntegrationTest
     public void testGetActiveUsersNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_ACTIVE_USERS);
+
         // Execute system under test.
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
 
@@ -869,6 +906,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
     @SmackIntegrationTest
     public void testGetActiveUsersListSimple() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid());
 
@@ -882,6 +921,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
     @SmackIntegrationTest
     public void testGetOnlineUsersListWithMaxUsers() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
             "max_items", "25");
@@ -898,6 +939,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-console-info" name="Get admin console info."
     @SmackIntegrationTest
     public void testAdminConsoleInfo() throws Exception {
+        checkServerSupportCommand(GET_ADMIN_CONSOLE_INFO);
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(GET_ADMIN_CONSOLE_INFO, adminConnection.getUser().asEntityBareJid());
 
@@ -912,6 +954,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-disabled-users-list" name="Get List of Disabled Users"
     @SmackIntegrationTest
     public void testDisabledUsersListEmpty() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
+
         // Setup test fixture.
         // TODO clear the list
 
@@ -925,6 +969,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testDisabledUsersList() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
+
         final Jid disabledUser = JidCreate.bareFrom("disableuserlisttest" + testRunId + "@example.org");
         createUser(disabledUser);
 
@@ -944,6 +990,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
     @SmackIntegrationTest
     public void testDisabledUsersNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_DISABLED_USERS);
+
         // Setup test fixture.
         final Jid disabledUser = JidCreate.bareFrom("disableusernumtest" + testRunId + "@example.org");
         try {
@@ -968,6 +1016,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-group-members" name="Get List of Group Members"
     @SmackIntegrationTest
     public void testGetGroupMembers() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_GROUP_MEMBERS);
+
         final String groupName = "testGroupMembers" + testRunId;
         try {
             // Setup test fixture.
@@ -1002,6 +1052,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-groups" name="Get List of Existing Groups"
     @SmackIntegrationTest
     public void testGetGroups() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_EXISTING_GROUPS);
+
         // Setup test fixture.
         final String groupName = "testGetGroups" + testRunId;
         final String groupDescription = "testGetGroups Description";
@@ -1047,6 +1099,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
     @SmackIntegrationTest
     public void testGetIdleUsersNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_IDLE_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_IDLE_USERS, adminConnection.getUser().asEntityBareJid());
 
@@ -1057,6 +1111,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
     @SmackIntegrationTest
     public void testGetOnlineUsersListSimple() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_ONLINE_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid());
 
@@ -1072,6 +1128,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
     @SmackIntegrationTest
     public void testGetOnlineUsersNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_ONLINE_USERS);
+
         // Execute system under test.
         DataForm form = executeCommandSimple(GET_NUMBER_OF_ONLINE_USERS, adminConnection.getUser().asEntityBareJid()).getForm();
 
@@ -1083,6 +1141,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
     @SmackIntegrationTest
     public void testGetRegisteredUsersList() throws Exception {
+        checkServerSupportCommand(GET_LIST_OF_REGISTERED_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid(),
             "max_items", "25");
@@ -1099,6 +1159,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
     @SmackIntegrationTest
     public void testGetRegisteredUsersNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_REGISTERED_USERS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
 
@@ -1110,6 +1172,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-server-stats" name="Get basic statistics of the server."
     @SmackIntegrationTest
     public void testGetServerStats() throws Exception {
+        checkServerSupportCommand(GET_BASIC_STATISTICS_OF_THE_SERVER);
+
         // Execute System under test.
         AdHocCommandData result = executeCommandSimple(GET_BASIC_STATISTICS_OF_THE_SERVER, adminConnection.getUser().asEntityBareJid());
 
@@ -1126,6 +1190,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-sessions-num" name="Get Number of Connected User Sessions"
     @SmackIntegrationTest
     public void testGetSessionsNumber() throws Exception {
+        checkServerSupportCommand(GET_NUMBER_OF_CONNECTED_USER_SESSIONS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(GET_NUMBER_OF_CONNECTED_USER_SESSIONS, adminConnection.getUser().asEntityBareJid());
 
@@ -1137,6 +1203,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-user-properties" name="Get User Properties"
     @SmackIntegrationTest
     public void testUserProperties() throws Exception {
+        checkServerSupportCommand(GET_USER_PROPERTIES);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
             "accountjids", adminConnection.getUser().asEntityBareJidString()
@@ -1150,6 +1218,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testUserPropertiesWithMultipleUsers() throws Exception {
+        checkServerSupportCommand(GET_USER_PROPERTIES);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
             "accountjids", adminConnection.getUser().asEntityBareJidString() + "," + conOne.getUser().asEntityBareJidString()
@@ -1164,6 +1234,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
     @SmackIntegrationTest
     public void testUserRoster() throws Exception {
+        checkServerSupportCommand(GET_USER_ROSTER);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_USER_ROSTER, adminConnection.getUser().asEntityBareJid(),
             "accountjids", adminConnection.getUser().asEntityBareJidString()
@@ -1177,6 +1249,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
     @SmackIntegrationTest
     public void testReenableUser() throws Exception {
+        checkServerSupportCommand(REENABLE_A_USER);
         final Jid disabledUser = JidCreate.entityBareFrom("reenableusertest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
@@ -1201,6 +1274,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testReenableNonDisabledUser() throws Exception {
+        checkServerSupportCommand(REENABLE_A_USER);
         final Jid disabledUser = JidCreate.entityBareFrom("reenableusernondisabledtest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
@@ -1222,6 +1296,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testReenableNonExistingUser() throws Exception {
+        checkServerSupportCommand(REENABLE_A_USER);
+
         // Setup test fixture.
         final Jid disabledUser = JidCreate.entityBareFrom("reenablenonexistingusertest" + testRunId + "@example.org");
 
@@ -1237,6 +1313,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     @SmackIntegrationTest
     public void testReenableRemoteUser() throws Exception {
+        checkServerSupportCommand(REENABLE_A_USER);
+
         // Setup test fixture.
         final Jid disabledUser = JidCreate.entityBareFrom("reenableremoteusertest" + testRunId + "@elsewhere.org");
 
@@ -1253,6 +1331,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
     @SmackIntegrationTest
     public void testHttpBindStatus() throws Exception {
+        checkServerSupportCommand(CURRENT_HTTP_BIND_STATUS);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(CURRENT_HTTP_BIND_STATUS, adminConnection.getUser().asEntityBareJid());
 
@@ -1268,6 +1348,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="http://jabber.org/protocol/admin#update-group" name="Update group configuration"
     @SmackIntegrationTest
     public void testUpdateGroupConfiguration() throws Exception {
+        checkServerSupportCommand(UPDATE_GROUP_CONFIGURATION);
+
         final String groupName = "testUpdateGroupConfiguration" + testRunId;
         final String groupDescription = "testUpdateGroupConfiguration Description";
         final String groupShowInRoster = "nobody";
@@ -1328,6 +1410,8 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //node="ping" name="Request pong from server"
     @SmackIntegrationTest
     public void testPing() throws Exception {
+        checkServerSupportCommand(REQUEST_PONG_FROM_SERVER);
+        
         // Execute System Under test.
         AdHocCommandData result = executeCommandSimple(REQUEST_PONG_FROM_SERVER, adminConnection.getUser().asEntityBareJid());
 
