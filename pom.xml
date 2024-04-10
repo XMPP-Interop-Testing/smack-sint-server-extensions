@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <smack.version>4.4.7</smack.version>
+        <smack.version>4.5.0-alpha4-SNAPSHOT</smack.version>
     </properties>
 
     <licenses>
@@ -110,6 +110,11 @@
         </dependency>
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-websocket</artifactId>
+            <version>${smack.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
             <artifactId>smack-im</artifactId>
             <version>${smack.version}</version>
         </dependency>
@@ -145,4 +150,13 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <!-- Used to pull in Smack SNAPSHOT artifacts during development. Remove this after switching to a proper release of Smack. -->
+            <id>sonatype-snapshot</id>
+            <name>Sonatype Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
 </project>
