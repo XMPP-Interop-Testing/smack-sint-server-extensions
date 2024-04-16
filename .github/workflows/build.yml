@@ -5,6 +5,8 @@ on: [pull_request]
 env:
   OPENFIRE_VERSION: 4_8_1 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
 
+permissions:
+  checks: write
 
 jobs:
   build:
@@ -87,12 +89,21 @@ jobs:
           -Dsinttest.enabledConnections=tcp \
           -Dsinttest.dnsResolver=javax \
           -Dsinttest.disabledTests="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest" \
+          -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
           -Dsinttest.debugger="org.igniterealtime.smack.inttest.util.FileLoggerFactory" \
           -DlogDir=logs \
           -jar $JARFILE
         shell: bash
       - name: Expose XMPP debug logs
         uses: actions/upload-artifact@v4
+        if: always() # always run even if the previous step fails
         with:
           name: XMPP debug logs
           path: logs/*
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: '**/test-results.xml'
+          include_passed: true
+          detailed_summary: true
