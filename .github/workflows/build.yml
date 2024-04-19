@@ -105,6 +105,6 @@ jobs:
         if: always() # always run even if the previous step fails
         with:
           report_paths: '**/test-results.xml'
-          suiteRegex: '*'
+          suite_regex: '*'
           include_passed: true
           detailed_summary: true
