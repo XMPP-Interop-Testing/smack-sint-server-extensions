@@ -58,12 +58,12 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 @SpecificationReference(document = "XEP-0060")
-public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
+public class PubSubExtIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final PubSubManager pubSubManagerOne;
     private final PubSubManager pubSubManagerTwo;
 
-    public PubSubIntegrationTest(SmackIntegrationTestEnvironment environment)
+    public PubSubExtIntegrationTest(SmackIntegrationTestEnvironment environment)
             throws TestNotPossibleException, SmackException.NoResponseException, XMPPErrorException,
             NotConnectedException, InterruptedException {
         super(environment);
@@ -736,84 +736,6 @@ public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
             assertNotNull(result.get(conTwo.getReplyTimeout(), TimeUnit.MILLISECONDS), "Expected '" + conTwo.getUser() + "' to receive the item that was just published by '" + conOne.getUser() + "' to node '" + nodeName + "', (but did not).");
         } catch (TimeoutException e) {
             throw new AssertionError("Expected '" + conTwo.getUser() + "' to receive the item that was just published by '" + conOne.getUser() + "' to node '" + nodeName + "', (but did not).", e);
-        } finally {
-            pubSubManagerOne.deleteNode(nodeName);
-        }
-    }
-
-    /**
-     * Asserts that an event notification (publication without item) can be published to
-     * a node that is both 'notification-only' and 'transient'.
-     *
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     */
-    @SmackIntegrationTest
-    public void transientNotificationOnlyNodeWithoutItemTest() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        final String nodeName = "sinttest-transient-notificationonly-withoutitem-nodename-" + testRunId;
-        ConfigureForm defaultConfiguration = pubSubManagerOne.getDefaultConfiguration();
-        FillableConfigureForm config = defaultConfiguration.getFillableForm();
-        // Configure the node as "Notification-Only Node".
-        config.setDeliverPayloads(false);
-        // Configure the node as "transient" (set persistent_items to 'false')
-        config.setPersistentItems(false);
-        Node node = pubSubManagerOne.createNode(nodeName, config);
-        try {
-            LeafNode leafNode = (LeafNode) node;
-            leafNode.publish();
-        } finally {
-            pubSubManagerOne.deleteNode(nodeName);
-        }
-    }
-
-    /**
-     * Asserts that an error is returned when a publish request to a node that is both
-     * 'notification-only' and 'transient' contains an item element.
-     *
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @see <a href="https://xmpp.org/extensions/xep-0060.html#publisher-publish-error-badrequest">
-     *     7.1.3.6 Request Does Not Match Configuration</a>
-     */
-    @SmackIntegrationTest(section = "7.1.3.6", quote =
-        "If the event type is notification + transient and the publisher provides an item, the service MUST bounce " +
-        "the publication request with a &lt;bad-request/&gt; error and a pubsub-specific error condition of <item-forbidden/>.")
-    public void transientNotificationOnlyNodeWithItemTest() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        final String nodeName = "sinttest-transient-notificationonly-withitem-nodename-" + testRunId;
-        final String itemId = "sinttest-transient-notificationonly-withitem-itemid-" + testRunId;
-
-        ConfigureForm defaultConfiguration = pubSubManagerOne.getDefaultConfiguration();
-        FillableConfigureForm config = defaultConfiguration.getFillableForm();
-        // Configure the node as "Notification-Only Node".
-        config.setDeliverPayloads(false);
-        // Configure the node as "transient" (set persistent_items to 'false')
-        config.setPersistentItems(false);
-        Node node = pubSubManagerOne.createNode(nodeName, config);
-
-        // Add a dummy payload. If there is no payload, but just an item ID, then ejabberd will *not* return an error,
-        // which I believe to be non-compliant behavior (although, granted, the XEP is not very clear about this). A user
-        // which sends an empty item with ID to a node that is configured to be notification-only and transient probably
-        // does something wrong, as the item's ID will never appear anywhere. Hence, it would be nice if the user would be
-        // made aware of this issue by returning an error. Sadly ejabberd does not do so.
-        // See also https://github.com/processone/ejabberd/issues/2864#issuecomment-500741915
-        final StandardExtensionElement dummyPayload = StandardExtensionElement.builder("dummy-payload",
-                SmackConfiguration.SMACK_URL_STRING).setText(testRunId).build();
-
-        try {
-            XMPPErrorException e = assertThrows(XMPPErrorException.class, () -> {
-                LeafNode leafNode = (LeafNode) node;
-
-                Item item = new PayloadItem<>(itemId, dummyPayload);
-                leafNode.publish(item);
-            }, "Expected an error to be returned when '" + conOne.getUser() + "' attempted to publish the item with ID '" + itemId + "' to node '" + nodeName + "' (but none was).");
-            assertEquals(StanzaError.Type.MODIFY, e.getStanzaError().getType(),
-                "Unexpected type of the (expected) error returned by the server when '" + conOne.getUser() + "' attempted to publish the item with ID '" + itemId + "' to node '" + nodeName + "'.");
-            assertNotNull(e.getStanzaError().getExtension("item-forbidden", "http://jabber.org/protocol/pubsub#errors"),
-                "The (expected) error returned by the server when '" + conOne.getUser() + "' attempted to publish the item with ID '" + itemId + "' to node '" + nodeName + "' should have included a qualified 'item-forbidden' extension (but did not).");
         } finally {
             pubSubManagerOne.deleteNode(nodeName);
         }
