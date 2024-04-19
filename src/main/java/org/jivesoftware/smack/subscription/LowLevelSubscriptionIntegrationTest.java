@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2023 Guus der Kinderen
+ * Copyright 2023-2024 Guus der Kinderen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  */
 package org.jivesoftware.smack.subscription;
 
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
@@ -36,6 +37,7 @@ import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
+@SpecificationReference(document = "RFC 6121")
 public class LowLevelSubscriptionIntegrationTest extends AbstractSmackLowLevelIntegrationTest {
     public LowLevelSubscriptionIntegrationTest(SmackIntegrationTestEnvironment environment) {
         super(environment);
@@ -49,7 +51,10 @@ public class LowLevelSubscriptionIntegrationTest extends AbstractSmackLowLevelIn
      * @param conTwo Conenction used to send subscription request.
      * @throws Exception on anything unexpected or undesired.
      */
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3.1.3", quote =
+        "[...] if the contact has no available resources when the subscription request is received by the contact's " +
+        "server, then the contact's server MUST keep a record of the complete presence stanza comprising the " +
+        "subscription request [...]")
     public void testSubscriptionRequestOffline(final AbstractXMPPConnection conOne,
                                                final AbstractXMPPConnection conTwo) throws Exception {
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
@@ -88,7 +93,10 @@ public class LowLevelSubscriptionIntegrationTest extends AbstractSmackLowLevelIn
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2244">Openfire issue OF-2244</a>
      * @throws Exception on anything unexpected or undesired.
      */
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3.1.3", quote =
+        "[...] if the contact has no available resources when the subscription request is received by the contact's " +
+        "server, then the contact's server MUST keep a record of the complete presence stanza comprising the " +
+        "subscription request, including any extended content contained therein [...]")
     public void testSubscriptionRequestOfflineWithExtension(final AbstractXMPPConnection conOne,
                                                             final AbstractXMPPConnection conTwo) throws Exception {
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);

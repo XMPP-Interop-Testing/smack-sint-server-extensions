@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2021-2023 Guus der Kinderen
+ * Copyright 2021-2024 Guus der Kinderen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  */
 package org.jivesoftware.smack.subscription;
 
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.PresenceTypeFilter;
@@ -35,6 +36,7 @@ import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
+@SpecificationReference(document = "RFC 6121")
 public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
     public SubscriptionIntegrationTest(SmackIntegrationTestEnvironment environment) {
@@ -46,7 +48,10 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
      *
      * @throws Exception on anything unexpected or undesired.
      */
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3.1.3", quote =
+        "if there is at least one available resource associated with the contact when the subscription request is " +
+        "received by the contact's server, then the contact's server MUST send that subscription request to all " +
+        "available resources in accordance with Section 8.")
     public void testSubscriptionRequest() throws Exception {
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
 
@@ -74,7 +79,10 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
      *
      * @throws Exception on anything unexpected or undesired.
      */
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3.1.3", quote =
+        "if there is at least one available resource associated with the contact when the subscription request is " +
+        "received by the contact's server, then the contact's server MUST send that subscription request to all " +
+        "available resources in accordance with Section 8.")
     public void testSubscriptionRequestWithExtension() throws Exception {
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
 
