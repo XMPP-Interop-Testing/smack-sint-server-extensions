@@ -17,6 +17,7 @@
 package org.jivesoftware.smack.subscription;
 
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.PresenceTypeFilter;
@@ -30,6 +31,8 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests that verify that sent presence subscription requests are received as intended.
@@ -70,7 +73,8 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
         conOne.addAsyncStanzaListener(p -> received.signal(), resultFilter);
 
         conTwo.sendStanza(subscriptionRequest);
-        received.waitForResult(timeout);
+
+        assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent by '" + conTwo.getUser() + "' (but did not).");
     }
 
     /**
@@ -92,17 +96,18 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
                 .addExtension(new StandardExtensionElement("test", "org.example.test"))
                 .build();
 
-        final SimpleResultSyncPoint received = new SimpleResultSyncPoint();
+        final ResultSyncPoint<Presence, ?> received = new ResultSyncPoint<>();
 
         final StanzaFilter resultFilter = new AndFilter(
             PresenceTypeFilter.SUBSCRIBE,
-            FromMatchesFilter.createBare(conTwo.getUser()),
-            new StanzaExtensionFilter("test", "org.example.test")
+            FromMatchesFilter.createBare(conTwo.getUser())
         );
 
-        conOne.addAsyncStanzaListener(p -> received.signal(), resultFilter);
+        conOne.addAsyncStanzaListener(p -> received.signal((Presence) p), resultFilter);
 
         conTwo.sendStanza(subscriptionRequest);
+        final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them by '" + conTwo.getUser() + "' (but did not).");
+        assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' to include the custom extension that was in the original request (but that extension was not received).");
         received.waitForResult(timeout);
     }
 }
