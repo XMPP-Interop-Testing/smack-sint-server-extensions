@@ -4,6 +4,7 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
@@ -36,6 +37,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SpecificationReference(document = "XEP-0133")
 public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final AdHocCommandManager adHocCommandManagerForAdmin;
@@ -252,7 +254,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3", quote =
+        "A server or component MUST advertise any administrative commands it supports via Service Discovery (XEP-0030) " +
+        "(as described in XEP-0050: Ad-Hoc Commands); such commands exist as well-defined discovery nodes associated " +
+        "with the service in question.")
     public void testGetCommandsForUser() throws Exception {
         // Setup test fixture.
 
@@ -265,7 +270,10 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertFalse(items.stream().anyMatch(item -> item.getNode().equals(ADD_A_USER)));
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "3", quote =
+        "A server or component MUST advertise any administrative commands it supports via Service Discovery (XEP-0030) " +
+            "(as described in XEP-0050: Ad-Hoc Commands); such commands exist as well-defined discovery nodes associated " +
+            "with the service in question.")
     public void testGetCommandsForAdmin() throws Exception {
         // Setup test fixture.
 
@@ -342,7 +350,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.1")
     public void testAddUser() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -358,13 +366,15 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             // Verify results.
             assertNoteType(AdHocCommandNote.Type.info, result);
             assertNoteContains("Operation finished successfully", result);
+
+            // TODO Assert that the newly created user is now available.
         } finally {
             // Tear down test fixture.
             deleteUser(addedUser);
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.1")
     public void testAddUserWithoutJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         Exception e = assertThrows(IllegalStateException.class, () ->
@@ -375,7 +385,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertEquals("Not all required fields filled. Missing: [accountjid]", e.getMessage());
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.1")
     public void testAddUserWithMismatchedPassword() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -397,7 +407,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.1")
     public void testAddUserWithRemoteJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -419,7 +429,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.1")
     public void testAddUserWithInvalidJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -442,7 +452,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.23")
     public void testSendAnnouncementToOnlineUsers() throws Exception {
         checkServerSupportCommand(SEND_ANNOUNCEMENT_TO_ONLINE_USERS);
         // Setup test fixture.
@@ -561,7 +571,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.7")
     public void testChangePassword() throws Exception {
         checkServerSupportCommand(CHANGE_USER_PASSWORD);
         // Setup test fixture.
@@ -660,7 +670,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.2")
     public void testDeleteUser() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
@@ -677,7 +687,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertNoteContains("Operation finished successfully", result);
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.2")
     public void testDeleteUserWithFullJid() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
@@ -698,7 +708,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.3")
     public void testDisableUser() throws Exception {
         checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
@@ -721,7 +731,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.29")
     public void testEditAdminList() throws Exception {
         checkServerSupportCommand(EDIT_ADMIN_LIST);
         final Jid adminToAdd = JidCreate.bareFrom("editadminlisttest" + testRunId + "@example.org");
@@ -762,7 +772,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
-    //@SmackIntegrationTest
+    //@SmackIntegrationTest(section = "4.11")
     // Disabled whilst we can't tidy up after ourselves.
     public void testEditBlackList() throws Exception {
         checkServerSupportCommand(EDIT_BLOCKED_LIST);
@@ -802,7 +812,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     //TODO: Once we know how to fix the blacklist cleanup...
 
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.5")
     public void testEndUserSession() throws Exception {
         checkServerSupportCommand(END_USER_SESSION);
         final Jid userToEndSession = JidCreate.bareFrom("endsessiontest" + testRunId + "@example.org");
@@ -891,7 +901,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
     //@see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.16")
     public void testGetActiveUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_ACTIVE_USERS);
 
@@ -904,7 +914,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.21")
     public void testGetActiveUsersListSimple() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
@@ -919,7 +929,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         );
         assertFormFieldContainsAll("activeuserjids", expectedActiveUsers, result);
     }
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.21")
     public void testGetOnlineUsersListWithMaxUsers() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
@@ -952,7 +962,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-list" name="Get List of Disabled Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.19")
     public void testDisabledUsersListEmpty() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
 
@@ -967,7 +977,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertFormFieldEquals("disableduserjids", new ArrayList<>(), result);
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.19")
     public void testDisabledUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
 
@@ -988,7 +998,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.14")
     public void testDisabledUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_DISABLED_USERS);
 
@@ -1097,7 +1107,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.17")
     public void testGetIdleUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_IDLE_USERS);
 
@@ -1109,7 +1119,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.20")
     public void testGetOnlineUsersListSimple() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_ONLINE_USERS);
 
@@ -1126,7 +1136,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.15")
     public void testGetOnlineUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_ONLINE_USERS);
 
@@ -1139,7 +1149,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.18")
     public void testGetRegisteredUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_REGISTERED_USERS);
 
@@ -1157,7 +1167,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.13")
     public void testGetRegisteredUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_REGISTERED_USERS);
 
@@ -1232,7 +1242,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.8")
     public void testUserRoster() throws Exception {
         checkServerSupportCommand(GET_USER_ROSTER);
 
@@ -1247,7 +1257,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.4")
     public void testReenableUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
         final Jid disabledUser = JidCreate.entityBareFrom("reenableusertest" + testRunId + "@example.org");
@@ -1272,7 +1282,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.4")
     public void testReenableNonDisabledUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
         final Jid disabledUser = JidCreate.entityBareFrom("reenableusernondisabledtest" + testRunId + "@example.org");
@@ -1294,7 +1304,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         }
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.4")
     public void testReenableNonExistingUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
 
@@ -1311,7 +1321,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         assertNoteContains("User does not exist: " + disabledUser, result);
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "4.4")
     public void testReenableRemoteUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
 
