@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@SpecificationReference(document = "RFC 6121")
+@SpecificationReference(document = "RFC6121")
 public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
     public SubscriptionIntegrationTest(SmackIntegrationTestEnvironment environment) {
