@@ -108,6 +108,5 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
         conTwo.sendStanza(subscriptionRequest);
         final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them by '" + conTwo.getUser() + "' (but did not).");
         assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' to include the custom extension that was in the original request (but that extension was not received).");
-        received.waitForResult(timeout);
     }
 }
