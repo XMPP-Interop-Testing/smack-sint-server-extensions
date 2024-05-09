@@ -29,14 +29,16 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
-import org.jxmpp.jid.EntityFullJid;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
-import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -298,15 +300,16 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
     }
 
     /**
-     * Asserts that a service-unvailable is returned in response to a disco#info request to a non-existing entity, while
-     * the request does not specify a node.
+     * Asserts that a service-unavailable is returned in response to a disco#info request to a non-existing entity, while
+     * the request does not specify a node. This test is executed against a bare JID 'client' address, since the server
+     * is expected to respond to such requests on behalf of the account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he target entity does not exist.")
-    public void testQueryInfoNonExistingEntityWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he target entity does not exist.")
+    public void testQueryInfoNonExistingBareJidClientEntityWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
     {
         // Setup test fixture.
         final DiscoverInfo request = DiscoverInfo.builder(conOne)
-            .to(JidCreate.entityFullFrom(Localpart.from(StringUtils.randomString(19)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(19))))
+            .to(JidCreate.entityBareFrom(Localpart.from("test-non-existing-bare-jid-" + StringUtils.randomString(19)), conOne.getXMPPServiceDomain()))
             .build();
 
         // Execute system-under-test.
@@ -321,15 +324,16 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
     }
 
     /**
-     * Asserts that a service-unvailable is returned in response to a disco#info request to a non-existing entity, while
-     * the request specifies a node.
+     * Asserts that a service-unavailable is returned in response to a disco#info request to a non-existing entity, while
+     * the request specifies a node. This test is executed against a bare JID 'client' address, since the server is
+     * expected to respond to such requests on behalf of the account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he target entity does not exist.")
-    public void testQueryInfoNonExistingEntityWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he target entity does not exist.")
+    public void testQueryInfoNonExistingBareJidClientEntityWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
     {
         // Setup test fixture.
         final DiscoverInfo request = DiscoverInfo.builder(conOne)
-            .to(JidCreate.entityFullFrom(Localpart.from(StringUtils.randomString(19)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(19))))
+            .to(JidCreate.entityBareFrom(Localpart.from("test-non-existing-bare-jid-" + StringUtils.randomString(19)), conOne.getXMPPServiceDomain()))
             .setNode("a-test-node-" + StringUtils.randomString(11))
             .build();
 
@@ -345,16 +349,18 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
     }
 
     /**
-     * Asserts that a service-unvailable is returned in response to a disco#info request to an existing entity that to
-     * which the requestor is not presence-subscribed, while the request does not specify a node.
+     * Asserts that a service-unavailable is returned in response to a disco#info request to an existing entity that to
+     * which the requestor is not presence-subscribed, while the request does not specify a node. This test is executed
+     * against a bare JID 'client' address, since the server is expected to respond to such requests on behalf of the
+     * account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he requesting entity is not authorized to receive presence from the target entity.")
-    public void testQueryInfoWithoutPresenceSubscriptionWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he requesting entity is not authorized to receive presence from the target entity.")
+    public void testQueryInfoWithoutPresenceSubscriptionBareJidWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
     {
         // Setup test fixture.
         RosterUtil.ensureNotSubscribedToEachOther(conOne, conTwo);
         final DiscoverInfo request = DiscoverInfo.builder(conOne)
-            .to(conTwo.getUser())
+            .to(conTwo.getUser().asBareJid())
             .build();
 
         // Execute system-under-test.
@@ -369,16 +375,18 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
     }
 
     /**
-     * Asserts that a service-unvailable is returned in response to a disco#info request to an existing entity that to
-     * which the requestor is not presence-subscribed, while the request specifies a node.
+     * Asserts that a service-unavailable is returned in response to a disco#info request to an existing entity that to
+     * which the requestor is not presence-subscribed, while the request specifies a node. This test is executed
+     * against a bare JID 'client' address, since the server is expected to respond to such requests on behalf of the
+     * account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he requesting entity is not authorized to receive presence from the target entity.")
-    public void testQueryInfoWithoutPresenceSubscriptionWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return a <service-unavailable/> error if [...] [t]he requesting entity is not authorized to receive presence from the target entity.")
+    public void testQueryInfoWithoutPresenceSubscriptionBareJidWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
     {
         // Setup test fixture.
         RosterUtil.ensureNotSubscribedToEachOther(conOne, conTwo);
         final DiscoverInfo request = DiscoverInfo.builder(conOne)
-            .to(conTwo.getUser())
+            .to(conTwo.getUser().asBareJid())
             .setNode("a-test-node-" + StringUtils.randomString(11))
             .build();
 
@@ -395,14 +403,15 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
 
     /**
      * Asserts that an empty set is returned in response to a disco#items request to a non-existing entity, while
-     * the request does not specify a node.
+     * the request does not specify a node. This test is executed against a bare JID 'client' address, since the server
+     * is expected to respond to such requests on behalf of the account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
-    public void testQueryItemsNonExistingEntityWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
+    public void testQueryItemsNonExistingEntityBareJidWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
     {
         // Setup test fixture.
         final ServiceDiscoveryManager manOne = ServiceDiscoveryManager.getInstanceFor(conOne);
-        final EntityFullJid nonexistingEntityAddress = JidCreate.entityFullFrom(Localpart.from(StringUtils.randomString(19)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(19)));
+        final EntityBareJid nonexistingEntityAddress = JidCreate.entityBareFrom(Localpart.from("test-non-existing-bare-jid-" + StringUtils.randomString(19)), conOne.getXMPPServiceDomain());
 
         // Execute system-under-test.
         final DiscoverItems result = manOne.discoverItems(nonexistingEntityAddress);
@@ -413,14 +422,14 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
 
     /**
      * Asserts that an empty set is returned in response to a disco#items request to a non-existing entity, while
-     * the request specifies a node.
+     * the request specifies a node. This test is executed against a bare JID 'client' address.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
-    public void testQueryItemsNonExistingEntityWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
+    public void testQueryItemsNonExistingEntityBareJidWithNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
     {
         // Setup test fixture.
         final ServiceDiscoveryManager manOne = ServiceDiscoveryManager.getInstanceFor(conOne);
-        final EntityFullJid nonexistingEntityAddress = JidCreate.entityFullFrom(Localpart.from(StringUtils.randomString(19)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(19)));
+        final EntityBareJid nonexistingEntityAddress = JidCreate.entityBareFrom(Localpart.from("test-non-existing-bare-jid-" + StringUtils.randomString(19)), conOne.getXMPPServiceDomain());
 
         // Execute system-under-test.
         final DiscoverItems result = manOne.discoverItems(nonexistingEntityAddress, "a-test-node-" + StringUtils.randomString(11));
@@ -431,17 +440,19 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
 
     /**
      * Asserts that an empty set is returned in response to a disco#info request to an existing entity that to
-     * which the requestor is not presence-subscribed, while the request does not specify a node.
+     * which the requestor is not presence-subscribed, while the request does not specify a node. This test is executed
+     * against a bare JID 'client' address, since the server is expected to respond to such requests on behalf of the
+     * account.
      */
-    @SmackIntegrationTest(section = "8", quote = "In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
-    public void testItemsQueryWithoutPresenceSubscriptionWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
+    public void testItemsQueryWithoutPresenceSubscriptionBareJidWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
     {
         // Setup test fixture.
         RosterUtil.ensureNotSubscribedToEachOther(conOne, conTwo);
         final ServiceDiscoveryManager manOne = ServiceDiscoveryManager.getInstanceFor(conOne);
 
         // Execute system-under-test.
-        final DiscoverItems result = manOne.discoverItems(conTwo.getUser());
+        final DiscoverItems result = manOne.discoverItems(conTwo.getUser().asEntityBareJid());
 
         // Verify result.
         assertTrue(result.getItems().isEmpty(), "Expected the disco#items request from '" + conOne.getUser() + "' to '" + conTwo.getUser() + "' (which has not granted presence subscription to the requestor) to be responded to with an empty result set (but it was not).");
