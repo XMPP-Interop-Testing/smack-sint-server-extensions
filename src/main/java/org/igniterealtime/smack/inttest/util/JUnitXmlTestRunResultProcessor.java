@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Guus der Kinderen
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.igniterealtime.smack.inttest.util;
 
 import org.igniterealtime.smack.inttest.FailedTest;
@@ -22,6 +37,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -208,11 +225,7 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
                     if (specification != null && !specification.isBlank()) {
                         final Element specificationUrlElement = doc.createElement("property");
                         specificationUrlElement.setAttribute("name", "specification URL");
-                        String link = "https://xmpp.org/extensions/" + specification.toLowerCase() + ".html";
-                        if (specificationSection != null) {
-                            link += "#" + specificationSection; // FIXME this is wrong for XEPs, as they use the title of the section, not its number, as the anchor. Maybe convince someone to add both?
-                        }
-                        specificationUrlElement.setAttribute("value", URI.create(link).toString());
+                        specificationUrlElement.setAttribute("value", generateLink(specification, specificationSection).toString());
                         propertiesElement.appendChild(specificationUrlElement);
                     }
                     testcaseElement.appendChild(propertiesElement);
@@ -236,6 +249,53 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
             }
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static URI generateLink(final String specification, final String specificationSection) {
+        if (specification == null || specification.isBlank()) {
+            return null;
+        }
+
+        String link;
+        if (specification.toUpperCase().startsWith("XEP")) {
+            String normalizedSpec = specification.substring(0, 3);
+            switch (specification.charAt(3)) {
+                case ' ':
+                    normalizedSpec += '-' + specification.substring(5);
+                    break;
+                case '-':
+                    normalizedSpec += specification.substring(3);
+                    break;
+                default:
+                    normalizedSpec += '-' + specification.substring(3);
+                    break;
+            }
+            link = "https://xmpp.org/extensions/" + URLEncoder.encode(normalizedSpec.toLowerCase(), StandardCharsets.UTF_8) + ".html";
+            if (specificationSection != null) {
+                link += "#" + URLEncoder.encode(specificationSection, StandardCharsets.UTF_8); // FIXME this is wrong for XEPs, as they use the title of the section, not its number, as the anchor. Maybe convince someone to add both?
+            }
+        } else if (specification.toUpperCase().startsWith("RFC")) {
+            String normalizedSpec = specification.substring(0, 3);
+            switch (specification.charAt(3)) {
+                case '-': // intended fall-through
+                case ' ':
+                    normalizedSpec += specification.substring(4);
+                    break;
+                default:
+                    normalizedSpec += specification.substring(3);
+                    break;
+            }
+            link = "https://www.rfc-editor.org/rfc/" + URLEncoder.encode(normalizedSpec.toLowerCase(), StandardCharsets.UTF_8) + ".html";
+        } else {
+            return null;
+        }
+
+        try {
+            return URI.create(link);
+        } catch (Throwable t) {
+            // Fail to provide a link rather than fail to generate a report.
+            return null;
         }
     }
 
