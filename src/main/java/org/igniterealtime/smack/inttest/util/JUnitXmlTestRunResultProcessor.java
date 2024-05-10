@@ -347,7 +347,7 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
         if (specification == null || specification.isBlank()) {
             return "";
         }
-        return specification.replaceAll("\\s", "").toUpperCase();
+        return specification.replaceAll("[\\s-]", "").toUpperCase();
     }
 
     public static Duration getAggregatedTime(final SmackIntegrationTestFramework.TestRunResult testRunResult) {
