@@ -17,4 +17,4 @@
 /**
  * Integration Tests for the XEP-0030: Service Discovery
  */
-package org.igniterealtime.smack.sint.xep0030;
+package org.igniterealtime.smack.inttest.xep0030;
