@@ -83,7 +83,7 @@ jobs:
           java \
           -Dsinttest.service="example.org" \
           -Dsinttest.securityMode=disabled \
-          -Dsinttest.replyTimeout=60000 \
+          -Dsinttest.replyTimeout=5000 \
           -Dsinttest.adminAccountUsername=admin \
           -Dsinttest.adminAccountPassword=admin \
           -Dsinttest.enabledConnections=tcp \
