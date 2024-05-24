@@ -96,9 +96,9 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
     @SmackIntegrationTest(section = "8.1", quote =
         "If someone without appropriate privileges attempts to change the room subject, the service MUST return a " +
         "message of type \"error\" specifying a <forbidden/> error condition")
-    public void mucTestVisitorNotAllowedToChangeSubject() throws Exception
+    public void mucTestParticipantNotAllowedToChangeSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-visitor-change-subject");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-participant-change-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -224,9 +224,9 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
     @SmackIntegrationTest(section = "8.1", quote =
         "If someone without appropriate privileges attempts to [remove] the room subject, the service MUST return a " +
             "message of type \"error\" specifying a <forbidden/> error condition")
-    public void mucTestVisitorNotAllowedToRemoveSubject() throws Exception
+    public void mucTestParticipantNotAllowedToRemoveSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-visitor-change-subject");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-participant-change-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
