@@ -29,7 +29,9 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.xdata.BooleanFormField;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 
 import java.util.HashSet;
@@ -141,9 +143,12 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         createMuc(mucAsSeenByOne, nicknameOne);
         try {
             final SimpleResultSyncPoint oneSeesTwo = new SimpleResultSyncPoint();
-            mucAsSeenByOne.addParticipantListener(presence -> {
-                if (presence.getType() == Presence.Type.available && nicknameTwo.equals(presence.getFrom().getResourceOrNull())) {
-                    oneSeesTwo.signal();
+            mucAsSeenByOne.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(JidCreate.entityFullFrom(mucAddress, nicknameTwo))) {
+                        oneSeesTwo.signal();
+                    }
                 }
             });
             mucAsSeenByTwo.join(nicknameTwo);
@@ -189,9 +194,12 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
             mucAsSeenByOne.changeSubject("Initial subject to be removed " + randomString);
 
             final SimpleResultSyncPoint oneSeesTwo = new SimpleResultSyncPoint();
-            mucAsSeenByOne.addParticipantListener(presence -> {
-                if (presence.getType() == Presence.Type.available && nicknameTwo.equals(presence.getFrom().getResourceOrNull())) {
-                    oneSeesTwo.signal();
+            mucAsSeenByOne.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(JidCreate.entityFullFrom(mucAddress, nicknameTwo))) {
+                        oneSeesTwo.signal();
+                    }
                 }
             });
             mucAsSeenByTwo.join(nicknameTwo);
@@ -239,15 +247,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
             if (field != null && ((BooleanFormField) field).getValueAsBoolean()) {
                 throw new TestNotPossibleException("Room is configured to allow subject changes from participants.");
             }
-
             mucAsSeenByOne.changeSubject("Initial subject to be removed " + randomString);
-
-            final SimpleResultSyncPoint oneSeesTwo = new SimpleResultSyncPoint();
-            mucAsSeenByOne.addParticipantListener(presence -> {
-                if (presence.getType() == Presence.Type.available && nicknameTwo.equals(presence.getFrom().getResourceOrNull())) {
-                    oneSeesTwo.signal();
-                }
-            });
             mucAsSeenByTwo.join(nicknameTwo);
 
             final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
@@ -278,9 +278,12 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         createMuc(mucAsSeenByOne, nicknameOne);
         try {
             final SimpleResultSyncPoint oneSeesTwo = new SimpleResultSyncPoint();
-            mucAsSeenByOne.addParticipantListener(presence -> {
-                if (presence.getType() == Presence.Type.available && nicknameTwo.equals(presence.getFrom().getResourceOrNull())) {
-                    oneSeesTwo.signal();
+            mucAsSeenByOne.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(JidCreate.entityFullFrom(mucAddress, nicknameTwo))) {
+                        oneSeesTwo.signal();
+                    }
                 }
             });
             mucAsSeenByTwo.join(nicknameTwo);
