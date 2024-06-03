@@ -109,9 +109,9 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
 
         createMuc(mucAsSeenByOne, nicknameOne);
         try {
-            final FormField field = mucAsSeenByOne.getConfigurationForm().getField("muc#roomconfig_changesubject");
-            if (field != null && ((BooleanFormField) field).getValueAsBoolean()) {
-                throw new TestNotPossibleException("Room is configured to allow subject changes from participants.");
+            final MucConfigFormManager configFormManager = mucAsSeenByOne.getConfigFormManager();
+            if (configFormManager.occupantsAreAllowedToChangeSubject()) {
+                configFormManager.disallowOccupantsToChangeSubject().submitConfigurationForm();
             }
             mucAsSeenByTwo.join(nicknameTwo);
 
@@ -119,6 +119,8 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
                 mucAsSeenByTwo.changeSubject("Test Subject Change " +  StringUtils.insecureRandomString(6));
             }, "Expected an error after '" + conTwo.getUser() + "' (that is not a moderator) tried to change the subject of room '" + mucAddress + "' (but none occurred).");
             assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to change to subject of room '" + mucAddress + "' while not being a moderator.");
+        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
         } finally {
             tryDestroy(mucAsSeenByOne);
         }
@@ -243,9 +245,9 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
 
         createMuc(mucAsSeenByOne, nicknameOne);
         try {
-            final FormField field = mucAsSeenByOne.getConfigurationForm().getField("muc#roomconfig_changesubject");
-            if (field != null && ((BooleanFormField) field).getValueAsBoolean()) {
-                throw new TestNotPossibleException("Room is configured to allow subject changes from participants.");
+            final MucConfigFormManager configFormManager = mucAsSeenByOne.getConfigFormManager();
+            if (configFormManager.occupantsAreAllowedToChangeSubject()) {
+                configFormManager.disallowOccupantsToChangeSubject().submitConfigurationForm();
             }
             mucAsSeenByOne.changeSubject("Initial subject to be removed " + randomString);
             mucAsSeenByTwo.join(nicknameTwo);
@@ -254,6 +256,8 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
                 mucAsSeenByTwo.changeSubject(""); // Setting an empty subject is how Smack removes a subject.
             }, "Expected an error after '" + conTwo.getUser() + "' (that is not a moderator) tried to change the subject of room '" + mucAddress + "' (but none occurred).");
             assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to change to subject of room '" + mucAddress + "' while not being a moderator.");
+        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
         } finally {
             tryDestroy(mucAsSeenByOne);
         }
