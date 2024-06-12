@@ -79,9 +79,9 @@ jobs:
           # Borrowing from:
           #  - https://github.com/XMPP-Interop-Testing/xmpp-interop-tests-action/blob/main/action.yml
           #  - https://github.com/igniterealtime/Openfire/blob/ddf144c4ff3b0f753c4087c1e197dfc2bab324a9/.github/workflows/continuous-integration-workflow.yml#L199-L205
-          sudo echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
           java \
           -Dsinttest.service="example.org" \
+          -Dsinttest.host="127.0.0.1" \
           -Dsinttest.securityMode=disabled \
           -Dsinttest.replyTimeout=5000 \
           -Dsinttest.adminAccountUsername=admin \
