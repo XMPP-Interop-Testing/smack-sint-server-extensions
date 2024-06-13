@@ -25,7 +25,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: maven
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
-        run: mvn package
+        run: mvn --update-snapshots package
       - name: Stash the built artifacts
         uses: actions/upload-artifact@v4
         if: ${{ matrix.java == 11}}
