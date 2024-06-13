@@ -125,11 +125,6 @@
         </dependency>
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
-            <artifactId>smack-websocket</artifactId>
-            <version>${smack.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.igniterealtime.smack</groupId>
             <artifactId>smack-xmlparser-stax</artifactId>
             <version>${smack.version}</version>
         </dependency>
