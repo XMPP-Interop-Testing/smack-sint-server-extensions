@@ -23,7 +23,6 @@ import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smackx.csi.ClientStateIndicationManager;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
@@ -31,7 +30,6 @@ import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,24 +46,26 @@ public class CsiIntegrationTest extends AbstractSmackIntegrationTest
     }
 
     @SmackIntegrationTest(section = "4.2", quote = "If a client wishes to inform the server that it has become inactive, it sends an <inactive/> element in the 'urn:xmpp:csi:0' namespace")
-    public void markActiveTest() throws SmackException.NotConnectedException, InterruptedException
-    {
-        ClientStateIndicationManager.inactive(conOne);
-        // TODO do we need to reset the CSI-state of conOne to not affect other tests?
-    }
-
-    /**
-     * This test implements the 'ping' based example in section 5.1, where a connection is marked inactive, gets sent
-     * some data, then is marked active
-     * @throws SmackException.NotConnectedException
-     * @throws InterruptedException
-     */
-    @SmackIntegrationTest(section = "4.2", quote = "[...] when the client is active again it sends an <active/> element.")
     public void markInactiveTest() throws SmackException.NotConnectedException, InterruptedException
     {
-        ClientStateIndicationManager.inactive(conOne);
-        ClientStateIndicationManager.active(conOne);
-        // TODO do we need to reset the CSI-state of conOne to not affect other tests?
+        try {
+            ClientStateIndicationManager.inactive(conOne);
+        } finally {
+            // Ensure that the connection is back in an 'active' state, to prevent subsequent tests from being affected.
+            ClientStateIndicationManager.active(conOne);
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.2", quote = "[...] when the client is active again it sends an <active/> element.")
+    public void markActiveTest() throws SmackException.NotConnectedException, InterruptedException
+    {
+        try {
+            ClientStateIndicationManager.inactive(conOne);
+            ClientStateIndicationManager.active(conOne);
+        } finally {
+            // Ensure that the connection is back in an 'active' state, to prevent subsequent tests from being affected.
+            ClientStateIndicationManager.active(conOne);
+        }
     }
 
     @SmackIntegrationTest(section = "6", quote = "To protect the privacy of users, servers MUST NOT reveal the clients active/inactive state to other entities on the network.")
@@ -98,11 +98,14 @@ public class CsiIntegrationTest extends AbstractSmackIntegrationTest
             throw new TestNotPossibleException("No consistent disco#info response from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' (when no changes are applied).");
         }
 
-        ClientStateIndicationManager.inactive(conOne);
-        final DiscoverInfo infoResponseAfterInactivation = discoManagerTwo.discoverInfo(conOne.getUser(), node);
-        assertTrue(areSemanticallyEqual(infoResponse1, infoResponseAfterInactivation), "Expected the disco#info responses from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' before and after marking '" + conOne.getUser() + "''s client state as 'inactive' to be semantically equal to each-other (but they were not).");
-
-        // TODO do we need to reset the CSI-state of conOne to not affect other tests?
+        try {
+            ClientStateIndicationManager.inactive(conOne);
+            final DiscoverInfo infoResponseAfterInactivation = discoManagerTwo.discoverInfo(conOne.getUser(), node);
+            assertTrue(areSemanticallyEqual(infoResponse1, infoResponseAfterInactivation), "Expected the disco#info responses from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' before and after marking '" + conOne.getUser() + "''s client state as 'inactive' to be semantically equal to each-other (but they were not).");
+        } finally {
+            // Ensure that the connection is back in an 'active' state, to prevent subsequent tests from being affected.
+            ClientStateIndicationManager.active(conOne);
+        }
     }
 
     @SmackIntegrationTest(section = "6", quote = "To protect the privacy of users, servers MUST NOT reveal the clients active/inactive state to other entities on the network.")
@@ -134,11 +137,14 @@ public class CsiIntegrationTest extends AbstractSmackIntegrationTest
             throw new TestNotPossibleException("No consistent disco#info response from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' (when no changes are applied).");
         }
 
-        ClientStateIndicationManager.inactive(conOne);
-        final DiscoverItems infoResponseAfterInactivation = discoManagerTwo.discoverItems(conOne.getUser());
-        assertTrue(areSemanticallyEqual(itemsResponse1, infoResponseAfterInactivation), "Expected the disco#items responses from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' before and after marking '" + conOne.getUser() + "''s client state as 'inactive' to be semantically equal to each-other (but they were not).");
-
-        // TODO do we need to reset the CSI-state of conOne to not affect other tests?
+        try {
+            ClientStateIndicationManager.inactive(conOne);
+            final DiscoverItems infoResponseAfterInactivation = discoManagerTwo.discoverItems(conOne.getUser());
+            assertTrue(areSemanticallyEqual(itemsResponse1, infoResponseAfterInactivation), "Expected the disco#items responses from '" + conOne.getUser() + "' as received by '" + conTwo.getUser() + "' before and after marking '" + conOne.getUser() + "''s client state as 'inactive' to be semantically equal to each-other (but they were not).");
+        } finally {
+            // Ensure that the connection is back in an 'active' state, to prevent subsequent tests from being affected.
+            ClientStateIndicationManager.active(conOne);
+        }
     }
 
     // TODO add a test that compares presence data of a connection that toggles between active and inactive (the presence should not change). How does one test for the absence of a change, without adding an undesirable delay?
