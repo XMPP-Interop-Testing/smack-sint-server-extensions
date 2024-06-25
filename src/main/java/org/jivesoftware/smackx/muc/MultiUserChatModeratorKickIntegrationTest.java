@@ -130,7 +130,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
                     twoSeesKick.signal(); // Invoked by Smack when receiving an unavailable with a 307 status.
                 }
             });
-            assertDoesNotThrow(() -> mucAsSeenByOne.kickParticipant(nicknameTwo, "Integration test asserting occupant kick from MUC room."), // TODO Assert that specifically an XMPPException.XMPPErrorException is now thrown. All other exceptions should still make the test error out, but this test should assert explicitly that the moderator is allowed to change the subject.
+            assertDoesNotThrow(() -> mucAsSeenByOne.kickParticipant(nicknameTwo, "Integration test asserting occupant kick from MUC room."), // TODO Assert that specifically an XMPPException.XMPPErrorException is now thrown. All other exceptions should still make the test error out, but this test should assert explicitly that the moderator is allowed to kick a participant.
                 "Expected '" + conOne.getUser() + "' that is owner of room '" + mucAddress + "' to receive a successful response after kicking '" + conTwo.getUser() + "' (that is using nickname '" + nicknameTwo + "') from the room (but no such response was received).");
         } finally {
             tryDestroy(mucAsSeenByOne);
