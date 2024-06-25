@@ -42,6 +42,20 @@ This is the most basic configuration that you can use to run tests against a loc
 
 To run the tests directly from the source code, edit the pom.xml to match your settings, then run `mvn exec:java`
 
+### From a container
+
+Assuming you've built the Docker image locally, using `docker build . -t sintse`, you can run the tests using the following command:
+
+```bash
+docker run --net=host sintse --service=example.org --host 127.0.0.1 --adminUsername=admin --adminPassword=admin
+```
+
+To see full usage instructions for the container, you can see the help text by running:
+
+```bash
+docker run sintse --help
+```
+
 ### Log XMPP traffic in files
 
 A Smack Debugger implementation is included, that, once configured, will store debug logs (containing XMPP traffic) in distinct files, per test that's executed.

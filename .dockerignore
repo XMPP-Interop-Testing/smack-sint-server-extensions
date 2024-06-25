@@ -1,0 +1,23 @@
+# Root level stuff
+.git
+.gitignore
+Dockerfile
+.github
+.idea
+.mvn
+.editorconfig
+.settings
+.vscode
+
+# Any already built stuff.
+target
+
+# Deeper stuff
+**/.DS_Store
+**/.classpath
+**/.factorypath
+**/.idea
+**/.project
+**/.settings
+**/*.iml
+**/*.class
