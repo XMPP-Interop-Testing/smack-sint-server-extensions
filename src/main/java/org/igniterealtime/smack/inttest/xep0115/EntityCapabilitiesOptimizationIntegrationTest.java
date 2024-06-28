@@ -69,21 +69,28 @@ public class EntityCapabilitiesOptimizationIntegrationTest extends AbstractSmack
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo); // Unsubscribe, to be able to capture the _first_ presence notification post (re)subscription.
 
         final ResultSyncPoint<Presence, Exception> oneReceivedFromTwo = new ResultSyncPoint<>();
-        Roster.getInstanceFor(conOne).addPresenceEventListener(new AbstractPresenceEventListener() {
+        final AbstractPresenceEventListener presenceEventListener = new AbstractPresenceEventListener() {
             @Override
             public void presenceAvailable(FullJid fullJid, Presence presence) {
                 if (fullJid.equals(conTwo.getUser())) {
                     oneReceivedFromTwo.signal(presence);
                 }
             }
-        });
+        };
+        final Roster rosterOne = Roster.getInstanceFor(conOne);
+        rosterOne.addPresenceEventListener(presenceEventListener);
 
-        // Execute system under test.
-        IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
+        try {
+            // Execute system under test.
+            IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
 
-        // Verify results.
-        final Presence result = assertResult(oneReceivedFromTwo, "Expected '" + conOne.getUser() + "' to receive presence notification from '" + conTwo.getUser() + "' after subscribing (but no presence notification was received).");
-        assertNotNull(result.getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT)), "Expected the presence notification as received by '" + conOne.getUser() + "' after subscribing to '" + conTwo.getUser() + "' to contain a entity capabilities annotation (but it did not).");
+            // Verify results.
+            final Presence result = assertResult(oneReceivedFromTwo, "Expected '" + conOne.getUser() + "' to receive presence notification from '" + conTwo.getUser() + "' after subscribing (but no presence notification was received).");
+            assertNotNull(result.getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT)), "Expected the presence notification as received by '" + conOne.getUser() + "' after subscribing to '" + conTwo.getUser() + "' to contain a entity capabilities annotation (but it did not).");
+        } finally {
+            // Tear down test fixture.
+            rosterOne.removePresenceEventListener(presenceEventListener);
+        }
     }
 
     /**
@@ -96,34 +103,46 @@ public class EntityCapabilitiesOptimizationIntegrationTest extends AbstractSmack
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo); // Unsubscribe, to be able to capture the _first_ presence notification post (re)subscription.
 
         final ResultSyncPoint<Presence, Exception> origPoint = new ResultSyncPoint<>();
-        Roster.getInstanceFor(conOne).addPresenceEventListener(new AbstractPresenceEventListener() {
+        final AbstractPresenceEventListener presenceEventListenerFirst = new AbstractPresenceEventListener() {
             @Override
             public void presenceAvailable(FullJid fullJid, Presence presence) {
                 if (fullJid.equals(conTwo.getUser())) {
                     origPoint.signal(presence);
                 }
             }
-        });
-        IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
-        final String originalVer = ((CapsExtension) origPoint.waitForResult(timeout).getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT))).getVer();
+        };
+        final Roster rosterOne = Roster.getInstanceFor(conOne);
+        rosterOne.addPresenceEventListener(presenceEventListenerFirst);
+        final String originalVer;
+        try {
+            IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
+            originalVer = ((CapsExtension) origPoint.waitForResult(timeout).getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT))).getVer();
+        } finally {
+            rosterOne.removePresenceEventListener(presenceEventListenerFirst);
+        }
 
         final ResultSyncPoint<Presence, Exception> updatePoint = new ResultSyncPoint<>();
-        Roster.getInstanceFor(conOne).addPresenceEventListener(new AbstractPresenceEventListener() {
+        final AbstractPresenceEventListener presenceEventListenerSecond = new AbstractPresenceEventListener() {
             @Override
             public void presenceAvailable(FullJid fullJid, Presence presence) {
                 if (fullJid.equals(conTwo.getUser())) {
                     updatePoint.signal(presence);
                 }
             }
-        });
+        };
+        rosterOne.addPresenceEventListener(presenceEventListenerSecond);
 
-        // Execute system under test.
-        ServiceDiscoveryManager.getInstanceFor(conTwo).addFeature("urn:example:xmppinteroptesting:" + StringUtils.randomString(17));
+        try {
+            // Execute system under test.
+            ServiceDiscoveryManager.getInstanceFor(conTwo).addFeature("urn:example:xmppinteroptesting:" + StringUtils.randomString(17));
 
-        // Verify results.
-        final Presence result = assertResult(updatePoint, "Expected '" + conOne.getUser() + "' to receive presence notification from '" + conTwo.getUser() + "' after its 'ver' value changed (but no presence notification was received).");
-        final CapsExtension caps = (CapsExtension) result.getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT));
-        assertNotNull(caps, "Expected the presence notification as received by '" + conOne.getUser() + "' after '" + conTwo.getUser() + "' updated its 'ver' value to contain a entity capabilities annotation (but it did not).");
-        assertNotSame(originalVer, caps.getVer(), "Expected the 'ver' as received by '" + conOne.getUser() + "' after '" + conTwo.getUser() + "' updated its 'ver' value to be different from the value that was received previously (but it was not).");
+            // Verify results.
+            final Presence result = assertResult(updatePoint, "Expected '" + conOne.getUser() + "' to receive presence notification from '" + conTwo.getUser() + "' after its 'ver' value changed (but no presence notification was received).");
+            final CapsExtension caps = (CapsExtension) result.getExtension(new QName(EntityCapsManager.NAMESPACE, EntityCapsManager.ELEMENT));
+            assertNotNull(caps, "Expected the presence notification as received by '" + conOne.getUser() + "' after '" + conTwo.getUser() + "' updated its 'ver' value to contain a entity capabilities annotation (but it did not).");
+            assertNotSame(originalVer, caps.getVer(), "Expected the 'ver' as received by '" + conOne.getUser() + "' after '" + conTwo.getUser() + "' updated its 'ver' value to be different from the value that was received previously (but it was not).");
+        } finally {
+            rosterOne.removePresenceEventListener(presenceEventListenerSecond);
+        }
     }
 }
