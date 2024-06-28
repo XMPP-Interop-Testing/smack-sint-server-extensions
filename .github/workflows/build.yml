@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 11, 17 ]
+        java: [ 11, 17, 21 ]
         distribution: [ temurin ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
     steps:
       - uses: actions/checkout@v4
