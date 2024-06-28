@@ -50,7 +50,7 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
         super(environment);
 
         if (!VCardManager.getInstanceFor(conOne).isSupported(conOne.getXMPPServiceDomain())) {
-            throw new TestNotPossibleException("Domain does not seem support XEP-054 vcard-temp.");
+            throw new TestNotPossibleException("Domain does not seem support XEP-0054 vcard-temp.");
         }
     }
 
