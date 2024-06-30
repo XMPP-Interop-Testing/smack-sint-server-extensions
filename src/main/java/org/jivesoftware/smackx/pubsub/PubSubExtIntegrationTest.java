@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NoResponseException;
@@ -181,11 +182,12 @@ public class PubSubExtIntegrationTest extends AbstractSmackIntegrationTest {
     @SmackIntegrationTest(section = "6.1.3.2", quote =
         "For nodes with an access model of \"presence\", if the requesting entity is not subscribed to the owner's " +
         "presence then the pubsub service MUST respond with a <not-authorized/> error (...)")
-    public void subscribePresenceSubscriptionRequiredTest() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException, PubSubException.NotAPubSubNodeException, TestNotPossibleException {
+    public void subscribePresenceSubscriptionRequiredTest() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException, PubSubException.NotAPubSubNodeException, TestNotPossibleException, SmackException.NotLoggedInException {
         final String nodeName = "sinttest-subscribe-nodename-" + testRunId;
         final ConfigureForm defaultConfiguration = pubSubManagerOne.getDefaultConfiguration();
         final FillableConfigureForm config = defaultConfiguration.getFillableForm();
         config.setAccessModel(AccessModel.presence);
+        IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
         try {
             pubSubManagerOne.createNode(nodeName, config);
         } catch (XMPPErrorException e) {
