@@ -78,8 +78,16 @@ public class CsiIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "6", quote = "To protect the privacy of users, servers MUST NOT reveal the clients active/inactive state to other entities on the network.")
     public void detectDiscoInfoChangeTestSubscribed() throws Exception
     {
-        IntegrationTestRosterUtil.ensureBothAccountsAreSubscribedToEachOther(conOne, conTwo, timeout);
-        detectDiscoInfoChangeTest();
+        try {
+            // Setup test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreSubscribedToEachOther(conOne, conTwo, timeout);
+
+            // Execute system under test & assert results.
+            detectDiscoInfoChangeTest();
+        } finally {
+            // Tear down test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 
     protected void detectDiscoInfoChangeTest() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
@@ -118,8 +126,16 @@ public class CsiIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "6", quote = "To protect the privacy of users, servers MUST NOT reveal the clients active/inactive state to other entities on the network.")
     public void detectDiscoItemsChangeTestSubscribed() throws Exception
     {
-        IntegrationTestRosterUtil.ensureBothAccountsAreSubscribedToEachOther(conOne, conTwo, timeout);
-        detectDiscoItemsChangeTest();
+        try {
+            // Setup test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreSubscribedToEachOther(conOne, conTwo, timeout);
+
+            // Execute system under test & assert results.
+            detectDiscoItemsChangeTest();
+        } finally {
+            // Tear down test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 
     protected void detectDiscoItemsChangeTest() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException

@@ -90,6 +90,7 @@ public class EntityCapabilitiesOptimizationIntegrationTest extends AbstractSmack
         } finally {
             // Tear down test fixture.
             rosterOne.removePresenceEventListener(presenceEventListener);
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
         }
     }
 
@@ -143,6 +144,7 @@ public class EntityCapabilitiesOptimizationIntegrationTest extends AbstractSmack
             assertNotSame(originalVer, caps.getVer(), "Expected the 'ver' as received by '" + conOne.getUser() + "' after '" + conTwo.getUser() + "' updated its 'ver' value to be different from the value that was received previously (but it was not).");
         } finally {
             rosterOne.removePresenceEventListener(presenceEventListenerSecond);
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
         }
     }
 }
