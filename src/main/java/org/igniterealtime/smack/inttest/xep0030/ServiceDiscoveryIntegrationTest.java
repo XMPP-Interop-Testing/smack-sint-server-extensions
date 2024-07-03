@@ -444,7 +444,7 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
      * against a bare JID 'client' address, since the server is expected to respond to such requests on behalf of the
      * account.
      */
-    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#items request, the server MUST return an empty result set if [...] [t]he target entity does not exist.")
+    @SmackIntegrationTest(section = "8", quote = "The following rule[s] apply to the handling of service discovery requests sent to bare JIDs: In response to a disco#items request, the server MUST return an empty result set if [...] [t]he request did not specify a node, the only items are available resources (as defined in RFC 3921), and the requesting entity is not authorized to receive presence from the target entity (i.e., via the target having a presence subscription to the requesting entity of type \"both\" or \"from\") or is not otherwise trusted (e.g., another server in a trusted network). However, the server MAY return items other than available resources (if any).")
     public void testItemsQueryWithoutPresenceSubscriptionBareJidWithoutNode() throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException, XMPPException.XMPPErrorException
     {
         // Setup test fixture.
@@ -455,7 +455,7 @@ public class ServiceDiscoveryIntegrationTest extends AbstractSmackIntegrationTes
         final DiscoverItems result = manOne.discoverItems(conTwo.getUser().asEntityBareJid());
 
         // Verify result.
-        assertTrue(result.getItems().isEmpty(), "Expected the disco#items request from '" + conOne.getUser() + "' to '" + conTwo.getUser() + "' (which has not granted presence subscription to the requestor) to be responded to with an empty result set (but it was not).");
+        assertFalse(result.getItems().stream().anyMatch(item -> item.getNode() == null && item.getEntityID() != null && item.getEntityID().isEntityFullJid()), "Expected the disco#items request from '" + conOne.getUser() + "' to '" + conTwo.getUser() + "' (which has not granted presence subscription to the requestor) to not include any available resources (but it did).");
     }
 
     /**
