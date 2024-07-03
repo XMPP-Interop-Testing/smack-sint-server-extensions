@@ -3,7 +3,7 @@ name: Build & Test
 on: [pull_request]
 
 env:
-  OPENFIRE_VERSION: 4_8_1 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
+  OPENFIRE_VERSION: 4_8_2 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
 
 permissions:
   checks: write
@@ -74,7 +74,7 @@ jobs:
           # Get the jar file by globbing on the version
           JAR_MATCHES=(smack-sint-server-extensions-*-jar-with-dependencies.jar)
           JARFILE=${JAR_MATCHES[0]}
-          
+
           # Run the tests the same way the action does
           # Borrowing from:
           #  - https://github.com/XMPP-Interop-Testing/xmpp-interop-tests-action/blob/main/action.yml
