@@ -3,7 +3,7 @@ name: Build & Test
 on: [pull_request]
 
 env:
-  OPENFIRE_VERSION: 4_8_2 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
+  OPENFIRE_VERSION: 4_8_3 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
 
 permissions:
   checks: write
