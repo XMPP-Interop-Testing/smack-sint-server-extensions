@@ -45,8 +45,26 @@ public class FileLogger extends AbstractDebugger
             formatedDate = dateFormatter.format(new Date());
         }
 
-        String filename;
         final SmackIntegrationTestFramework.ConcreteTest testUnderExecution = SmackIntegrationTestFramework.getTestUnderExecution();
+        final Path logPath = getLog(logDir, testUnderExecution);
+
+        try (final Writer writer = new OutputStreamWriter(new FileOutputStream(logPath.toFile(), true), StandardCharsets.UTF_8);
+             final BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
+            bufferedWriter.write(formatedDate + ' ' + logMessage + System.lineSeparator());
+        } catch (IOException e) {
+            System.err.println("Unable to write log to file " + logPath);
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void log(String logMessage, Throwable throwable) {
+        String stacktrace = ExceptionUtil.getStackTrace(throwable);
+        log(logMessage + '\n' + stacktrace);
+    }
+
+    public static Path getLog(final Path logDir, final SmackIntegrationTestFramework.ConcreteTest testUnderExecution) {
+        String filename;
         if (testUnderExecution != null) {
             filename = testUnderExecution.toString();
         } else {
@@ -60,20 +78,6 @@ public class FileLogger extends AbstractDebugger
         } else {
             logPath = Paths.get(filename);
         }
-
-        try (final Writer writer = new OutputStreamWriter(new FileOutputStream(logPath.toFile(), true), StandardCharsets.UTF_8);
-             final BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
-            bufferedWriter.write(formatedDate + ' ' + logMessage + System.lineSeparator());
-        } catch (IOException e) {
-            System.err.println("Unable to write log to file " + filename);
-            e.printStackTrace();
-        }
+        return logPath;
     }
-
-    @Override
-    protected void log(String logMessage, Throwable throwable) {
-        String stacktrace = ExceptionUtil.getStackTrace(throwable);
-        log(logMessage + '\n' + stacktrace);
-    }
-
 }

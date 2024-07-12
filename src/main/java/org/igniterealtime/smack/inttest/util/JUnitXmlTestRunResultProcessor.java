@@ -319,15 +319,19 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
         return allTestResults.stream().collect(Collectors.groupingBy(e -> getSpecificationReference(e.concreteTest.getMethod())));
     }
 
-    private static String getSpecificationReference(Method method) {
-        final SpecificationReference spec = method.getDeclaringClass().getAnnotation(SpecificationReference.class);
+    public static String getSpecificationReference(Class<?> clazz) {
+        final SpecificationReference spec = clazz.getAnnotation(SpecificationReference.class);
         if (spec == null || spec.document().isBlank()) {
             return "";
         }
         return normalizeSpecification(spec.document().trim());
     }
 
-    private static String getSpecificationSection(Method method) {
+    public static String getSpecificationReference(Method method) {
+        return getSpecificationReference(method.getDeclaringClass());
+    }
+
+    public static String getSpecificationSection(Method method) {
         final SmackIntegrationTest test = method.getAnnotation(SmackIntegrationTest.class);
         if (!test.section().isBlank()) {
             return test.section().trim();
@@ -335,7 +339,7 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
         return null;
     }
 
-    private static String getSpecificationQuote(Method method) {
+    public static String getSpecificationQuote(Method method) {
         final SmackIntegrationTest test = method.getAnnotation(SmackIntegrationTest.class);
         if (!test.quote().isBlank()) {
             return test.quote().trim();
