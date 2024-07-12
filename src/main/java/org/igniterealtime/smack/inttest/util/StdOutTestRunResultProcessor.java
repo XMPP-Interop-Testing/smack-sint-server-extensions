@@ -18,6 +18,7 @@ package org.igniterealtime.smack.inttest.util;
 import org.igniterealtime.smack.inttest.*;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,9 +37,16 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
         final int impossibleTests = testRunResult.getNotPossibleTests().size() + getMethodsInImpossibleTestClasses(testRunResult.getImpossibleTestClasses().keySet()).size();
 
         System.out.println();
-        System.out.println("Test run (id :" + testRunResult.testRunId + ") finished! " + successfulTests + " tests were successful (✔), " + failedTests + " failed (\uD83D\uDC80), and " + impossibleTests + " were impossible to run (✖).");
+        System.out.println("Test run (id: " + testRunResult.testRunId + ") finished! " + successfulTests + " tests were successful (✔), " + failedTests + " failed (\uD83D\uDC80), and " + impossibleTests + " were impossible to run (✖).");
         System.out.println();
         System.out.println("Results aggregated by specification:");
+
+        final Properties specTitles = new Properties();
+        try {
+            specTitles.load(JUnitXmlTestRunResultProcessor.class.getResourceAsStream("/specifications.properties"));
+        } catch (IOException e) {
+            System.err.println("Unable to load specifications.properties");
+        }
 
         final Map<String, Collection<SuccessfulTest>> successFulTestsBySpec = aggregateBySpecification(testRunResult.getSuccessfulTests());
         final Map<String, Collection<FailedTest>> failedTestsBySpec = aggregateBySpecification(testRunResult.getFailedTests());
@@ -50,15 +58,20 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
         specifications.addAll(failedTestsBySpec.keySet());
         specifications.addAll(impossibleTestsBySpec.keySet());
         specifications.addAll(impossibleTestClassesBySpec.keySet());
-        final int longestSpecCharCount = specifications.stream().map(String::length).max(Integer::compareTo).orElse(0);
+        final Map<String, String> titleBySpec = new HashMap<>();
+        titleBySpec.put("", "(noname)");
+        for (final String specification : specifications) {
+            titleBySpec.put(specification, findTitle(specTitles, specification, 81));
+        }
+        final int longestSpecCharCount = titleBySpec.values().stream().map(String::length).max(Integer::compareTo).orElse(0);
         final int longestSuccCharCount = successFulTestsBySpec.values().stream().map(Collection::size).map(i->i.toString().length()).max(Integer::compareTo).orElse(0);
         final int longestFailCharCount = failedTestsBySpec.values().stream().map(Collection::size).map(i->i.toString().length()).max(Integer::compareTo).orElse(0);
         for (final String specification : specifications) {
             final int success = successFulTestsBySpec.getOrDefault(specification, Collections.emptySet()).size();
             final int fail = failedTestsBySpec.getOrDefault(specification, Collections.emptySet()).size();
             final int impossible = impossibleTestsBySpec.getOrDefault(specification, Collections.emptySet()).size() + getMethodsInImpossibleTestClasses(impossibleTestClassesBySpec.getOrDefault(specification, Collections.emptySet())).size();
-            final String title = (specification.isEmpty() ? "(noname)" : specification);
-            System.out.println("• " + String.format("%" + (Math.max(longestSpecCharCount, "(noname)".length()))+"s", title) + " " + String.format("%"+longestSuccCharCount+"s", success) + " ✔  " + String.format("%"+longestFailCharCount+"s", fail) + " \uD83D\uDC80 " + String.format("%3s", impossible) + " ✖");
+            final String title = titleBySpec.get(specification);
+            System.out.println("• " + String.format("%-" + longestSpecCharCount+"s", title) + " " + String.format("%"+longestSuccCharCount+"s", success) + " ✔  " + String.format("%"+longestFailCharCount+"s", fail) + " \uD83D\uDC80 " + String.format("%3s", impossible) + " ✖");
         }
 
         if (!impossibleTestsBySpec.isEmpty() || !impossibleTestClassesBySpec.isEmpty()) {
@@ -69,7 +82,7 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                 final String title = (entry.getKey().isEmpty() ? "(noname)" : entry.getKey());
                 final Map<String, Long> reasonCount = entry.getValue().stream().collect(Collectors.groupingBy(t -> t.testNotPossibleException.getMessage(), Collectors.counting()));
                 for (final Map.Entry<String, Long> reasonEntry : reasonCount.entrySet()) {
-                    System.out.println("• " + String.format("%" + (Math.max(longestSpecCharCount, "(noname)".length())) + "s", title) + ": could not run " + entry.getValue().size() + " test(s) because: " + reasonEntry.getKey());
+                    System.out.println("• " + title + ": could not run " + entry.getValue().size() + " test(s) because: " + reasonEntry.getKey());
                 }
             }
             for (final Map.Entry<String, Collection<Class<? extends AbstractSmackIntTest>>> entry : impossibleTestClassesBySpec.entrySet()) {
@@ -84,7 +97,7 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                     counts.put(reason, c);
                 }
                 for (Map.Entry<String, Integer> e : counts.entrySet()) {
-                    System.out.println("• " + String.format("%" + (Math.max(longestSpecCharCount, "(noname)".length())) + "s", title) + ": could not run " + e.getValue() + " test(s) because: " + e.getKey());
+                    System.out.println("• " + title + ": could not run " + e.getValue() + " test(s) because: " + e.getKey());
                 }
             }
         }
@@ -102,7 +115,9 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                     final String sectionReference = JUnitXmlTestRunResultProcessor.getSpecificationSection(failedTest.concreteTest.getMethod());
                     final String quote = JUnitXmlTestRunResultProcessor.getSpecificationQuote(failedTest.concreteTest.getMethod());
                     final Path logPath = FileLogger.getLog(System.getProperty("logDir") == null ? null : Paths.get(System.getProperty("logDir")), failedTest.concreteTest);
-                    System.out.println("• " + (sectionReference == null ? title : title + ", section " + sectionReference) + " \"" + quote + "\"");
+//                    System.out.println("• " + (sectionReference == null ? title : title + ", section " + sectionReference) + " \"" + quote + "\"");
+                    System.out.println("• " + findTitle(specTitles, title, -1) + (sectionReference != null ? ", Section " + sectionReference : ""));
+                    System.out.println("      \"" + quote + "\"");
                     System.out.println("  Failure reason  : " + failedTest.failureReason.getMessage());
                     System.out.println("  Stanza log file : " + logPath);
                     System.out.println("  Test class      : " + failedTest.concreteTest.getMethod().getDeclaringClass());
@@ -156,6 +171,20 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
     }
 
     public static String humanReadibleSpec(final String spec) {
-        return spec.replaceFirst("^XEP", "XEP-").replaceFirst("^RFC", "RFC ");
+        return spec.replaceFirst("^XEP", "XEP-");
+    }
+
+
+    public static String findTitle(final Properties specs, final String key, final int maxLength) {
+        final String title = specs.getProperty(key);
+        String result = key;
+        if (title != null) {
+            result += ": " + title;
+        }
+
+        if (maxLength > 0 && result.length() > maxLength) {
+            result = result.substring(0, maxLength-3) + "...";
+        }
+        return result;
     }
 }
