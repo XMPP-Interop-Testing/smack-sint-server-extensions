@@ -74,7 +74,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that an admin list can be obtained.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "the owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'.")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'.")
     public void testOwnerRequestsAdminList() throws Exception
     {
         // Setup test fixture.
@@ -106,7 +106,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
      *
      * This test uses a semi-anonymous room, as a XEP update is in the works that allows these requests for non-anonymous rooms.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
     public void testUserRequestsAdminList() throws Exception
     {
         // Setup test fixture.
@@ -138,7 +138,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
      *
      * This test uses a semi-anonymous room, as a XEP update is in the works that allows these requests for non-anonymous rooms.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
     public void testParticipantRequestsAdminList() throws Exception
     {
         // Setup test fixture.
@@ -172,7 +172,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that an admin list item has 'affiliation' and 'jid' attributes.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "each item MUST include the 'affiliation' and 'jid' attributes")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list [...] the service MUST then return the admin list to the owner; each item MUST include the 'affiliation' and 'jid' attributes")
     public void testAdminListItemCheck() throws Exception
     {
         // Setup test fixture.
