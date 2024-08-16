@@ -30,6 +30,7 @@ import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,8 +43,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatAdminGrantModeratorIntegrationTest(SmackIntegrationTestEnvironment environment)
-        throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
-        SmackException.NotConnectedException, InterruptedException, TestNotPossibleException
+        throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+        InterruptedException, TestNotPossibleException, MultiUserChatException.MucAlreadyJoinedException, MultiUserChatException.MissingMucCreationAcknowledgeException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         super(environment);
     }
