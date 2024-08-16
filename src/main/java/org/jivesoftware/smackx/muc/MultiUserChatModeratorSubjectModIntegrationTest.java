@@ -23,16 +23,14 @@ import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.util.StringUtils;
-import org.jivesoftware.smackx.xdata.BooleanFormField;
-import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -48,8 +46,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatModeratorSubjectModIntegrationTest(SmackIntegrationTestEnvironment environment)
-        throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
-        SmackException.NotConnectedException, InterruptedException, TestNotPossibleException
+        throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+        InterruptedException, TestNotPossibleException, MultiUserChatException.MucAlreadyJoinedException, MultiUserChatException.MissingMucCreationAcknowledgeException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         super(environment);
     }
