@@ -87,6 +87,7 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
 
+        final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
         final ResultSyncPoint<Stanza, Exception> targetReceivedPrivateMessage = new ResultSyncPoint<>();
@@ -121,7 +122,8 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
             conOne.sendStanza(pmBuilder.build());
 
             // Verify result.
-            assertResult(targetReceivedPrivateMessage, "Expected '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') to receive the private message that was sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') in '" + mucAddress + "' (but the message was not received).");
+            final Stanza receivedMessage = assertResult(targetReceivedPrivateMessage, "Expected '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') to receive the private message that was sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') in '" + mucAddress + "' (but the message was not received).");
+            assertEquals(ownerMucAddress, receivedMessage.getFrom(), "Expected the 'from' address of the private message sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' to match the occupant JID of the sender (but it did not).");
         } finally {
             // Tear down test fixture.
             conTwo.removeStanzaListener(pmListener);
