@@ -22,6 +22,7 @@ import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
@@ -88,7 +89,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to revoke membership from '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to revoke membership from '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -129,7 +130,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to revoke membership (using the optional 'reason' element) from '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to revoke membership (using the optional 'reason' element) from '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -166,7 +167,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
             final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
                 conTwo.sendIqRequestAndWaitForResponse(request);
             }, "Expected an error after '" + conTwo.getUser() + "' (that is not an admin) tried to revoke membership from another participant ('" + targetAddress + "') for room '" + mucAddress + "' (but none occurred).");
-            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke membership from another participant ('" + targetAddress + "') for room '" + mucAddress + "' while not being an admin.");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (that is not an admin) after it tried to revoke membership from another participant ('" + targetAddress + "') for room '" + mucAddress + "' while not being an admin.");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -202,7 +203,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
             }
 
             // Verify result.
-            assertFalse(mucAsSeenByAdmin.getMembers().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress + "' to no longer be on the Member List after their membership was revoked by '" + conTwo + "' from '" + mucAddress + "' (but the JID does appear on the Member List).");
+            assertFalse(mucAsSeenByAdmin.getMembers().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress + "' to no longer be on the Member List after their membership was revoked by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the JID does appear on the Member List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -288,9 +289,9 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
             }
 
             // Verify result.
-            assertResult(targetSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after it was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after '" + targetAddress + "' was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after '" + targetAddress + "' was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after it was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after '" + targetAddress + "' was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of membership, after '" + targetAddress + "' was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -306,45 +307,49 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-revoke-removal");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = conThree.getUser().asEntityBareJid();
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameAdmin = Resourcepart.from("admin-" + randomString);
         final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
 
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
         createMembersOnlyMuc(mucAsSeenByOwner, nicknameOwner);
         try {
+            mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
+            mucAsSeenByAdmin.join(nicknameAdmin);
             mucAsSeenByOwner.grantMembership(targetAddress);
 
-            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
-            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener()
+            final SimpleResultSyncPoint adminSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByAdmin.addParticipantStatusListener(new ParticipantStatusListener()
             {
                 @Override
                 public void joined(EntityFullJid participant)
                 {
                     if (participant.equals(targetMucAddress)) {
-                        ownerSeesTarget.signal();
+                        adminSeesTarget.signal();
                     }
                 }
             });
             mucAsSeenByTarget.join(nicknameTarget);
-            ownerSeesTarget.waitForResult(timeout);
+            adminSeesTarget.waitForResult(timeout);
 
             ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
             final StanzaFilter leaveRoomFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), PresenceTypeFilter.UNAVAILABLE);
             conThree.addAsyncStanzaListener(stanza -> targetSeesRemoval.signal((Presence) stanza), leaveRoomFilter);
 
             // Execute system under test.
-            mucAsSeenByOwner.revokeMembership(targetAddress);
+            mucAsSeenByAdmin.revokeMembership(targetAddress);
 
             // Verify result
-            final Presence presence = assertResult(targetSeesRemoval, "Expected '" + conThree.getUser() + "' to receive a presence 'unavailable' stanza from room '" + mucAddress + "' indicating that they removed from the room, after '" + conOne.getUser() + "' revoked their membership from the (members-only) room (but that presence stanza did not arrive).");
+            final Presence presence = assertResult(targetSeesRemoval, "Expected '" + conThree.getUser() + "' to receive a presence 'unavailable' stanza from room '" + mucAddress + "' indicating that they removed from the room, after '" + conTwo.getUser() + "' (an admin) revoked their membership from the (members-only) room (but that presence stanza did not arrive).");
             final MUCUser extension = presence.getExtension(MUCUser.class);
-            assertNotNull(extension, "Expected an <x/> child element qualified by the 'http://jabber.org/protocol/muc#user' namespace to exist in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conOne.getUser() + "' revoked their membership (but no such child element was detected).");
-            assertTrue(extension.getItem() != null && extension.getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conOne.getUser() + "' revoked their membership (but it was not).");
-            assertTrue(extension.getStatus().stream().anyMatch(status -> status.getCode() == 321), "Expected to find status code 321 in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conOne.getUser() + "' revoked their membership (but it was not).");
+            assertNotNull(extension, "Expected an <x/> child element qualified by the 'http://jabber.org/protocol/muc#user' namespace to exist in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conTwo.getUser() + "' (an admin) revoked their membership (but no such child element was detected).");
+            assertTrue(extension.getItem() != null && extension.getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conTwo.getUser() + "' (an admin) revoked their membership (but it was not).");
+            assertTrue(extension.getStatus().stream().anyMatch(status -> status.getCode() == 321), "Expected to find status code 321 in the presence stanza received by '" + conThree.getUser() + "' when they were removed from members-only room '" + mucAddress + "' when '" + conTwo.getUser() + "' (an admin) revoked their membership (but it was not).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -352,7 +357,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
     }
 
     /**
-     * Verifies that other occupants are notified when a user is kicked from a members-only room whein their membership is revoked.
+     * Verifies that other occupants are notified when a user is kicked from a members-only room when their membership is revoked by an admin.
      */
     @SmackIntegrationTest(section = "9.4", quote = "An admin might want to revoke a user's membership; [...] If the room is members-only, the service MUST remove the user from the room, including a status code of 321 [...] and inform all remaining occupants")
     public void mucTestOccupantsInformedKick() throws Exception
@@ -360,25 +365,31 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-revoke-removal-notif");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-        final MultiUserChat mucAsSeenByMember = mucManagerTwo.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
-        final EntityBareJid memberAddress = conTwo.getUser().asEntityBareJid();
+        final EntityBareJid adminAddress = conTwo.getUser().asEntityBareJid();
         final EntityBareJid targetAddress = conThree.getUser().asEntityBareJid();
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-        final Resourcepart nicknameMember = Resourcepart.from("member-" + randomString);
+        final Resourcepart nicknameAdmin = Resourcepart.from("admin-" + randomString);
         final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
 
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
+        final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
+        final ResultSyncPoint<Presence, Exception> adminSeesRemoval = new ResultSyncPoint<>();
+        final StanzaFilter leaveRoomFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), PresenceTypeFilter.UNAVAILABLE);
+        final StanzaListener ownerListener = stanza -> ownerSeesRemoval.signal((Presence) stanza);
+        final StanzaListener adminListener = stanza -> adminSeesRemoval.signal((Presence) stanza);
+
         createMembersOnlyMuc(mucAsSeenByOwner, nicknameOwner);
         try {
-            mucAsSeenByOwner.grantMembership(memberAddress);
+            mucAsSeenByOwner.grantAdmin(adminAddress); // Admins are also members!
             mucAsSeenByOwner.grantMembership(targetAddress);
-            mucAsSeenByMember.join(nicknameMember);
+            mucAsSeenByAdmin.join(nicknameAdmin);
 
             final SimpleResultSyncPoint memberSeesTarget = new SimpleResultSyncPoint();
-            mucAsSeenByMember.addParticipantStatusListener(new ParticipantStatusListener()
+            mucAsSeenByAdmin.addParticipantStatusListener(new ParticipantStatusListener()
             {
                 @Override
                 public void joined(EntityFullJid participant)
@@ -391,21 +402,29 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
             mucAsSeenByTarget.join(nicknameTarget);
             memberSeesTarget.waitForResult(timeout);
 
-            ResultSyncPoint<Presence, Exception> memberSeesRemoval = new ResultSyncPoint<>();
-            final StanzaFilter leaveRoomFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), PresenceTypeFilter.UNAVAILABLE);
-            conTwo.addAsyncStanzaListener(stanza -> memberSeesRemoval.signal((Presence) stanza), leaveRoomFilter);
+            conOne.addAsyncStanzaListener(ownerListener, leaveRoomFilter);
+            conTwo.addAsyncStanzaListener(adminListener, leaveRoomFilter);
 
             // Execute system under test.
-            mucAsSeenByOwner.revokeMembership(targetAddress);
+            mucAsSeenByAdmin.revokeMembership(targetAddress);
 
             // Verify result
-            final Presence presence = assertResult(memberSeesRemoval, "Expected '" + conTwo.getUser() + "' to receive a presence 'unavailable' stanza from room '" + mucAddress + "' indicating that '" + conThree.getUser() + "' was removed from the room, as a result of '" + conOne.getUser() + "' revoking their membership from the (members-only) room (but that presence stanza did not arrive).");
-            final MUCUser extension = presence.getExtension(MUCUser.class);
-            assertNotNull(extension, "Expected an <x/> child element qualified by the 'http://jabber.org/protocol/muc#user' namespace to exist in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conOne.getUser() + "' revoking their membership (but no such child element was detected).");
-            assertTrue(extension.getItem() != null && extension.getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conOne.getUser() + "' revoking their membership (but it was not).");
-            assertTrue(extension.getStatus().stream().anyMatch(status -> status.getCode() == 321), "Expected to find status code 321 in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conOne.getUser() + "' revoking their membership (but it was not).");
+            final Presence presenceRecvdByAdmin = assertResult(adminSeesRemoval, "Expected '" + conTwo.getUser() + "' to receive a presence 'unavailable' stanza from room '" + mucAddress + "' indicating that '" + conThree.getUser() + "' was removed from the room, as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership from the (members-only) room (but that presence stanza did not arrive).");
+            final MUCUser extensionRecvdByAdmin = presenceRecvdByAdmin.getExtension(MUCUser.class);
+            assertNotNull(extensionRecvdByAdmin, "Expected an <x/> child element qualified by the 'http://jabber.org/protocol/muc#user' namespace to exist in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but no such child element was detected).");
+            assertTrue(extensionRecvdByAdmin.getItem() != null && extensionRecvdByAdmin.getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
+            assertTrue(extensionRecvdByAdmin.getStatus().stream().anyMatch(status -> status.getCode() == 321), "Expected to find status code 321 in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
+
+            final Presence presenceRecvdByOwner = assertResult(ownerSeesRemoval, "Expected '" + conOne.getUser() + "' to receive a presence 'unavailable' stanza from room '" + mucAddress + "' indicating that '" + conThree.getUser() + "' was removed from the room, as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership from the (members-only) room (but that presence stanza did not arrive).");
+            final MUCUser extensionRecvdByOwner = presenceRecvdByOwner.getExtension(MUCUser.class);
+            assertNotNull(extensionRecvdByOwner, "Expected an <x/> child element qualified by the 'http://jabber.org/protocol/muc#user' namespace to exist in the presence stanza received by '" + conOne.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but no such child element was detected).");
+            assertTrue(extensionRecvdByOwner.getItem() != null && extensionRecvdByOwner.getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conOne.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
+            assertTrue(extensionRecvdByOwner.getStatus().stream().anyMatch(status -> status.getCode() == 321), "Expected to find status code 321 in the presence stanza received by '" + conOne.getUser() + "'  when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
+
         } finally {
             // Tear down test fixture.
+            conOne.removeAsyncStanzaListener(ownerListener);
+            conTwo.removeAsyncStanzaListener(adminListener);
             tryDestroy(mucAsSeenByOwner);
         }
     }

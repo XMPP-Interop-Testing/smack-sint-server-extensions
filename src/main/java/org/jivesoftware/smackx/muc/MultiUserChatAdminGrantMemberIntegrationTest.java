@@ -80,7 +80,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "'(an admin) to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -120,7 +120,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -159,7 +159,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -232,11 +232,11 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
             try {
                 conTwo.sendIqRequestAndWaitForResponse(request);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin)to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress + "' to be on the Member List after the were granted membership by '" + conTwo + "' to '" + mucAddress + "' (but the JID does not appear on the Member List).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress + "' to be on the Member List after the were granted membership by '" + conTwo.getUser() + "' (an admin) to '" + mucAddress + "' (but the JID does not appear on the Member List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -244,7 +244,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     }
 
     /**
-     * Verifies that occupants are notified when an existing occupant is granted membership.
+     * Verifies that occupants are notified when an existing occupant is granted membership by an admin.
      */
     @SmackIntegrationTest(section = "9.3", quote = "If the user is in the room, the service MUST then send updated presence from this individual to all occupants, indicating the granting of membership by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\".")
     public void mucTestOccupantsInformed() throws Exception
@@ -312,13 +312,13 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
             try {
                 mucAsSeenByAdmin.grantMembership(targetAddress);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant membership to '" + targetAddress + "' in '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertResult(targetSeesMembership, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after they are granted membership by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(ownerSeesMembership, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after '" + targetAddress + "' is granted membership by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesMembership, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after '" + targetAddress + "' is granted membership by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesMembership, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after they are granted membership by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesMembership, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after '" + targetAddress + "' is granted membership by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesMembership, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of membership, after '" + targetAddress + "' is granted membership by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);

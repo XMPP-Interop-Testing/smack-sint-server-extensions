@@ -80,7 +80,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to ban '" + targetAddress + "' (that was not an occupant) from '" + mucAddress + "' without providing the optional 'reason' attribute (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to ban '" + targetAddress + "' (that was not an occupant) from '" + mucAddress + "' without providing the optional 'reason' attribute (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -132,7 +132,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to ban '" + targetAddress + "' (an existing occupant) from '" + mucAddress + "' without providing the optional 'reason' attribute (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to ban '" + targetAddress + "' (an existing occupant) from '" + mucAddress + "' without providing the optional 'reason' attribute (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -219,7 +219,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to ban '" + targetAddress + "' (an existing occupant) from '" + mucAddress + "' while providing the optional 'reason' attribute (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to ban '" + targetAddress + "' (an existing occupant) from '" + mucAddress + "' while providing the optional 'reason' attribute (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -281,7 +281,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
             mucAsSeenByAdmin.banUser(targetAddress, "Banned as part of a test.");
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress +"' (that was not an occupant) to be on the Ban List after the were banned by '" + conTwo + "' from '" + mucAddress + "' (but the JID does not appear on the Ban List).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress +"' (that was not an occupant) to be on the Ban List after the were banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the JID does not appear on the Ban List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -329,7 +329,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
             mucAsSeenByAdmin.banUser(targetAddress, "Banned as part of a test.");
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress +"' (an existing occupant) to be on the Ban List after the were banned by '" + conTwo + "' from '" + mucAddress + "' (but the JID does not appear on the Ban List).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(affiliate -> affiliate.getJid().equals(targetAddress)), "Expected '" + targetAddress +"' (an existing occupant) to be on the Ban List after the were banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the JID does not appear on the Ban List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -399,7 +399,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
             mucAsSeenByAdmin.banUser(targetAddress, "Banned as part of a test.");
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget + "') of '" + targetAddress + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo + "' from '" + mucAddress + "' (but the nickname does still appear on the list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget + "') of '" + targetAddress + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the nickname does still appear on the list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -407,7 +407,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     }
 
     /**
-     * Verifies that an occupant that is banned is removed from the room.
+     * Verifies that an occupant that is banned by an admin is removed from the room.
      */
     @SmackIntegrationTest(section = "9.1", quote = "The service MUST also remove any banned users who are in the room by sending a presence stanza of type \"unavailable\" to each banned occupant, including status code 301 in the extended presence information [...]")
     public void testBannedOccupantReceivesRemoval() throws Exception
@@ -455,7 +455,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
             mucAsSeenByAdmin.banUser(targetAddress, "Banned as part of a test.");
 
             // Verify result.
-            assertResult(targetSeesBan, "Expected '" + conThree.getUser() + "' to receive a presence stanza of type \"unavailable\" including status code 301 in the extended presence information after being banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesBan, "Expected '" + conThree.getUser() + "' to receive a presence stanza of type \"unavailable\" including status code 301 in the extended presence information after being banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -463,7 +463,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     }
 
     /**
-     * Verifies that other occupants are notified when an occupant is banned.
+     * Verifies that other occupants are notified when an occupant is banned by an admin.
      */
     @SmackIntegrationTest(section = "9.1", quote = "The service MUST then inform all of the remaining occupants that the banned user is no longer in the room by sending presence stanzas of type \"unavailable\" from the banned user to all remaining occupants [...]")
     public void mucTestRemainingOccupantsInformedOfBan() throws Exception
@@ -522,8 +522,8 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
             mucAsSeenByAdmin.banUser(targetAddress, "Banned as part of a test.");
 
             // Verify result.
-            assertResult(ownerSeesBan, "Expected '" + conOne.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress + "' is banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesBan, "Expected '" + conTwo.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress + "' is banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesBan, "Expected '" + conOne.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress + "' is banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesBan, "Expected '" + conTwo.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress + "' is banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);

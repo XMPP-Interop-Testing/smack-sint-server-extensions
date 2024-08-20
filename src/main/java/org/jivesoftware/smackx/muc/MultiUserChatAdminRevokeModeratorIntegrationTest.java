@@ -103,7 +103,7 @@ public class MultiUserChatAdminRevokeModeratorIntegrationTest extends AbstractMu
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to revoke moderator status from '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to revoke moderator status from '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -163,7 +163,7 @@ public class MultiUserChatAdminRevokeModeratorIntegrationTest extends AbstractMu
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to revoke moderator status (using the optional 'reason' element) from '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to revoke moderator status (using the optional 'reason' element) from '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -220,7 +220,7 @@ public class MultiUserChatAdminRevokeModeratorIntegrationTest extends AbstractMu
             final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
                 conTwo.sendIqRequestAndWaitForResponse(request);
             }, "Expected an error after '" + conTwo.getUser() + "' (that is not an admin) tried to revoke moderator status from another participant ('" + targetMucAddress + "') for room '" + mucAddress + "' (but none occurred).");
-            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke moderator status from another participant ('" + targetMucAddress + "') for room '" + mucAddress + "' while not being an admin.");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (that is not an admin) after it tried to revoke moderator status from another participant ('" + targetMucAddress + "') for room '" + mucAddress + "' while not being an admin.");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -276,7 +276,7 @@ public class MultiUserChatAdminRevokeModeratorIntegrationTest extends AbstractMu
             }
 
             // Verify result.
-            assertFalse(mucAsSeenByAdmin.getModerators().stream().anyMatch(affiliate -> affiliate.getNick().equals(nicknameTarget)), "Expected '" + nicknameTarget + "' to no longer be on the Moderator List after their moderator status was revoked by '" + conTwo + "' from '" + mucAddress + "' (but their nickname does appear on the Moderator List).");
+            assertFalse(mucAsSeenByAdmin.getModerators().stream().anyMatch(affiliate -> affiliate.getNick().equals(nicknameTarget)), "Expected '" + nicknameTarget + "' to no longer be on the Moderator List after their moderator status was revoked by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but their nickname does appear on the Moderator List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -360,9 +360,9 @@ public class MultiUserChatAdminRevokeModeratorIntegrationTest extends AbstractMu
             }
 
             // Verify result.
-            assertResult(targetSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after their status was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after '" + targetMucAddress + "'s status was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after '" + targetMucAddress + "'s status was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after their status was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after '" + targetMucAddress + "'s status was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of moderator status, after '" + targetMucAddress + "'s status was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);

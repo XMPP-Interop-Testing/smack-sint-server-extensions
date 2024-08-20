@@ -85,7 +85,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
             // Verify result.
         } catch (XMPPException.XMPPErrorException e) {
-            fail("Expected admin '" + conTwo.getUser() + "' to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).", e);
+            fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).", e);
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -94,7 +94,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
 
     /**
-     * Asserts that a ban list is always based on a bare JID.
+     * Asserts that a ban list received by an admin is always based on a bare JID.
      *
      * This test attempts to add a full JID to the ban list (which may/should not be possible, in which case the test
      * stops as 'not possible'), and then retrieves the ban list, asserting that the entry on it either doesn't exist,
@@ -132,11 +132,11 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             try {
                 response = conTwo.sendIqRequestAndWaitForResponse(iq);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin) to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid().isEntityFullJid()), "The ban list for '" + mucAddress + "' unexpectedly contained an item with a full JID (where only bare JIDs are allowed).");
+            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid().isEntityFullJid()), "The ban list for '" + mucAddress + "' as received by '" + conTwo.getUser() + "' (an admin) unexpectedly contained an item with a full JID (where only bare JIDs are allowed).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -144,9 +144,9 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Asserts that a ban list item has 'affiliation' and 'jid' attributes.
+     * Asserts that a ban list item (as received by admins) has 'affiliation' and 'jid' attributes.
      */
-    @SmackIntegrationTest(section = "9.2", quote = "each item MUST include the 'affiliation' and 'jid' attributes")
+    @SmackIntegrationTest(section = "9.2", quote = "The service MUST then return the list of banned users to the admin; each item MUST include the 'affiliation' and 'jid' attributes")
     public void mucTestAdminBanListItemCheck() throws Exception
     {
         // Setup test fixture.
@@ -174,13 +174,13 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             try {
                 response = conTwo.sendIqRequestAndWaitForResponse(iq);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin) to be able to receive the ban list from '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid() == null), "The ban list for '" + mucAddress + "' contains an item that does not have a 'jid' attribute (but all items must have one).");
-            assertFalse(response.getItems().stream().anyMatch(i -> i.getAffiliation() == null), "The ban list for '" + mucAddress + "' contains an item that does not have an 'affiliation' attribute (but all items must have one).");
-            assertTrue(response.getItems().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Expected the ban list requested by '" + conTwo.getUser() + "' from '" + mucAddress + "' to include the recently added outcast '" + targetAddress + "' (but it did not).");
+            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid() == null), "The ban list for '" + mucAddress + "' as received by '" + conTwo.getUser() + "' (an admin) contains an item that does not have a 'jid' attribute (but all items must have one).");
+            assertFalse(response.getItems().stream().anyMatch(i -> i.getAffiliation() == null), "The ban list for '" + mucAddress + "' as received by '" + conTwo.getUser() + "' (an admin) contains an item that does not have an 'affiliation' attribute (but all items must have one).");
+            assertTrue(response.getItems().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Expected the ban list requested by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' to include the recently added outcast '" + targetAddress + "' (but it did not).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -188,7 +188,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Asserts that a ban list modification can contain more than one item.
+     * Asserts that a ban list modification made by an admin can contain more than one item.
      */
     @SmackIntegrationTest(section = "9.2", quote = "The admin can then modify the ban list if desired. In order to do so, the admin MUST send the changed items [...] back to the service; After updating the ban list, the service MUST inform the admin of success.")
     public void mucTestAdminBanListMultipleItems() throws Exception
@@ -220,10 +220,10 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (but does not appear on the ban list).");
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (but does not appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the ban list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -262,7 +262,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Asserts that a ban list modification can be used to remove people from the banlist.
+     * Asserts that a ban list modification made by an admin can be used to remove people from the banlist.
      */
     @SmackIntegrationTest(section = "9.2", quote = "The admin can then modify the ban list if desired. [...] each item MUST include the 'affiliation' attribute (normally set to a value of \"outcast\" to ban or \"none\" to remove ban)")
     public void mucTestAdminBanListMultipleItemsUnban() throws Exception
@@ -296,10 +296,10 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to no longer contain '" + targetAddress1 + "' that was just removed from the ban list by '" + conTwo.getUser() + "' (but does appear on the ban list).");
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to no longer contain '" + targetAddress2 + "' that was just removed from the ban list by '" + conTwo.getUser() + "' (but does appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to no longer contain '" + targetAddress1 + "' that was just removed from the ban list by '" + conTwo.getUser() + "' (an admin) (but does appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to no longer contain '" + targetAddress2 + "' that was just removed from the ban list by '" + conTwo.getUser() + "' (an admin) (but does appear on the ban list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -307,7 +307,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Asserts that a ban list modification can contain more than one item, that have optional attributes set.
+     * Asserts that a ban list modification made by an admin can contain more than one item, that have optional attributes set.
      */
     @SmackIntegrationTest(section = "9.2", quote = "The admin can then modify the ban list if desired. In order to do so, the admin MUST send the changed items [...] back to the service; After updating the ban list, the service MUST inform the admin of success.")
     public void mucTestAdminBanListMultipleItemsWithOptionalAttributes() throws Exception
@@ -339,10 +339,10 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (but does not appear on the ban list).");
-            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (but does not appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress1)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the ban list).");
+            assertTrue(mucAsSeenByAdmin.getOutcasts().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.outcast && i.getJid().equals(targetAddress2)), "Expected the ban list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the ban list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the ban list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -350,8 +350,8 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Asserts that a ban list modification is a delta: it shouldn't affect entries already on the ban list that are
-     * not included in the delta.
+     * Asserts that a ban list modification made by an admin is a delta: it shouldn't affect entries already on the ban
+     * list that are not included in the delta.
      */
     @SmackIntegrationTest(section = "9.2", quote = "The admin can then modify the ban list if desired. In order to do so, the admin MUST send the changed items (i.e., only the \"delta\") [...]")
     public void mucTestAdminBanListIsDelta() throws Exception
@@ -385,13 +385,13 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the ban list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
 
             final Set<Jid> outcasts = mucAsSeenByAdmin.getOutcasts().stream().filter(i -> i.getAffiliation().equals(MUCAffiliation.outcast)).map(Affiliate::getJid).collect(Collectors.toSet());
-            assertFalse(outcasts.contains(targetAddress1), "Expected '" + targetAddress1 + "' to no longer be on the ban list of '" + mucAddress + "', after '" + conTwo.getUser() + "' updated the ban list that previously contained them with their removal (but does still appear on the ban list).");
-            assertTrue(outcasts.contains(targetAddress2), "Expected '" + targetAddress2 + "' to be on the ban list of '" + mucAddress + "', after the ban list that previously contained them got updated by '" + conTwo.getUser() + "' with different items (which should have been applied as a delta).");
-            assertTrue(outcasts.contains(targetAddress3), "Expected '" + targetAddress3 + "' to be on the ban list of '" + mucAddress + "', after the ban list that previously did not contain them got updated by '" + conTwo.getUser() + "' with items that include them.");
+            assertFalse(outcasts.contains(targetAddress1), "Expected '" + targetAddress1 + "' to no longer be on the ban list of '" + mucAddress + "', after '" + conTwo.getUser() + "' (an admin) updated the ban list that previously contained them with their removal (but does still appear on the ban list).");
+            assertTrue(outcasts.contains(targetAddress2), "Expected '" + targetAddress2 + "' to be on the ban list of '" + mucAddress + "', after the ban list that previously contained them got updated by '" + conTwo.getUser() + "' (an admin) with different items (which should have been applied as a delta).");
+            assertTrue(outcasts.contains(targetAddress3), "Expected '" + targetAddress3 + "' to be on the ban list of '" + mucAddress + "', after the ban list that previously did not contain them got updated by '" + conTwo.getUser() + "' (an admin) with items that include them.");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -399,7 +399,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Verifies that occupants that are banned by modification of the banlist are removed from the room.
+     * Verifies that occupants that are banned by modification of the banlist by an admin are removed from the room.
      */
     @SmackIntegrationTest(section = "9.2", quote = "After updating the ban list [...] The service MUST then remove the affected occupants (if they are in the room)")
     public void mucTestBanListOccupantsInformedOfBan() throws Exception
@@ -448,7 +448,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             mucAsSeenByAdmin.banUsers(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            assertResult(targetSeesBan, "Expected '" + conThree.getUser() + "' to receive a presence stanza of type \"unavailable\" including status code 301 in the extended presence information after being banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesBan, "Expected '" + conThree.getUser() + "' to receive a presence stanza of type \"unavailable\" including status code 301 in the extended presence information after being banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -456,7 +456,7 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Verifies that other occupants are notified when banlist changes are made.
+     * Verifies that other occupants are notified when banlist changes are made by an admin.
      */
     @SmackIntegrationTest(section = "9.2", quote = "After updating the ban list [...] The service MUST then remove the affected occupants [...] and send updated presence (including the appropriate status code) from them to all the remaining occupants")
     public void mucTestBanListRemainingOccupantsInformedOfBan() throws Exception
@@ -516,8 +516,8 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             mucAsSeenByAdmin.banUsers(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            assertResult(ownerSeesBan, "Expected '" + conOne.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress1 + "' is banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesBan, "Expected '" + conTwo.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress1 + "' is banned by '" + conTwo.getUser() + "' from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesBan, "Expected '" + conOne.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress1 + "' is banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesBan, "Expected '" + conTwo.getUser() + "' to receive a presence stanza of type \"unavailable\" of '" + targetMucAddress + "' including status code 301 in the extended presence information after '" + targetAddress1 + "' is banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -525,8 +525,8 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
     }
 
     /**
-     * Verifies that entities banned from a room through ban list modifications get their nickname removed from the list
-     * of registered nicknames.
+     * Verifies that entities banned by an admin from a room through ban list modifications get their nickname removed
+     * from the list of registered nicknames.
      */
     @SmackIntegrationTest(section = "9.2", quote = "After updating the ban list [...] The service MUST also remove each banned user's reserved nickname from the list of reserved roomnicks, if appropriate.")
     public void mucTestBanListRemovesRegisteredNickname() throws Exception
@@ -577,8 +577,8 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             mucAsSeenByAdmin.banUsers(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget1.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget1 + "') of '" + targetAddress1 + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo + "' from '" + mucAddress + "' (but the nickname does still appear on the list).");
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget2.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget2 + "') of '" + targetAddress2 + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo + "' from '" + mucAddress + "' (but the nickname does still appear on the list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget1.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget1 + "') of '" + targetAddress1 + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the nickname does still appear on the list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(affiliate -> nicknameTarget2.equals(affiliate.getNick())), "Expected the registered nickname ('" + nicknameTarget2 + "') of '" + targetAddress2 + "' to no longer be on the list of registered nicknames after the were banned by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' (but the nickname does still appear on the list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);

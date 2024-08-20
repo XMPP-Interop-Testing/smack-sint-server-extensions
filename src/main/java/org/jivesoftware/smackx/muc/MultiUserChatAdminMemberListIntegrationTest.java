@@ -58,7 +58,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Asserts that a member list can be obtained.
+     * Asserts that a member list can be obtained by an admin.
      */
     @SmackIntegrationTest(section = "9.5", quote = "The admin [...] requests the member list by querying the room for all users with an affiliation of \"member\"")
     public void mucTestAdminRequestsMemberList() throws Exception
@@ -85,7 +85,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
 
             // Verify result.
         } catch (XMPPException.XMPPErrorException e) {
-            fail("Expected admin '" + conTwo.getUser() + "' to be able to receive the member list from '" + mucAddress + "' (but the server returned an error).", e);
+            fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to receive the member list from '" + mucAddress + "' (but the server returned an error).", e);
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -93,9 +93,9 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Asserts that a member list item has 'affiliation' and 'jid' attributes.
+     * Asserts that a member list item received by an admin has 'affiliation' and 'jid' attributes.
      */
-    @SmackIntegrationTest(section = "9.5", quote = "each item MUST include the 'affiliation' and 'jid' attributes")
+    @SmackIntegrationTest(section = "9.5", quote = "The service MUST then return the full member list to the admin [...]; each item MUST include the 'affiliation' and 'jid' attributes")
     public void mucTestAdminMemberListItemCheck() throws Exception
     {
         // Setup test fixture.
@@ -120,9 +120,9 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
             final MUCAdmin response = conTwo.sendIqRequestAndWaitForResponse(iq);
 
             // Verify result.
-            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid() == null), "The member list for '" + mucAddress + "' contains an item that does not have a 'jid' attribute (but all items must have one).");
-            assertFalse(response.getItems().stream().anyMatch(i -> i.getAffiliation() == null), "The member list for '" + mucAddress + "' contains an item that does not have an 'affiliation' attribute (but all items must have one).");
-            assertTrue(response.getItems().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Expected the member list requested by '" + conTwo.getUser() + "' from '" + mucAddress + "' to include the recently added member '" + targetAddress + "' (but it did not).");
+            assertFalse(response.getItems().stream().anyMatch(i -> i.getJid() == null), "The member list for '" + mucAddress + "' as requested by '" + conTwo.getUser() + "' (an admin) contains an item that does not have a 'jid' attribute (but all items must have one).");
+            assertFalse(response.getItems().stream().anyMatch(i -> i.getAffiliation() == null), "The member list for '" + mucAddress + "' as requested by '" + conTwo.getUser() + "' (an admin) contains an item that does not have an 'affiliation' attribute (but all items must have one).");
+            assertTrue(response.getItems().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Expected the member list requested by '" + conTwo.getUser() + "' (an admin) from '" + mucAddress + "' to include the recently added member '" + targetAddress + "' (but it did not).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -130,7 +130,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Asserts that a member list modification can contain more than one item.
+     * Asserts that a member list modification made by an admin can contain more than one item.
      */
     @SmackIntegrationTest(section = "9.5", quote = "The admin can then modify the member list if desired. In order to do so, the admin MUST send the changed items [...] to the service; [...] The service MUST modify the member list and then inform the moderator of success:")
     public void mucTestAdminMemberListMultipleItems() throws Exception
@@ -162,10 +162,10 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress1)), "Expected the member list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the member list by '" + conTwo.getUser() + "' (but does not appear on the member list).");
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress2)), "Expected the member list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the member list by '" + conTwo.getUser() + "' (but does not appear on the member list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress1)), "Expected the member list for '" + mucAddress + "' to contain '" + targetAddress1 + "' that was just added to the member list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the member list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress2)), "Expected the member list for '" + mucAddress + "' to contain '" + targetAddress2 + "' that was just added to the member list by '" + conTwo.getUser() + "' (an admin) (but does not appear on the member list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -173,7 +173,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Asserts that a member list modification can be used to remove people from the member list.
+     * Asserts that a member list modification made by an admin can be used to remove people from the member list.
      */
     @SmackIntegrationTest(section = "9.5", quote = "The admin can then modify the member list if desired. [...] each item MUST include the 'affiliation' attribute (normally set to a value of \"member\" or \"none\")")
     public void mucTestAdminMemberListMultipleItemsRevoke() throws Exception
@@ -207,10 +207,10 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).", e);
+                fail("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).", e);
             }
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress1)), "Expected the member list for '" + mucAddress + "' to no longer contain '" + targetAddress1 + "' that was just removed from the member list by '" + conTwo.getUser() + "' (but does appear on the member list).");
-            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress2)), "Expected the member list for '" + mucAddress + "' to no longer contain '" + targetAddress2 + "' that was just removed from the member list by '" + conTwo.getUser() + "' (but does appear on the member list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress1)), "Expected the member list for '" + mucAddress + "' to no longer contain '" + targetAddress1 + "' that was just removed from the member list by '" + conTwo.getUser() + "' (an admin) (but does appear on the member list).");
+            assertTrue(mucAsSeenByAdmin.getMembers().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.member && i.getJid().equals(targetAddress2)), "Expected the member list for '" + mucAddress + "' to no longer contain '" + targetAddress2 + "' that was just removed from the member list by '" + conTwo.getUser() + "' (an admin) (but does appear on the member list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -218,8 +218,8 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Asserts that a member list modification is a delta: it shouldn't affect entries already on the member list that are
-     * not included in the delta.
+     * Asserts that a member list modification made by an admin is a delta: it shouldn't affect entries already on the
+     * member list that are not included in the delta.
      */
     @SmackIntegrationTest(section = "9.5", quote = "The admin can then modify the member list if desired. In order to do so, the admin MUST send the changed items (i.e., only the \"delta\")")
     public void mucTestAdminMemberListIsDelta() throws Exception
@@ -251,14 +251,14 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
             try {
                 conTwo.sendIqRequestAndWaitForResponse(iq);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected the service to inform '" + conTwo.getUser() + "' of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).");
+                throw new TestNotPossibleException("Expected the service to inform '" + conTwo.getUser() + "' (an admin) of success after they modified the member list of room '" + mucAddress + "' (but instead, an error was returned).");
             }
 
             // Verify result.
             final Set<Jid> members = mucAsSeenByAdmin.getMembers().stream().filter(i -> i.getAffiliation().equals(MUCAffiliation.member)).map(Affiliate::getJid).collect(Collectors.toSet());
-            assertFalse(members.contains(targetAddress1), "Expected '" + targetAddress1 + "' to no longer be on the member list of '" + mucAddress + "', after '" + conTwo.getUser() + "' updated the member list that previously contained them with their removal (but does still appear on the member list).");
-            assertTrue(members.contains(targetAddress2), "Expected '" + targetAddress2 + "' to be on the member list of '" + mucAddress + "', after the member list that previously contained them got updated by '" + conTwo.getUser() + "' with different items (which should have been applied as a delta).");
-            assertTrue(members.contains(targetAddress3), "Expected '" + targetAddress3 + "' to be on the member list of '" + mucAddress + "', after the member list that previously did not contain them got updated by '" + conTwo.getUser() + "' with items that include them.");
+            assertFalse(members.contains(targetAddress1), "Expected '" + targetAddress1 + "' to no longer be on the member list of '" + mucAddress + "', after '" + conTwo.getUser() + "' (an admin) updated the member list that previously contained them with their removal (but does still appear on the member list).");
+            assertTrue(members.contains(targetAddress2), "Expected '" + targetAddress2 + "' to be on the member list of '" + mucAddress + "', after the member list that previously contained them got updated by '" + conTwo.getUser() + "' (an admin) with different items (which should have been applied as a delta).");
+            assertTrue(members.contains(targetAddress3), "Expected '" + targetAddress3 + "' to be on the member list of '" + mucAddress + "', after the member list that previously did not contain them got updated by '" + conTwo.getUser() + "' (an admin) with items that include them.");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -266,8 +266,8 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that occupants that get their membership revoked by modification of the member list are prevented
-     * from accessing the room
+     * Verifies that occupants that get their membership revoked by modification of the member list by an admin
+     * are prevented from accessing the room
      */
     @SmackIntegrationTest(section = "9.5", quote = "If a removed member is currently in a members-only room [..] The service MUST subsequently refuse entry to the user.")
     public void mucTestMemberListNoEntryAfterRevoke() throws Exception
@@ -275,21 +275,25 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-memberlist-noentry");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = conThree.getUser().asEntityBareJid();
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameAdmin = Resourcepart.from("admin-" + randomString);
         final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
 
         createMembersOnlyMuc(mucAsSeenByOwner, nicknameOwner);
         try {
+            mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
             mucAsSeenByOwner.grantMembership(targetAddress);
+            mucAsSeenByAdmin.join(nicknameAdmin);
 
             // Execute system under test.
-            mucAsSeenByOwner.revokeMembership(targetAddress);
+            mucAsSeenByAdmin.revokeMembership(targetAddress);
 
             // Verify result.
-            assertThrows(XMPPException.XMPPErrorException.class, () -> mucAsSeenByTarget.join(nicknameTarget), "Expected '" + conThree.getUser() + "' to receive an error when trying to join room '" + mucAddress + "' after '" + conOne.getUser() + "' removed them from the member list (but no error was received).'");
+            assertThrows(XMPPException.XMPPErrorException.class, () -> mucAsSeenByTarget.join(nicknameTarget), "Expected '" + conThree.getUser() + "' to receive an error when trying to join room '" + mucAddress + "' after '" + conTwo.getUser() + "' (an admin) removed them from the member list (but no error was received).'");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -297,7 +301,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that other occupants are notified when member list changes are made.
+     * Verifies that other occupants are notified when member list changes are made by an admin.
      */
     @SmackIntegrationTest(section = "9.5", quote = "[for a removed member] For all room types, the service MUST send updated presence from this individual to all occupants, indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\".")
     public void mucTestMemberListRemainingOccupantsInformedOfRevokeOpenRoom() throws Exception
@@ -359,8 +363,8 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
             mucAsSeenByAdmin.revokeMembership(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
-            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
+            assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
+            assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -368,7 +372,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that other occupants are notified when member list changes are made.
+     * Verifies that other occupants are notified when member list changes are made by an admin.
      */
     @SmackIntegrationTest(section = "9.5", quote = "[for a removed member] For all room types, the service MUST send updated presence from this individual to all occupants, indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\".")
     public void mucTestMemberListRemainingOccupantsInformedOfRevokeMemberOnlyRoom() throws Exception
@@ -417,10 +421,10 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
             mucAsSeenByAdmin.revokeMembership(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            final Presence ownerReceivedPresence = assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be a member-only room (but no such stanza was received).");
-            final Presence adminReceivedPresence = assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be a member-only room (but no such stanza was received).");
-            assertTrue(ownerReceivedPresence.getExtension(MUCUser.class).getItem() != null && ownerReceivedPresence.getExtension(MUCUser.class).getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conOne.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' revoking their membership (but it was not).");
-            assertTrue(adminReceivedPresence.getExtension(MUCUser.class).getItem() != null && ownerReceivedPresence.getExtension(MUCUser.class).getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' revoking their membership (but it was not).");
+            final Presence ownerReceivedPresence = assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be a member-only room (but no such stanza was received).");
+            final Presence adminReceivedPresence = assertResult(adminSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"none\" for '" + targetAddress1 + "' after its membership was revoked by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be a member-only room (but no such stanza was received).");
+            assertTrue(ownerReceivedPresence.getExtension(MUCUser.class).getItem() != null && ownerReceivedPresence.getExtension(MUCUser.class).getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conOne.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
+            assertTrue(adminReceivedPresence.getExtension(MUCUser.class).getItem() != null && ownerReceivedPresence.getExtension(MUCUser.class).getItem().getAffiliation().equals(MUCAffiliation.none), "Expected to find an item with affiliation 'none' in the presence stanza received by '" + conTwo.getUser() + "' when '" + conThree.getUser() + "' was removed from members-only room '" + mucAddress + "' as a result of '" + conTwo.getUser() + "' (an admin) revoking their membership (but it was not).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -428,25 +432,30 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that sending an invitation in an open room does not automatically add the invitee to the member list.
+     * Verifies that sending an invitation (by an admin) in an open room does not automatically add the invitee to the member list.
      */
     @SmackIntegrationTest(section = "9.5", quote = "Invitations sent through an open room MUST NOT trigger the addition of the invitee to the member list.")
-    public void mucTestMemberListNoChangeWithInviteInOpenROom() throws Exception
+    public void mucTestMemberListNoChangeWithInviteInOpenRoom() throws Exception
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-memberlist-invite-open");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameAdmin = Resourcepart.from("admin-" + randomString);
 
         final EntityBareJid targetAddress = conThree.getUser().asEntityBareJid();
 
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
+            mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
+            mucAsSeenByAdmin.join(nicknameAdmin);
+
             // Execute system under test.
-            mucAsSeenByOwner.invite(targetAddress, "Invitation as part of an integration test.");
+            mucAsSeenByAdmin.invite(targetAddress, "Invitation as part of an integration test.");
 
             // Verify result.
-            assertFalse(mucAsSeenByOwner.getMembers().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Did not expect '" + targetAddress + "' to be on the member list of open room '" + mucAddress + "' after they were invited by '" + conOne.getUser() + "' (but they are on the member list).");
+            assertFalse(mucAsSeenByOwner.getMembers().stream().anyMatch(i -> i.getJid().equals(targetAddress)), "Did not expect '" + targetAddress + "' to be on the member list of open room '" + mucAddress + "' after they were invited by '" + conTwo.getUser() + "' (an admin) (but they are on the member list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -454,7 +463,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that other occupants are notified when member list changes are made.
+     * Verifies that other occupants are notified when member list changes are made by an admin.
      */
     @SmackIntegrationTest(section = "9.5", quote = "If a user is added to the member list of an open room and the user is in the room, the service MUST send updated presence from this individual to all occupants, indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\".")
     public void mucTestMemberListOccupantsInformedOfGrantOpenRoom() throws Exception
@@ -521,13 +530,12 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
             mucAsSeenByAdmin.grantMembership(List.of(targetAddress1, targetAddress2));
 
             // Verify result.
-            assertResult(ownerSeesGrant, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
-            assertResult(adminSeesGrant, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
-            assertResult(target1SeesGrant, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
+            assertResult(ownerSeesGrant, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
+            assertResult(adminSeesGrant, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
+            assertResult(target1SeesGrant, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the change in affiliation by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'affiliation' attribute set to a value of \"member\" for '" + targetAddress1 + "' after its membership was granted by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' which is configured to be an open room (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
         }
     }
-
 }

@@ -94,7 +94,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to grant moderator status to '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant moderator status to '" + targetMucAddress + "' in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -148,7 +148,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected admin '" + conTwo.getUser() + "' to be able to grant moderator status to '" + targetMucAddress + "' in '" + mucAddress + "' when providing an optional 'reason' element (but the server returned an error).", e);
+                fail("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant moderator status to '" + targetMucAddress + "' in '" + mucAddress + "' when providing an optional 'reason' element (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -251,11 +251,11 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
             try {
                 conTwo.sendIqRequestAndWaitForResponse(request);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to grant moderator status to '" + nicknameTarget + "' in '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant moderator status to '" + nicknameTarget + "' in '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertTrue(mucAsSeenByAdmin.getModerators().stream().anyMatch(affiliate -> affiliate.getNick().equals(nicknameTarget)), "Expected '" + nicknameTarget + "' to be on the Moderator List after the were granted moderator status by '" + conTwo + "' in '" + mucAddress + "' (but the nickname does not appear on the Moderator List).");
+            assertTrue(mucAsSeenByAdmin.getModerators().stream().anyMatch(affiliate -> affiliate.getNick().equals(nicknameTarget)), "Expected '" + nicknameTarget + "' to be on the Moderator List after the were granted moderator status by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but the nickname does not appear on the Moderator List).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
@@ -263,7 +263,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     }
 
     /**
-     * Verifies that occupants are notified when an existing occupant is granted moderator status.
+     * Verifies that occupants are notified when an existing occupant is granted moderator status by an admin.
      */
     @SmackIntegrationTest(section = "9.6", quote = "The service MUST then send updated presence from this individual to all occupants, indicating the addition of moderator status by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'role' attribute set to a value of \"moderator\".")
     public void mucTestOccupantsInformed() throws Exception {
@@ -333,13 +333,13 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
             try {
                 conTwo.sendIqRequestAndWaitForResponse(request);
             } catch (XMPPException.XMPPErrorException e) {
-                throw new TestNotPossibleException("Expected admin '" + conTwo.getUser() + "' to be able to grant moderator status to '" + nicknameTarget + "' in '" + mucAddress + "' (but the server returned an error).");
+                throw new TestNotPossibleException("Expected '" + conTwo.getUser() + "' (an admin) to be able to grant moderator status to '" + nicknameTarget + "' in '" + mucAddress + "' (but the server returned an error).");
             }
 
             // Verify result.
-            assertResult(targetSeesModerator, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after they are granted moderator status by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(ownerSeesModerator, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after '" + targetMucAddress + "' is granted moderator status by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
-            assertResult(adminSeesModerator, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after '" + targetMucAddress + "' is granted moderator status by '" + conTwo.getUser() + "' in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(targetSeesModerator, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after they are granted moderator status by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(ownerSeesModerator, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after '" + targetMucAddress + "' is granted moderator status by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
+            assertResult(adminSeesModerator, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of moderator status, after '" + targetMucAddress + "' is granted moderator status by '" + conTwo.getUser() + "' (an admin) in '" + mucAddress + "' (but no such stanza was received).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
