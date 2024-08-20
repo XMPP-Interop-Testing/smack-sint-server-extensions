@@ -60,7 +60,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testDestroyPersistentRoom() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-persistent");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-prst");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
