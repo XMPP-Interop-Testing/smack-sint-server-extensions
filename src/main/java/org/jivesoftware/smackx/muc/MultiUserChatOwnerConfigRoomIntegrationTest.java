@@ -19,15 +19,15 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.filter.AndFilter;
-import org.jivesoftware.smack.filter.FromMatchesFilter;
-import org.jivesoftware.smack.filter.StanzaFilter;
-import org.jivesoftware.smack.filter.StanzaTypeFilter;
+import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smackx.muc.filter.MUCUserStatusCodeFilter;
 import org.jivesoftware.smackx.muc.packet.MUCOwner;
@@ -734,12 +734,12 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameMember = Resourcepart.from("member-" + randomString);
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final SimpleResultSyncPoint ownerSeesRemoval = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint targetSeesRemoval = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint memberSeesRemoval = new SimpleResultSyncPoint();
-        final StanzaListener ownerListener = stanza -> ownerSeesRemoval.signal();
-        final StanzaListener targetListener = stanza -> targetSeesRemoval.signal();
-        final StanzaListener memberListener = stanza -> memberSeesRemoval.signal();
+        final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
+        final ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
+        final ResultSyncPoint<Presence, Exception> memberSeesRemoval = new ResultSyncPoint<>();
+        final StanzaListener ownerListener = (stanza) -> ownerSeesRemoval.signal((Presence) stanza);
+        final StanzaListener targetListener = (stanza) -> targetSeesRemoval.signal((Presence) stanza);
+        final StanzaListener memberListener = (stanza) -> memberSeesRemoval.signal((Presence) stanza);
         try {
             mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
                 .setMembersOnly(false)
@@ -774,9 +774,7 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
 
             final StanzaFilter removalDetectionFilter = new AndFilter(
                 FromMatchesFilter.create(mucAddress),
-                StanzaTypeFilter.PRESENCE,
-                FromMatchesFilter.createFull(targetMucAddress),
-                new MUCUserStatusCodeFilter(MUCUser.Status.create(322))
+                PresenceTypeFilter.UNAVAILABLE
             );
             conOne.addStanzaListener(ownerListener, removalDetectionFilter);
             conTwo.addStanzaListener(targetListener, removalDetectionFilter);
@@ -789,9 +787,12 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                     .submitConfigurationForm();
 
                 // Verify result.
-                assertResult(ownerSeesRemoval, "Expected '" + conOne.getUser() + "' to receive an 'unavailable' presence stanza with status code 322 from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
-                assertResult(targetSeesRemoval, "Expected '" + conTwo.getUser() + "' to receive an 'unavailable' presence stanza with status code 322 from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
-                assertResult(memberSeesRemoval, "Expected '" + conThree.getUser() + "' to receive an 'unavailable' presence stanza with status code 322 from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
+                final Presence ownerKick = assertResult(ownerSeesRemoval, "Expected '" + conOne.getUser() + "' to receive an 'unavailable' presence stanza from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
+                assertTrue(ownerKick.getExtension(MUCUser.class).getStatus().stream().anyMatch(status -> status.getCode() == 322), "Expected to find status code '322' in the 'unavailable' presence stanza that '" + conOne.getUser() + "' received from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but that status code was not found).");
+                final Stanza targetKick = assertResult(targetSeesRemoval, "Expected '" + conTwo.getUser() + "' to receive an 'unavailable' presence stanza from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
+                assertTrue(targetKick.getExtension(MUCUser.class).getStatus().stream().anyMatch(status -> status.getCode() == 322), "Expected to find status code '322' in the 'unavailable' presence stanza that '" + conTwo.getUser() + "' received from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but that status code was not found).");
+                final Stanza memberKick = assertResult(memberSeesRemoval, "Expected '" + conThree.getUser() + "' to receive an 'unavailable' presence stanza from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but no such stanza was received).");
+                assertTrue(memberKick.getExtension(MUCUser.class).getStatus().stream().anyMatch(status -> status.getCode() == 322), "Expected to find status code '322' in the 'unavailable' presence stanza that '" + conThree.getUser() + "' received from '" + targetMucAddress + "' indicating that non-member '" + targetMucAddress + "' was removed from the room, after '" + conOne.getUser() + " updated the room configuration to be members-only (but that status code was not found).");
             } catch (XMPPException.XMPPErrorException e) {
                 fail("Expected owner '" + conOne.getUser() + "' to be able to apply a change to a room using its configuration form for '" + mucAddress + "' while being in the room (but the server returned an error).", e);
             }
