@@ -1,6 +1,5 @@
 #!/bin/bash
 
-DISABLEDTESTS="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest,ServiceDiscoveryIntegrationTest"
 TIMEOUT=5000
 
 usage() {
@@ -12,7 +11,6 @@ Usage:
     --adminUsername=ADMINUSERNAME       Admin username for the service, to create test users (if not using IBR / XEP-0077)
     --adminPassword=ADMINPASSWORD       Admin password for the service, as above
     --disabledTests=DISABLEDTESTS       Comma-separated list of tests to skip, e.g. EntityCapsTest,SoftwareInfoIntegrationTest
-                                        Default: $DISABLEDTESTS
     --disabledSpecifications=DISABLEDSPECIFICATIONS
                                         Comma-separated list of specifications to skip, e.g. XEP-0030,XEP-0199
     --help                              This help message
@@ -82,7 +80,7 @@ java \
   -Dsinttest.dnsResolver=javax \
   -Dsinttest.disabledSpecifications="$DISABLEDSPECIFICATIONS" \
   -Dsinttest.disabledTests="$DISABLEDTESTS" \
-  -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.SmackIntegrationTestFramework\$JulTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
+  -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
   -Dsinttest.debugger="org.igniterealtime.smack.inttest.util.FileLoggerFactory" \
   -DlogDir="logs" \
   -jar /usr/local/sintse/sintse.jar
