@@ -47,8 +47,17 @@ To run the tests directly from the source code, edit the pom.xml to match your s
 Assuming you've built the Docker image locally, using `docker build . -t sintse`, you can run the tests using the following command:
 
 ```bash
-docker run --net=host sintse --service=example.org --host 127.0.0.1 --adminUsername=admin --adminPassword=admin
+docker run \
+       --net=host \
+       -v "$(pwd)"/logs:/logs \
+       sintse \
+       --service=example.org \
+       --host 127.0.0.1 \
+       --adminUsername=admin \
+       --adminPassword=admin
 ```
+
+The test execution logs (as described in 'Log XMPP traffic in files' below) will be saved in the `/logs/` directory in the container. To make it easy to access these logs, the example above uses a bind mount to store them on the host machine.
 
 To see full usage instructions for the container, you can see the help text by running:
 
