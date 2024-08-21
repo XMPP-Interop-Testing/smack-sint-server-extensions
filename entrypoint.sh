@@ -1,12 +1,14 @@
 #!/bin/bash
 
+SERVICE="example.org"
+HOST="127.0.0.1"
 TIMEOUT=5000
 
 usage() {
   cat <<EOF
 Usage:
-    --service=SERVICE                   Service name, e.g. example.org
-    --host=HOST                         Override DNS, and use this host instead, e.g. 127.0.0.1
+    --service=SERVICE                   Service name, e.g. example.org (default: $SERVICE)
+    --host=HOST                         IP address or DNS name of the XMPP service to run the tests on. (default: $HOST)
     --timeout=TIMEOUT                   Timeout in milliseconds for any XMPP action (default: $TIMEOUT)
     --adminUsername=ADMINUSERNAME       Admin username for the service, to create test users (if not using IBR / XEP-0077)
     --adminPassword=ADMINPASSWORD       Admin password for the service, as above
