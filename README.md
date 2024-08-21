@@ -51,7 +51,7 @@ docker run \
        --net=host \
        -v "$(pwd)"/logs:/logs \
        xmpp_interop_tests \
-       --service=example.org \
+       --domain=example.org \
        --host 127.0.0.1 \
        --adminAccountUsername=admin \
        --adminAccountPassword=admin

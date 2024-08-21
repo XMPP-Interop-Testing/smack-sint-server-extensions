@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SERVICE="example.org"
+DOMAIN="example.org"
 HOST="127.0.0.1"
 TIMEOUT=5000
 
 usage() {
   cat <<EOF
 Usage:
-    --service=SERVICE                     Service name, e.g. example.org (default: $SERVICE)
+    --domain=DOMAIN                       XMPP domain name of server under test. (default: DOMAIN)
     --host=HOST                           IP address or DNS name of the XMPP service to run the tests on. (default: $HOST)
     --timeout=TIMEOUT                     Timeout in milliseconds for any XMPP action (default: $TIMEOUT)
     --adminAccountUsername=ADMINUSERNAME  Admin username for the service, to create test users (if not using IBR / XEP-0077)
@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --service*|--domain*)
       if [[ "$1" != *=* ]]; then shift; fi # Value is next arg if no `=`
-      SERVICE="${1#*=}"
+      DOMAIN="${1#*=}"
       ;;
     --host*)
       if [[ "$1" != *=* ]]; then shift; fi
@@ -62,7 +62,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Deal with errors
-if [ ! -v SERVICE ]; then echo "Service is not set"; exit 1; fi
+if [ ! -v DOMAIN ]; then echo "Domain is not set"; exit 1; fi
 if [ ! -v ADMINACCOUTNUSERNAME ] && [ -v ADMINACCOUTNPASSWORD ]; then echo "Admin username is not set, but password is. Credentials must be specified as a pair"; exit 1; fi
 if [ ! -v ADMINACCOUTNPASSWORD ] && [ -v ADMINACCOUTNUSERNAME ]; then echo "Admin password is not set, but username is. Credentials must be specified as a pair"; exit 1; fi
 
@@ -72,7 +72,7 @@ if [ ! -v ADMINACCOUTNPASSWORD ] && [ -v ADMINACCOUTNUSERNAME ]; then echo "Admi
 #fi
 
 java \
-  -Dsinttest.service="$SERVICE" \
+  -Dsinttest.service="$DOMAIN" \
   -Dsinttest.host="$HOST" \
   -Dsinttest.securityMode=disabled \
   -Dsinttest.replyTimeout=$TIMEOUT \
