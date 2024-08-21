@@ -53,8 +53,8 @@ docker run \
        sintse \
        --service=example.org \
        --host 127.0.0.1 \
-       --adminUsername=admin \
-       --adminPassword=admin
+       --adminAccountUsername=admin \
+       --adminAccountPassword=admin
 ```
 
 The test execution logs (as described in 'Log XMPP traffic in files' below) will be saved in the `/logs/` directory in the container. To make it easy to access these logs, the example above uses a bind mount to store them on the host machine.
