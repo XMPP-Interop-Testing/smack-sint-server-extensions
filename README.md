@@ -44,13 +44,13 @@ To run the tests directly from the source code, edit the pom.xml to match your s
 
 ### From a container
 
-Assuming you've built the Docker image locally, using `docker build . -t sintse`, you can run the tests using the following command:
+Assuming you've built the Docker image locally, using `docker build . -t xmpp_interop_tests`, you can run the tests using the following command:
 
 ```bash
 docker run \
        --net=host \
        -v "$(pwd)"/logs:/logs \
-       sintse \
+       xmpp_interop_tests \
        --service=example.org \
        --host 127.0.0.1 \
        --adminAccountUsername=admin \
@@ -62,7 +62,7 @@ The test execution logs (as described in 'Log XMPP traffic in files' below) will
 To see full usage instructions for the container, you can see the help text by running:
 
 ```bash
-docker run sintse --help
+docker run xmpp_interop_tests --help
 ```
 
 ### Log XMPP traffic in files
