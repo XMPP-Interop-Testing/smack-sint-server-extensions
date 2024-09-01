@@ -87,6 +87,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     private static final String CURRENT_HTTP_BIND_STATUS = "http://jabber.org/protocol/admin#status-http-bind";
     private static final String UPDATE_GROUP_CONFIGURATION = "http://jabber.org/protocol/admin#update-group";
     private static final String GET_USER_LAST_LOGIN_TIME = "http://jabber.org/protocol/admin#get-user-lastlogin";
+    private static final String GET_USER_STATISTICS = "http://jabber.org/protocol/admin#user-stats";
     private static final String REQUEST_PONG_FROM_SERVER = "ping";
 
     public AdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -1362,6 +1363,21 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
             // Do nothing here, since the field only SHOULD be in the format specified by XEP-0082
             // Let a non-parsing exception bubble up.
         }
+    }
+
+    @SmackIntegrationTest(section = "4.10")
+    public void testGetUserStatistics() throws Exception {
+        checkServerSupportCommand(GET_USER_STATISTICS);
+
+        // Execute system under test.
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_STATISTICS, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", conOne.getUser().asEntityBareJidString()
+        );
+
+        // Verify results.
+        assertFormFieldExists("rostersize", result);
+        assertFormFieldExists("onlineresources", result);
+        // TODO: Examples are non-normative, so we can't really check the values, and I'm not 100% happy with these assertions.
     }
 
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
