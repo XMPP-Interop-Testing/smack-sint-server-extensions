@@ -28,6 +28,8 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -84,6 +86,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     private static final String REENABLE_A_USER = "http://jabber.org/protocol/admin#reenable-user";
     private static final String CURRENT_HTTP_BIND_STATUS = "http://jabber.org/protocol/admin#status-http-bind";
     private static final String UPDATE_GROUP_CONFIGURATION = "http://jabber.org/protocol/admin#update-group";
+    private static final String GET_USER_LAST_LOGIN_TIME = "http://jabber.org/protocol/admin#get-user-lastlogin";
     private static final String REQUEST_PONG_FROM_SERVER = "ping";
 
     public AdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -1336,6 +1339,29 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
         // Verify results.
         assertNoteType(AdHocCommandNote.Type.error, result);
         assertNoteContains("Cannot re-enable remote user: " + disabledUser, result);
+    }
+
+    @SmackIntegrationTest(section = "4.9")
+    public void testGetUserLastLoginTime() throws Exception {
+        checkServerSupportCommand(GET_USER_LAST_LOGIN_TIME);
+
+        // Execute system under test.
+        AdHocCommandData result = executeCommandWithArgs(GET_USER_LAST_LOGIN_TIME, adminConnection.getUser().asEntityBareJid(),
+            "accountjids", conOne.getUser().asEntityBareJidString()
+        );
+
+        // Verify results.
+        assertFormFieldExists("lastlogin", result);
+        assertFormFieldHasValues("lastlogin", 1, result);
+        FormField field = result.getForm().getField("lastlogin");
+        try {
+            Date lastLogin = field.getFirstValueAsDate();
+            ZonedDateTime lastLoginTime = ZonedDateTime.ofInstant(lastLogin.toInstant(), ZoneId.systemDefault());
+            assertTrue(lastLoginTime.isAfter(ZonedDateTime.now().minusMinutes(10)));
+        } catch (ParseException e) {
+            // Do nothing here, since the field only SHOULD be in the format specified by XEP-0082
+            // Let a non-parsing exception bubble up.
+        }
     }
 
     //node="http://jabber.org/protocol/admin#status-http-bind" name="Current Http Bind Status"
