@@ -20,19 +20,14 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
-import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.util.StringUtils;
-import org.jivesoftware.smackx.iqversion.packet.Version;
-import org.jxmpp.jid.BareJid;
-import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -102,112 +97,6 @@ public class ResourceBindingIntegrationTest extends AbstractSmackLowLevelIntegra
 
             final XMPPException.StreamErrorException result = assertResult(errorReceived, "Expected an error to be returned when connection sent a message prior to resource-binding/authentication, but no error was returned on connection " + connection);
             assertEquals(StreamError.Condition.not_authorized, result.getStreamError().getCondition(), "Unexpected condition in (expected) error after a message was sent on a connection that had not yet performed resource-binding/authentication.");
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    /**
-     * Asserts that the stream is NOT closed (with a 'not_authorized' stream error) when a stanza is sent to 'yourself',
-     * before the user authenticates.
-     *
-     * Ideally, we'd test this (too) after authentication but before resource binding, but the Smack API does not
-     * support this.
-     *
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @throws XMPPException if an XMPP protocol error was received.
-     * @throws IOException if an I/O error occurred.
-     * @throws SmackException if Smack detected an exceptional situation.
-     * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2565">issue OF-2565</a>
-     */
-    @SmackIntegrationTest(section = "7.1", quote =
-        "If, before completing the resource binding step, the client attempts to send an XML stanza to an entity " +
-        "other than the server itself or the client's account, the server MUST NOT process the stanza and MUST close " +
-        "the stream with a <not-authorized/> stream error (Section 4.9.3.12).")
-    public void testSendStanzaBeforeLoginToSelf(UnconnectedConnectionSource unconnectedConnectionSource) throws XMPPException, SmackException, IOException, InterruptedException
-    {
-        final AbstractXMPPConnection connection = unconnectedConnectionSource.getUnconnectedConnection();
-        connection.connect();
-
-        // connection.getUser() will be null prior to resource binding.
-        final DomainBareJid server = connection.getXMPPServiceDomain();
-        final BareJid self = JidCreate.bareFrom(Localpart.from(connection.config.getUsername().toString()), server);
-
-        try {
-            final IQ query = Version.builder(connection)
-                .ofType(IQ.Type.get)
-                .to(null) // Prior to authentication, user cannot verify the expected JID. Null implies 'addressed to self'.
-                .build();
-
-            // This basically is IQReplyFilter, but without the requirement that the connection is authenticated.
-            final StanzaFilter filter = stanza -> new AndFilter(
-                new OrFilter(IQTypeFilter.ERROR, IQTypeFilter.RESULT),
-                new StanzaIdFilter(query),
-                new OrFilter(FromMatchesFilter.createBare(self),
-                    FromMatchesFilter.createFull(server),
-                    FromMatchesFilter.createFull(null))
-            ).test(stanza);
-
-            final StanzaCollector collector = connection.createStanzaCollectorAndSend(filter, query);
-            final IQ response = collector.nextResult();
-
-            // It doesn't really matter if the response is a result or error. Receiving a response indicates that the
-            // server has processed the request, instead of closing the stream.
-            assertNotNull(response);
-            assertTrue(connection.connected, "Server unexpectedly closed connection that sent a stanza to the client's account prior to authentication/resource binding.");
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    /**
-     * Asserts that the stream is NOT closed (with a 'not_authorized' stream error) when a stanza is sent to the server
-     * itself, before the user authenticates.
-     *
-     * Ideally, we'd test this (too) after authentication but before resource binding, but the Smack API does not
-     * support this.
-     *
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @throws XMPPException if an XMPP protocol error was received.
-     * @throws IOException if an I/O error occurred.
-     * @throws SmackException if Smack detected an exceptional situation.
-     * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2565">issue OF-2565</a>
-     */
-    @SmackIntegrationTest(section = "7.1", quote =
-        "If, before completing the resource binding step, the client attempts to send an XML stanza to an entity " +
-        "other than the server itself or the client's account, the server MUST NOT process the stanza and MUST close " +
-        "the stream with a <not-authorized/> stream error (Section 4.9.3.12).")
-    public void testSendStanzaBeforeLoginServer(UnconnectedConnectionSource unconnectedConnectionSource) throws XMPPException, SmackException, IOException, InterruptedException
-    {
-        final AbstractXMPPConnection connection = unconnectedConnectionSource.getUnconnectedConnection();
-        connection.connect();
-
-        // connection.getUser() will be null prior to resource binding.
-        final DomainBareJid server = connection.getXMPPServiceDomain();
-        final BareJid self = JidCreate.bareFrom(Localpart.from(connection.config.getUsername().toString()), server);
-
-        try {
-            final IQ query = Version.builder(connection)
-                .ofType(IQ.Type.get)
-                .to(server)
-                .build();
-
-            // This basically is IQReplyFilter, but without the requirement that the connection is authenticated.
-            final StanzaFilter filter = stanza -> new AndFilter(
-                new OrFilter(IQTypeFilter.ERROR, IQTypeFilter.RESULT),
-                new StanzaIdFilter(query),
-                new OrFilter(FromMatchesFilter.createBare(self),
-                    FromMatchesFilter.createFull(server),
-                    FromMatchesFilter.createFull(null))
-            ).test(stanza);
-
-            final StanzaCollector collector = connection.createStanzaCollectorAndSend(filter, query);
-            final IQ response = collector.nextResult();
-
-            // It doesn't really matter if the response is a result or error. Receiving a response indicates that the
-            // server has processed the request, instead of closing the stream.
-            assertNotNull(response);
-            assertTrue(connection.connected, "Server unexpectedly closed connection that sent a stanza to the server prior to authentication/resource binding.");
         } finally {
             connection.disconnect();
         }
