@@ -209,7 +209,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
             iq.addItem(new MUCItem(MUCRole.moderator, nicknameTarget2));
 
             try {
-                conOne.sendIqRequestAndWaitForResponse(iq);
+                conOne.sendIqRequestAndWaitForResponse(iq); // As we're limited to only three connections, we're using the owner rather than an admin for this test.
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
@@ -294,7 +294,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
             iq.addItem(new MUCItem(MUCRole.participant, nicknameTarget2));
 
             try {
-                conOne.sendIqRequestAndWaitForResponse(iq);
+                conOne.sendIqRequestAndWaitForResponse(iq); // As we're limited to only three connections, we're using the owner rather than an admin for this test.
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
@@ -380,7 +380,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
             iq.addItem(new MUCItem(MUCRole.moderator, nicknameTarget2));
 
             try {
-                conOne.sendIqRequestAndWaitForResponse(iq);
+                conOne.sendIqRequestAndWaitForResponse(iq); // As we're limited to only three connections, we're using the owner rather than an admin for this test.
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
