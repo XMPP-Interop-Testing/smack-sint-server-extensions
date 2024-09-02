@@ -297,11 +297,21 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
             errorNonExistingVCard = e.getStanzaError();
         }
 
+        if (errorNonExistingVCard == null) {
+            // If this throws, then the test testForErrorWhenRecipientHasNoVCard() should have failed.
+            throw new TestNotPossibleException("Requesting a vCard from an entity did does not have a vCard unexpectedly did not result in an error.");
+        }
+
         try {
             // Execute system under test
             conOne.sendIqRequestAndWaitForResponse(requestNonExistingUser);
         } catch (XMPPException.XMPPErrorException e) {
             errorNonExistingUser = e.getStanzaError();
+        }
+
+        if (errorNonExistingUser == null) {
+            // If this throws, then the test testForErrorWhenRecipientDoesntExist() should have failed.
+            throw new TestNotPossibleException("Requesting a vCard from a non-exising error unexpectedly did not result in an error.");
         }
 
         // Verify result
