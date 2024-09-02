@@ -299,7 +299,7 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
 
         if (errorNonExistingVCard == null) {
             // If this throws, then the test testForErrorWhenRecipientHasNoVCard() should have failed.
-            throw new TestNotPossibleException("Requesting a vCard from an entity did does not have a vCard unexpectedly did not result in an error.");
+            throw new TestNotPossibleException("Requesting a vCard from an entity that does not have a vCard unexpectedly did not result in an error.");
         }
 
         try {
