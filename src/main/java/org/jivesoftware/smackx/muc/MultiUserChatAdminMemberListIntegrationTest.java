@@ -110,6 +110,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             mucAsSeenByOwner.grantMembership(targetAddress);
+            mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
             mucAsSeenByAdmin.join(nicknameAdmin);
 
             // Execute system under test.
