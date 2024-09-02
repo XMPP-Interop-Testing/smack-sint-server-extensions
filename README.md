@@ -48,7 +48,7 @@ Assuming you've built the Docker image locally, using `docker build . -t xmpp_in
 
 ```bash
 docker run \
-       --net=host \
+       --network=host \
        -v "$(pwd)"/logs:/logs \
        xmpp_interop_tests \
        --domain=example.org \
@@ -64,6 +64,12 @@ To see full usage instructions for the container, you can see the help text by r
 ```bash
 docker run xmpp_interop_tests --help
 ```
+
+#### Podman
+
+As usual, identical to the docker commands, substituting `docker` with `podman`.
+
+The repository contains a dedicated `Containerfile` to build the OCI image without the need for specifying or configuring search repositories.=
 
 ### Log XMPP traffic in files
 

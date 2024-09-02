@@ -1,3 +1,5 @@
+# If you're editing this file, you might need to make matching changes to the Containerfile too
+
 FROM eclipse-temurin:17-jdk-noble AS pom
 
 WORKDIR /usr/src
