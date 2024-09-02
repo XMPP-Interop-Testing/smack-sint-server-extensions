@@ -183,12 +183,8 @@ jobs:
 
   build-podman:
     name: Build with Podman
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Needed for Podman 4.9.3
     steps:
       - uses: actions/checkout@v4
-      - name: Install Podman
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y podman
       - name: Build with Podman
         run: podman build -t sintse .

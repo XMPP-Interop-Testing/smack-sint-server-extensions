@@ -27,4 +27,6 @@ COPY --from=build --chmod=0755 /usr/src/entrypoint.sh /sbin/entrypoint.sh
 COPY --from=build /usr/src/target/*-jar-with-dependencies.jar /usr/local/sintse/sintse.jar
 
 LABEL author="Dan Caseley" maintainer="dan@caseley.me.uk"
+LABEL org.opencontainers.image.authors="Dan Caseley <dan@caseley.me.uk>"
+
 ENTRYPOINT ["/sbin/entrypoint.sh"]
