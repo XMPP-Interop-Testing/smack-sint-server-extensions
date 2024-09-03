@@ -429,13 +429,9 @@ public class PubSubExtIntegrationTest extends AbstractSmackIntegrationTest {
         try {
             // Subscribe to the node twice, using different configuration
             final Node subscriberNode = pubSubManagerTwo.getNode(nodeName);
-            final FillableSubscribeForm formA = subscriberNode.getSubscriptionOptions(subscriber.toString()).getFillableForm();
-            formA.setDigestFrequency(1);
-            final FillableSubscribeForm formB = subscriberNode.getSubscriptionOptions(subscriber.toString()).getFillableForm();
-            formB.setDigestFrequency(2);
 
-            final Subscription subscriptionA = subscriberNode.subscribe(subscriber, formA);
-            final Subscription subscriptionB = subscriberNode.subscribe(subscriber, formB);
+            final Subscription subscriptionA = subscriberNode.subscribe(subscriber);
+            final Subscription subscriptionB = subscriberNode.subscribe(subscriber);
 
             // A poor-man's "equal"
             final String normalizedRepresentationA = subscriptionA.toXML(XmlEnvironment.EMPTY).toString();
