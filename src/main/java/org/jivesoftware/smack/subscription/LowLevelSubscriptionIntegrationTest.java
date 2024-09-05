@@ -69,21 +69,32 @@ public class LowLevelSubscriptionIntegrationTest extends AbstractSmackLowLevelIn
 
         conOne.disconnect();
 
-        conTwo.sendStanza(subscriptionRequest);
+        try {
+            conTwo.sendStanza(subscriptionRequest);
 
-        conOne.connect();
+            conOne.connect();
 
-        final SimpleResultSyncPoint received = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint received = new SimpleResultSyncPoint();
 
-        final StanzaFilter resultFilter = new AndFilter(
-            PresenceTypeFilter.SUBSCRIBE,
-            FromMatchesFilter.createBare(conTwo.getUser())
-        );
+            final StanzaFilter resultFilter = new AndFilter(
+                PresenceTypeFilter.SUBSCRIBE,
+                FromMatchesFilter.createBare(conTwo.getUser())
+            );
 
-        conOne.addAsyncStanzaListener(p -> received.signal(), resultFilter);
+            conOne.addAsyncStanzaListener(p -> received.signal(), resultFilter);
 
-        conOne.login();
-        assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them while they were offline by '" + conTwo.getUser() + "' (but did not).");
+            conOne.login();
+            assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them while they were offline by '" + conTwo.getUser() + "' (but did not).");
+        } finally {
+            // Clean up test fixture.
+            if (!conOne.isConnected()) {
+                conOne.connect();
+            }
+            if (!conOne.isAuthenticated()) {
+                conOne.login();
+            }
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 
     /**
@@ -112,21 +123,32 @@ public class LowLevelSubscriptionIntegrationTest extends AbstractSmackLowLevelIn
 
         conOne.disconnect();
 
-        conTwo.sendStanza(subscriptionRequest);
+        try {
+            conTwo.sendStanza(subscriptionRequest);
 
-        conOne.connect();
+            conOne.connect();
 
-        final ResultSyncPoint<Presence, ?> received = new ResultSyncPoint<>();
+            final ResultSyncPoint<Presence, ?> received = new ResultSyncPoint<>();
 
-        final StanzaFilter resultFilter = new AndFilter(
-            PresenceTypeFilter.SUBSCRIBE,
-            FromMatchesFilter.createBare(conTwo.getUser())
-        );
+            final StanzaFilter resultFilter = new AndFilter(
+                PresenceTypeFilter.SUBSCRIBE,
+                FromMatchesFilter.createBare(conTwo.getUser())
+            );
 
-        conOne.addAsyncStanzaListener(p -> received.signal((Presence) p), resultFilter);
+            conOne.addAsyncStanzaListener(p -> received.signal((Presence) p), resultFilter);
 
-        conOne.login();
-        final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them while they were offline by '" + conTwo.getUser() + "' (but did not).");
-        assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' (sent while the intended recipient was offline) to include the custom extension that was in the original request (but that extension was not received).");
+            conOne.login();
+            final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them while they were offline by '" + conTwo.getUser() + "' (but did not).");
+            assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' (sent while the intended recipient was offline) to include the custom extension that was in the original request (but that extension was not received).");
+        } finally {
+            // Clean up test fixture.
+            if (!conOne.isConnected()) {
+                conOne.connect();
+            }
+            if (!conOne.isAuthenticated()) {
+                conOne.login();
+            }
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 }

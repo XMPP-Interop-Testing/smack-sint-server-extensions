@@ -72,9 +72,14 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
         conOne.addAsyncStanzaListener(p -> received.signal(), resultFilter);
 
-        conTwo.sendStanza(subscriptionRequest);
+        try {
+            conTwo.sendStanza(subscriptionRequest);
 
-        assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent by '" + conTwo.getUser() + "' (but did not).");
+            assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent by '" + conTwo.getUser() + "' (but did not).");
+        } finally {
+            // Clean up test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 
     /**
@@ -105,8 +110,13 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
         conOne.addAsyncStanzaListener(p -> received.signal((Presence) p), resultFilter);
 
-        conTwo.sendStanza(subscriptionRequest);
-        final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them by '" + conTwo.getUser() + "' (but did not).");
-        assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' to include the custom extension that was in the original request (but that extension was not received).");
+        try {
+            conTwo.sendStanza(subscriptionRequest);
+            final Presence result = assertResult(received, "Expected '" + conOne.getUser() + "' to receive the subscription request sent to them by '" + conTwo.getUser() + "' (but did not).");
+            assertTrue(result.hasExtension("test", "org.example.test"), "Expected the subscription request received by '" + conOne.getUser() + "' from '" + conTwo.getUser() + "' to include the custom extension that was in the original request (but that extension was not received).");
+        } finally {
+            // Clean up test fixture.
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+        }
     }
 }
