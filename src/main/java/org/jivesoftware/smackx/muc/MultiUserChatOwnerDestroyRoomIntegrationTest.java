@@ -189,43 +189,42 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
         }
     }
 
-// TODO enable this once SMACK-950 gets fixed.
-//    /**
-//     * Verifies that a room destruction request can contain an alternate venue and alternate venue password.
-//     */
-//    @SmackIntegrationTest(section = "10.9", quote = "In order to destroy a room, the room owner MUST send an IQ set to the address of the room to be destroyed. [...] The address of the alternate venue MAY be provided as the value of the <destroy/> element's 'jid' attribute. A password for the alternate venue MAY be provided as the XML character data of a <password/> child element of the <destroy/> element.")
-//    public void testAlternateVenuePassword() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenuepassword");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        try {
-//            createMuc(mucAsSeenByOwner, nicknameOwner);
-//
-//            // Execute system under test.
-//            final MUCOwner request = new MUCOwner();
-//            request.setTo(mucAddress);
-//            request.setType(IQ.Type.set);
-//            request.setDestroy(new Destroy(JidCreate.entityBareFrom("alternate@muc.example.org"), "secret", null));
-//            try {
-//                conOne.sendIqRequestAndWaitForResponse(request);
-//
-//                // Verify result.
-//            } catch (XMPPException.XMPPErrorException e) {
-//                fail("Expected owner '" + conOne.getUser() + "' to be able to destroy room '" + mucAddress + "' while providing an alternative venue and password (but the server returned an error).", e);
-//            }
-//        } finally {
-//            // Tear down test fixture.
-//            try {
-//                if (mucAsSeenByOwner.isJoined()) {
-//                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-//                }
-//            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-//                // Room was likely already destroyed.
-//            }
-//        }
-//    }
+    /**
+     * Verifies that a room destruction request can contain an alternate venue and alternate venue password.
+     */
+    @SmackIntegrationTest(section = "10.9", quote = "In order to destroy a room, the room owner MUST send an IQ set to the address of the room to be destroyed. [...] The address of the alternate venue MAY be provided as the value of the <destroy/> element's 'jid' attribute. A password for the alternate venue MAY be provided as the XML character data of a <password/> child element of the <destroy/> element.")
+    public void testAlternateVenuePassword() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenuepassword");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        try {
+            createMuc(mucAsSeenByOwner, nicknameOwner);
+
+            // Execute system under test.
+            final MUCOwner request = new MUCOwner();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.setDestroy(new Destroy(JidCreate.entityBareFrom("alternate@muc.example.org"), "secret", null));
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
+
+                // Verify result.
+            } catch (XMPPException.XMPPErrorException e) {
+                fail("Expected owner '" + conOne.getUser() + "' to be able to destroy room '" + mucAddress + "' while providing an alternative venue and password (but the server returned an error).", e);
+            }
+        } finally {
+            // Tear down test fixture.
+            try {
+                if (mucAsSeenByOwner.isJoined()) {
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
+                }
+            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
+                // Room was likely already destroyed.
+            }
+        }
+    }
 
     /**
      * Verifies that a room destruction request can contain a reason.
@@ -282,13 +281,13 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
         final SimpleResultSyncPoint participantSeesDestroy = new SimpleResultSyncPoint();
         final UserStatusListener ownerListener = new UserStatusListener() {
             @Override
-            public void roomDestroyed(MultiUserChat alternateMUC, String reason) {
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
                 ownerSeesDestroy.signal();
             }
         };
         final UserStatusListener participantListener = new UserStatusListener() {
             @Override
-            public void roomDestroyed(MultiUserChat alternateMUC, String reason) {
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
                 participantSeesDestroy.signal();
             }
         };
@@ -339,21 +338,21 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
         final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
 
         final EntityBareJid alternateVenue = JidCreate.entityBareFrom("alternate@muc.example.org");
-        final String password = "secret"; // TODO use this after SMACK-950 gets resolved.
+        final String password = "secret";
         final String reason = "Destroying room as part of an integration test";
 
         final ResultSyncPoint<Destroy, Exception> ownerSeesDestroy = new ResultSyncPoint<>();
         final ResultSyncPoint<Destroy, Exception> participantSeesDestroy = new ResultSyncPoint<>();
         final UserStatusListener ownerListener = new UserStatusListener() {
             @Override
-            public void roomDestroyed(MultiUserChat alternateMUC, String reason) {
-                ownerSeesDestroy.signal(new Destroy(alternateMUC == null ? null : alternateMUC.getRoom(), reason));
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
+                ownerSeesDestroy.signal(new Destroy(alternateMUC == null ? null : alternateMUC.getRoom(), password, reason));
             }
         };
         final UserStatusListener participantListener = new UserStatusListener() {
             @Override
-            public void roomDestroyed(MultiUserChat alternateMUC, String reason) {
-                participantSeesDestroy.signal(new Destroy(alternateMUC == null ? null : alternateMUC.getRoom(), reason));
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
+                participantSeesDestroy.signal(new Destroy(alternateMUC == null ? null : alternateMUC.getRoom(), password, reason));
             }
         };
         mucAsSeenByOwner.addUserStatusListener(ownerListener);
@@ -366,18 +365,18 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             final MUCOwner request = new MUCOwner();
             request.setTo(mucAddress);
             request.setType(IQ.Type.set);
-            request.setDestroy(new Destroy(alternateVenue, reason));
+            request.setDestroy(new Destroy(alternateVenue, password, reason));
 
             conOne.sendIqRequestAndWaitForResponse(request);
 
             // Verify result.
             final Destroy ownerDestroy = assertResult(ownerSeesDestroy, "Expected owner '" + conOne.getUser() + "' (joined as '" + nicknameOwner + "') to be notified of destruction of room '" + mucAddress + "' (but no such notification was received).");
             assertEquals(alternateVenue, ownerDestroy.getJid(), "Expected the presence received by owner '" + conOne.getUser() + "' (joined as '" + nicknameOwner + "') after room '" + mucAddress + "' got destroyed to include the alternate venue address that was provided in the destruction request (but that was found in the received presence).");
-            // TODO enable this after SMACK-950 gets resolved // assertEquals(password, ownerDestroy.getPassword(), "Expected the presence received by owner '" + conOne.getUser() + "' (joined as '" + nicknameOwner + "') after room '" + mucAddress + "' got destroyed to include the alternate venue password that was provided in the destruction request (but that was found in the received presence).");
+            assertEquals(password, ownerDestroy.getPassword(), "Expected the presence received by owner '" + conOne.getUser() + "' (joined as '" + nicknameOwner + "') after room '" + mucAddress + "' got destroyed to include the alternate venue password that was provided in the destruction request (but that was found in the received presence).");
             assertEquals(reason, ownerDestroy.getReason(), "Expected the presence received by owner '" + conOne.getUser() + "' (joined as '" + nicknameOwner + "') after room '" + mucAddress + "' got destroyed to include the reason that was provided in the destruction request (but that was found in the received presence).");
             final Destroy participantDestroy = assertResult(participantSeesDestroy, "Expected participant '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') to be notified of destruction of room '" + mucAddress + "' (but no such notification was received).");
             assertEquals(alternateVenue, participantDestroy.getJid(), "Expected the presence received by participant '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after room '" + mucAddress + "' got destroyed to include the alternate venue address that was provided in the destruction request (but that was found in the received presence).");
-            // TODO enable this after SMACK-950 gets resolved // assertEquals(password, participantDestroy.getPassword(), "Expected the presence received by participant '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after room '" + mucAddress + "' got destroyed to include the alternate venue password that was provided in the destruction request (but that was found in the received presence).");
+            assertEquals(password, participantDestroy.getPassword(), "Expected the presence received by participant '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after room '" + mucAddress + "' got destroyed to include the alternate venue password that was provided in the destruction request (but that was found in the received presence).");
             assertEquals(reason, participantDestroy.getReason(), "Expected the presence received by participant '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after room '" + mucAddress + "' got destroyed to include the reason that was provided in the destruction request (but that was found in the received presence).");
         } finally {
             // Tear down test fixture.

@@ -43,10 +43,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -320,191 +317,189 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         }
     }
 
-    // TODO uncomment this after Smack is updated to get the new API used by this implementation (SMACK-947).
-//    /**
-//     * Verifies that when as a result of a change in the room configuration a room admin loses admin status while in the room, the room sends updated presence.
-//     */
-//    @SmackIntegrationTest(section = "10.2", quote = "If as a result of a change in the room configuration a room admin loses admin status while in the room, the room MUST send updated presence for that individual to all occupants, denoting the change in status [...]")
-//    public void testRoomConfigDropAdmin() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-drop-admin");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerThree.getMultiUserChat(mucAddress);
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
-//
-//        try {
-//            mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
-//                .setRoomAdmins(Set.of(conOne.getUser().asBareJid(), conTwo.getUser().asBareJid()))
-//                .submitConfigurationForm();
-//
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
-//            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        ownerSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.join(nicknameTarget);
-//
-//            ownerSeesTarget.waitForResult(timeout);
-//            participantSeesTarget.waitForResult(timeout);
-//
-//            final SimpleResultSyncPoint ownerSeesRevoke = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint targetSeesRevoke = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint participantSeesRevoke = new SimpleResultSyncPoint();
-//            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void adminRevoked(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        ownerSeesRevoke.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.addUserStatusListener(new UserStatusListener() {
-//                @Override
-//                public void adminRevoked() {
-//                    targetSeesRevoke.signal();
-//                }
-//            });
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void adminRevoked(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesRevoke.signal();
-//                    }
-//                }
-//            });
-//
-//            try {
-//                // Execute system under test.
-//                mucAsSeenByOwner.getConfigFormManager()
-//                    .setRoomAdmins(Set.of(conOne.getUser().asBareJid()))
-//                    .submitConfigurationForm();
-//
-//                // Verify result.
-//                assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//                assertResult(targetSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//                assertResult(participantSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//            } catch (XMPPException.XMPPErrorException e) {
-//                fail("Expected owner '" + conOne.getUser() + "' to be able to apply a change to a room using its configuration form for '" + mucAddress + "' while being in the room (but the server returned an error).", e);
-//            }
-//        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
-//            throw new TestNotPossibleException(e);
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
+    /**
+     * Verifies that when as a result of a change in the room configuration a room admin loses admin status while in the room, the room sends updated presence.
+     */
+    @SmackIntegrationTest(section = "10.2", quote = "If as a result of a change in the room configuration a room admin loses admin status while in the room, the room MUST send updated presence for that individual to all occupants, denoting the change in status [...]")
+    public void testRoomConfigDropAdmin() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-drop-admin");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerThree.getMultiUserChat(mucAddress);
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-    // TODO uncomment this after Smack is updated to get the new API used by this implementation (SMACK-947).
-//    /**
-//     * Verifies that when as a result of a change in the room configuration a user gains admin status while in the room, the room sends updated presence.
-//     */
-//    @SmackIntegrationTest(section = "10.2", quote = "If as a result of a change in the room configuration a user gains admin status while in the room, the room MUST send updated presence for that individual to all occupants, denoting the change in status [...]")
-//    public void testRoomConfigAddAdmin() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-add-admin");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerThree.getMultiUserChat(mucAddress);
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
-//
-//        try {
-//            mucAsSeenByOwner.create(nicknameOwner).makeInstant();
-//
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
-//            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        ownerSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.join(nicknameTarget);
-//
-//            ownerSeesTarget.waitForResult(timeout);
-//            participantSeesTarget.waitForResult(timeout);
-//
-//            final SimpleResultSyncPoint ownerSeesGrant = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint targetSeesGrant = new SimpleResultSyncPoint();
-//            final SimpleResultSyncPoint participantSeesGrant = new SimpleResultSyncPoint();
-//            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void adminGranted(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        ownerSeesGrant.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.addUserStatusListener(new UserStatusListener() {
-//                @Override
-//                public void adminGranted() {
-//                    targetSeesGrant.signal();
-//                }
-//            });
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void adminGranted(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesGrant.signal();
-//                    }
-//                }
-//            });
-//
-//            try {
-//                // Execute system under test.
-//                mucAsSeenByOwner.getConfigFormManager()
-//                    .setRoomAdmins(Set.of( conTwo.getUser().asBareJid()))
-//                    .submitConfigurationForm();
-//
-//                // Verify result.
-//                assertResult(ownerSeesGrant, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//                assertResult(targetSeesGrant, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//                assertResult(participantSeesGrant, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
-//            } catch (XMPPException.XMPPErrorException e) {
-//                fail("Expected owner '" + conOne.getUser() + "' to be able to apply a change to a room using its configuration form for '" + mucAddress + "' while being in the room (but the server returned an error).", e);
-//            }
-//        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
-//            throw new TestNotPossibleException(e);
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
+        try {
+            mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
+                .setRoomAdmins(Set.of(conTwo.getUser().asBareJid()))
+                .submitConfigurationForm();
+
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        ownerSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.join(nicknameTarget);
+
+            ownerSeesTarget.waitForResult(timeout);
+            participantSeesTarget.waitForResult(timeout);
+
+            final SimpleResultSyncPoint ownerSeesRevoke = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint targetSeesRevoke = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesRevoke = new SimpleResultSyncPoint();
+            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void adminRevoked(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        ownerSeesRevoke.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.addUserStatusListener(new UserStatusListener() {
+                @Override
+                public void adminRevoked() {
+                    targetSeesRevoke.signal();
+                }
+            });
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void adminRevoked(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesRevoke.signal();
+                    }
+                }
+            });
+
+            try {
+                // Execute system under test.
+                mucAsSeenByOwner.getConfigFormManager()
+                    .setRoomAdmins(Set.of()) // Remove the admin.
+                    .submitConfigurationForm();
+
+                // Verify result.
+                assertResult(ownerSeesRevoke, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+                assertResult(targetSeesRevoke, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+                assertResult(participantSeesRevoke, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the revokation of admin status from '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to remove '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+            } catch (XMPPException.XMPPErrorException e) {
+                fail("Expected owner '" + conOne.getUser() + "' to be able to apply a change to a room using its configuration form for '" + mucAddress + "' while being in the room (but the server returned an error).", e);
+            }
+        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that when as a result of a change in the room configuration a user gains admin status while in the room, the room sends updated presence.
+     */
+    @SmackIntegrationTest(section = "10.2", quote = "If as a result of a change in the room configuration a user gains admin status while in the room, the room MUST send updated presence for that individual to all occupants, denoting the change in status [...]")
+    public void testRoomConfigAddAdmin() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-add-admin");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerThree.getMultiUserChat(mucAddress);
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
+
+        try {
+            mucAsSeenByOwner.create(nicknameOwner).makeInstant();
+
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        ownerSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.join(nicknameTarget);
+
+            ownerSeesTarget.waitForResult(timeout);
+            participantSeesTarget.waitForResult(timeout);
+
+            final SimpleResultSyncPoint ownerSeesGrant = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint targetSeesGrant = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesGrant = new SimpleResultSyncPoint();
+            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void adminGranted(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        ownerSeesGrant.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.addUserStatusListener(new UserStatusListener() {
+                @Override
+                public void adminGranted() {
+                    targetSeesGrant.signal();
+                }
+            });
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void adminGranted(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesGrant.signal();
+                    }
+                }
+            });
+
+            try {
+                // Execute system under test.
+                mucAsSeenByOwner.getConfigFormManager()
+                    .setRoomAdmins(Set.of( conTwo.getUser().asBareJid()))
+                    .submitConfigurationForm();
+
+                // Verify result.
+                assertResult(ownerSeesGrant, "Expected '" + conOne.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+                assertResult(targetSeesGrant, "Expected '" + conTwo.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+                assertResult(participantSeesGrant, "Expected '" + conThree.getUser() + "' to receive a presence stanza from '" + targetMucAddress + "' indicating the granting of admin status to '" + targetMucAddress + "', after '" + conOne.getUser() + " updated the room configuration to add '" + conTwo.getUser() + "' as a room admin (but no such stanza was received).");
+            } catch (XMPPException.XMPPErrorException e) {
+                fail("Expected owner '" + conOne.getUser() + "' to be able to apply a change to a room using its configuration form for '" + mucAddress + "' while being in the room (but the server returned an error).", e);
+            }
+        } catch (MultiUserChatException.MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
 
     /**
      * Verifies that when as a result of a change in the room configuration a room owner loses owner status while in the room, the room sends updated presence.
@@ -599,33 +594,32 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         }
     }
 
-    // TODO uncomment after Smack provides a way to unset a form field (SMACK-946)
-//    /**
-//     * Verifies that a room configuration form cannot be used to remove the only owner of a room.
-//     */
-//    @SmackIntegrationTest(section = "10.2", quote = "A service MUST NOT allow an owner to revoke his or her own owner status if there are no other owners; if an owner attempts to do this, the service MUST return a <conflict/> error to the owner.")
-//    public void testRoomConfigRemoveLastOwner() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-remove-last");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//
-//        try {
-//            createMuc(mucAsSeenByOwner, nicknameOwner);
-//
-//            // Execute system under test & Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                mucAsSeenByOwner.getConfigFormManager()
-//                    .setRoomOwners(new HashSet<>())
-//                    .submitConfigurationForm();
-//            }, "Expected an error after '" + conOne.getUser() + "' (that is the only room owner) tried to update the configuration of room '" + mucAddress + "' to remove itself as an owner (but none occurred).");
-//            assertEquals(StanzaError.Condition.conflict, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conOne.getUser() + "' after it tried to remove itself as owner of room '" + mucAddress + "' using the room configuration form.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
+    /**
+     * Verifies that a room configuration form cannot be used to remove the only owner of a room.
+     */
+    @SmackIntegrationTest(section = "10.2", quote = "A service MUST NOT allow an owner to revoke his or her own owner status if there are no other owners; if an owner attempts to do this, the service MUST return a <conflict/> error to the owner.")
+    public void testRoomConfigRemoveLastOwner() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-remove-last");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
+        try {
+            createMuc(mucAsSeenByOwner, nicknameOwner);
+
+            // Execute system under test & Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                mucAsSeenByOwner.getConfigFormManager()
+                    .setRoomOwners(new HashSet<>())
+                    .submitConfigurationForm();
+            }, "Expected an error after '" + conOne.getUser() + "' (that is the only room owner) tried to update the configuration of room '" + mucAddress + "' to remove itself as an owner (but none occurred).");
+            assertEquals(StanzaError.Condition.conflict, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conOne.getUser() + "' after it tried to remove itself as owner of room '" + mucAddress + "' using the room configuration form.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
 
     /**
      * Verifies that when as a result of a change in the room configuration a user gains owner status while in the room, the room sends updated presence.
