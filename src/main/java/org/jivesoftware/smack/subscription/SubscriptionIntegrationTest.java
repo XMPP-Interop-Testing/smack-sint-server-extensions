@@ -60,7 +60,7 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
         final Presence subscriptionRequest = conTwo.getStanzaFactory().buildPresenceStanza()
                 .ofType(Presence.Type.subscribe)
-                .to(conOne.getUser())
+                .to(conOne.getUser().asBareJid())
                 .build();
 
         final SimpleResultSyncPoint received = new SimpleResultSyncPoint();
@@ -97,7 +97,7 @@ public class SubscriptionIntegrationTest extends AbstractSmackIntegrationTest {
 
         final Presence subscriptionRequest = conTwo.getStanzaFactory().buildPresenceStanza()
                 .ofType(Presence.Type.subscribe)
-                .to(conOne.getUser())
+                .to(conOne.getUser().asBareJid())
                 .addExtension(new StandardExtensionElement("test", "org.example.test"))
                 .build();
 
