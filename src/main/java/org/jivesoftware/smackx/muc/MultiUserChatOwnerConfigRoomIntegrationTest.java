@@ -239,6 +239,7 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                             if (!option.getValue().equals(defaultValue)) {
                                 optionValues.put(field.getFieldName(), option.getValue());
                                 answerForm.setAnswer(field.getFieldName(), option.getValue().getValue());
+                                break;
                             }
                         }
                     }

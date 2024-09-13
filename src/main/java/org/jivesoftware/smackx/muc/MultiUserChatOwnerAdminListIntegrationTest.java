@@ -293,6 +293,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-adminlist-delta");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final EntityBareJid unchangedAddress = JidCreate.entityBareFrom("unchanged-admin-" + randomString + "@example.org");
 
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
@@ -301,6 +302,11 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
             } catch (XMPPException.XMPPErrorException e) {
                 throw new TestNotPossibleException("Unable to grant '" + conTwo.getUser().asBareJid() + "' admin status in room '" + mucAddress + "'.");
             }
+            try {
+                mucAsSeenByOwner.grantAdmin(unchangedAddress);
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to grant '" + unchangedAddress + "' admin status in room '" + mucAddress + "'.");
+            }
 
             // Execute system under test.
             final MUCAdmin iq = new MUCAdmin();
@@ -308,7 +314,6 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
             iq.setType(IQ.Type.set);
             iq.addItem(new MUCItem(MUCAffiliation.none, conTwo.getUser().asBareJid()));
             iq.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
-
 
             try {
                 conOne.sendIqRequestAndWaitForResponse(iq);
@@ -319,6 +324,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
             }
             assertTrue(mucAsSeenByOwner.getAdmins().stream().noneMatch(i -> i.getAffiliation() == MUCAffiliation.admin && i.getJid().equals(conTwo.getUser().asBareJid())), "Expected the admin list for '" + mucAddress + "' to no longer contain '" + conTwo.getUser().asBareJid() + "' that was just removed from the admin list by '" + conOne.getUser() + "' (but does still appear on the admin list).");
             assertTrue(mucAsSeenByOwner.getAdmins().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.admin && i.getJid().equals(conThree.getUser().asBareJid())), "Expected the admin list for '" + mucAddress + "' to contain '" + conThree.getUser().asBareJid() + "' that was just added to the admin list by '" + conOne.getUser() + "' (but does not appear on the admin list).");
+            assertTrue(mucAsSeenByOwner.getAdmins().stream().anyMatch(i -> i.getAffiliation() == MUCAffiliation.admin && i.getJid().equals(unchangedAddress)), "Expected the admin list for '" + mucAddress + "' to contain '" + unchangedAddress + "' that already was an admin, and not in the change request issued by '" + conOne.getUser() + "' (but does not appear on the admin list).");
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);

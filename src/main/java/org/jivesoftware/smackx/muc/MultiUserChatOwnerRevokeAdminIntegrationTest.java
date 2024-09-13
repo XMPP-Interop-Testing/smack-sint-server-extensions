@@ -165,7 +165,7 @@ public class MultiUserChatOwnerRevokeAdminIntegrationTest extends AbstractMultiU
     }
 
     /**
-     * Verifies that an owner can revoke admin status from a user that is currently not in the room.
+     * Verifies that an owner can revoke admin status from a user that is currently not in the room, and give a reason.
      */
     @SmackIntegrationTest(section = "10.7", quote = "An owner might want to revoke a user's admin status; this is done by changing the user's affiliation to something other than \"admin\" or \"owner\" [...] The <reason/> element is OPTIONAL.")
     public void testRevokeAdminOptionalReason() throws Exception
@@ -203,7 +203,7 @@ public class MultiUserChatOwnerRevokeAdminIntegrationTest extends AbstractMultiU
     }
 
     /**
-     * Verifies that an owner can revoke admin status from a user that is currently a participant in the room.
+     * Verifies that an owner can revoke admin status from a user that is currently a participant in the room, and provide a reason.
      */
     @SmackIntegrationTest(section = "10.7", quote = "An owner might want to revoke a user's admin status; this is done by changing the user's affiliation to something other than \"admin\" or \"owner\" [...] The <reason/> element is OPTIONAL.")
     public void testRevokeAdminOptionalReasonWhileInRoom() throws Exception

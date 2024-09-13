@@ -65,16 +65,53 @@ public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUs
     }
 
     /**
-     * Verifies that an owner can grant admin status to a user that is currently not in the room.
+     * Verifies that an owner can grant admin status to a member that is currently not in the room.
      */
-    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to a member or an unaffiliated user; this is done by changing the user's affiliation to \"admin\"")
-    public void testGrantAdmin() throws Exception
+    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to a member [...]; this is done by changing the user's affiliation to \"admin\"")
+    public void testGrantAdminMember() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-member");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            try {
+                mucAsSeenByOwner.grantMembership(conTwo.getUser().asBareJid());
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to grant '" + conTwo.getUser().asBareJid() + "' member status in room '" + mucAddress + "'.");
+            }
+
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conTwo.getUser().asBareJid()));
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
+
+                // Verify result.
+            } catch (XMPPException.XMPPErrorException e) {
+                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' (a member that's currently not joined in the room) in '" + mucAddress + "' (but the server returned an error).", e);
+            }
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that an owner can grant admin status to an unaffiliated user that is currently not in the room.
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to [...] an unaffiliated user; this is done by changing the user's affiliation to \"admin\"")
+    public void testGrantAdminUnaffiliated() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-unaffiliated");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             // Execute system under test.
@@ -87,22 +124,76 @@ public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUs
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' (an unaffiliated user that's currently not joined in the room) in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
         }
     }
-    
+
     /**
      * Verifies that an owner can grant admin status to a user that is currently a participant in the room.
      */
-    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to a member or an unaffiliated user; this is done by changing the user's affiliation to \"admin\"")
-    public void testGrantAdminWhileInRoom() throws Exception
+    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to a member [...]; this is done by changing the user's affiliation to \"admin\"")
+    public void testGrantAdminMemberWhileInRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-inroom");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-member-inroom");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+
+        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            try {
+                mucAsSeenByOwner.grantMembership(conTwo.getUser().asBareJid());
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to grant '" + conTwo.getUser().asBareJid() + "' member status in room '" + mucAddress + "'.");
+            }
+
+            final SimpleResultSyncPoint ownerSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByOwner.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        ownerSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.join(nicknameTarget);
+            ownerSeesTarget.waitForResult(timeout);
+
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conTwo.getUser().asBareJid()));
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
+
+                // Verify result.
+            } catch (XMPPException.XMPPErrorException e) {
+                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' (a member that is currently joined as '" + nicknameTarget+ "') in '" + mucAddress + "' (but the server returned an error).", e);
+            }
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that an owner can grant admin status to a user that is currently a participant in the room.
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "An owner can grant admin status to [...] an unaffiliated user; this is done by changing the user's affiliation to \"admin\"")
+    public void testGrantAdminUnaffiliatedWhileInRoom() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-unaffiliated-inroom");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -135,7 +226,7 @@ public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUs
 
                 // Verify result.
             } catch (XMPPException.XMPPErrorException e) {
-                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' (that is currently joined as '" + nicknameTarget+ "') in '" + mucAddress + "' (but the server returned an error).", e);
+                fail("Expected owner '" + conOne.getUser() + "' to be able to grant admin status to '" + conTwo.getUser().asBareJid() + "' (an unaffiliated user that is currently joined as '" + nicknameTarget+ "') in '" + mucAddress + "' (but the server returned an error).", e);
             }
         } finally {
             // Tear down test fixture.
@@ -222,7 +313,7 @@ public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUs
         }
     }
 
-    // TODO enable these tests after https://github.com/xsf/xeps/pull/1370 gets merged. Until then, the specification does not seem to restrict granting of admin status to owners.
+    // TODO enable these tests after https://github.com/xsf/xeps/pull/1370 gets merged. Until then, the specification does not seem to restrict granting of admin as something only owners can do.
 //    /**
 //     * Verifies that a non-owner, non-joined user cannot grant someone admin status (when the target is not in the room).
 //     */

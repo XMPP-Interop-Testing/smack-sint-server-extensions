@@ -156,7 +156,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * Verifies that a room destruction request can contain an alternate venue.
      */
     @SmackIntegrationTest(section = "10.9", quote = "In order to destroy a room, the room owner MUST send an IQ set to the address of the room to be destroyed. [...] The address of the alternate venue MAY be provided as the value of the <destroy/> element's 'jid' attribute.")
-    public void testAlternateVenue() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    public void testAlternateVenue() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenue");
@@ -193,7 +193,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * Verifies that a room destruction request can contain an alternate venue and alternate venue password.
      */
     @SmackIntegrationTest(section = "10.9", quote = "In order to destroy a room, the room owner MUST send an IQ set to the address of the room to be destroyed. [...] The address of the alternate venue MAY be provided as the value of the <destroy/> element's 'jid' attribute. A password for the alternate venue MAY be provided as the XML character data of a <password/> child element of the <destroy/> element.")
-    public void testAlternateVenuePassword() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    public void testAlternateVenuePassword() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenuepassword");
@@ -230,7 +230,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * Verifies that a room destruction request can contain a reason.
      */
     @SmackIntegrationTest(section = "10.9", quote = "In order to destroy a room, the room owner MUST send an IQ set to the address of the room to be destroyed. [...] The reason for the room destruction MAY be provided as the XML character data of a <reason/> child element of the <destroy/> element.")
-    public void testReason() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    public void testReason() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-reason");
@@ -267,7 +267,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * Verifies that a room destruction request causes all occupants to be removed.
      */
     @SmackIntegrationTest(section = "10.9", quote = "The service is responsible for removing all the occupants. [...] sending only one presence stanza of type \"unavailable\" to each occupant so that the user knows he or she has been removed from the room.")
-    public void testPresence() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException, TimeoutException
+    public void testPresence() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TimeoutException
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-presence");
@@ -327,7 +327,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * all optional data.
      */
     @SmackIntegrationTest(section = "10.9", quote = "The service is responsible for removing all the occupants. [...] sending only one presence stanza of type \"unavailable\" to each occupant so that the user knows he or she has been removed from the room. If extended presence information specifying the JID of an alternate location and the reason for the room destruction was provided by the room owner, the presence stanza MUST include that information.")
-    public void testPresenceOptional() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException, TimeoutException
+    public void testPresenceOptional() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TimeoutException
     {
         // Setup test fixture.
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-presenceext");
@@ -393,13 +393,147 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     }
 
     /**
-     * Verifies that a room destruction request cannot be issued by a non-owner.
+     * Verifies that a room destruction request cannot be issued by a non-owner (but an admin).
      */
     @SmackIntegrationTest(section = "10.9", quote = "If the <user@host> of the 'from' address received on a destroy request does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender")
-    public void testAuthorization() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException, TimeoutException
+    public void testAuthorizationAdmin() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth");
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-admin");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameAdmin = Resourcepart.from("admin-" + randomString);
+
+        try {
+            createMuc(mucAsSeenByOwner, nicknameOwner);
+            try {
+                mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to grant '" + conTwo.getUser().asBareJid() + "' admin status in room '" + mucAddress + "'.");
+            }
+
+            mucAsSeenByAdmin.join(nicknameAdmin);
+
+            // Execute system under test.
+            final MUCOwner request = new MUCOwner();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.setDestroy(new Destroy(null, null));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException xmppErrorException = assertThrows(XMPPException.XMPPErrorException.class, () -> { conTwo.sendIqRequestAndWaitForResponse(request); },
+                "Expected an error to be returned when '" + conTwo.getUser() + "' (joined as '" + nicknameAdmin + "', an admin, not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
+            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameAdmin + "', an admin, not a room owner) tried to destroy room '" + mucAddress);
+        } finally {
+            // Tear down test fixture.
+            try {
+                if (mucAsSeenByOwner.isJoined()) {
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
+                }
+            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
+                // Room was likely already destroyed.
+            }
+        }
+    }
+
+    /**
+     * Verifies that a room destruction request cannot be issued by a non-owner (but a member).
+     */
+    @SmackIntegrationTest(section = "10.9", quote = "If the <user@host> of the 'from' address received on a destroy request does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender")
+    public void testAuthorizationMember() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException, MultiUserChatException.MucConfigurationNotSupportedException
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-member");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByMember = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameMember = Resourcepart.from("member-" + randomString);
+
+        try {
+            createMembersOnlyMuc(mucAsSeenByOwner, nicknameOwner);
+            try {
+                mucAsSeenByOwner.grantMembership(conTwo.getUser().asBareJid());
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to grant '" + conTwo.getUser().asBareJid() + "' member status in room '" + mucAddress + "'.");
+            }
+
+            mucAsSeenByMember.join(nicknameMember);
+
+            // Execute system under test.
+            final MUCOwner request = new MUCOwner();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.setDestroy(new Destroy(null, null));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException xmppErrorException = assertThrows(XMPPException.XMPPErrorException.class, () -> { conTwo.sendIqRequestAndWaitForResponse(request); },
+                "Expected an error to be returned when '" + conTwo.getUser() + "' (joined as '" + nicknameMember + "', a member, not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
+            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameMember + "', a member, not a room owner) tried to destroy room '" + mucAddress);
+        } finally {
+            // Tear down test fixture.
+            try {
+                if (mucAsSeenByOwner.isJoined()) {
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
+                }
+            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
+                // Room was likely already destroyed.
+            }
+        }
+    }
+
+    /**
+     * Verifies that a room destruction request cannot be issued by a non-owner (but an outcast).
+     */
+    @SmackIntegrationTest(section = "10.9", quote = "If the <user@host> of the 'from' address received on a destroy request does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender")
+    public void testAuthorizationOutcast() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-outcast");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
+        try {
+            createMuc(mucAsSeenByOwner, nicknameOwner);
+            try {
+                mucAsSeenByOwner.banUser(conTwo.getUser().asBareJid(), "Make outcast for integration testing.");
+            } catch (XMPPException.XMPPErrorException e) {
+                throw new TestNotPossibleException("Unable to make '" + conTwo.getUser().asBareJid() + "' outcast in room '" + mucAddress + "'.");
+            }
+
+            // Execute system under test.
+            final MUCOwner request = new MUCOwner();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.setDestroy(new Destroy(null, null));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException xmppErrorException = assertThrows(XMPPException.XMPPErrorException.class, () -> { conTwo.sendIqRequestAndWaitForResponse(request); },
+                "Expected an error to be returned when '" + conTwo.getUser() + "' (an outcast, not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
+            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (an outcast, not a room owner) tried to destroy room '" + mucAddress);
+        } finally {
+            // Tear down test fixture.
+            try {
+                if (mucAsSeenByOwner.isJoined()) {
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
+                }
+            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
+                // Room was likely already destroyed.
+            }
+        }
+    }
+
+    /**
+     * Verifies that a room destruction request cannot be issued by a non-owner (but a non-affiliated participant).
+     */
+    @SmackIntegrationTest(section = "10.9", quote = "If the <user@host> of the 'from' address received on a destroy request does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender")
+    public void testAuthorizationParticipant() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-participant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -418,13 +552,50 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
 
             // Verify result.
             final XMPPException.XMPPErrorException xmppErrorException = assertThrows(XMPPException.XMPPErrorException.class, () -> { conTwo.sendIqRequestAndWaitForResponse(request); },
-                "Expected an error to be returned when '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "', not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
-            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "', not a room owner) tried to destroy room '" + mucAddress);
+                "Expected an error to be returned when '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "', an unaffiliated participant, not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
+            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "', an unaffiliated participant, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
             try {
                 if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner);
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
+                }
+            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
+                // Room was likely already destroyed.
+            }
+        }
+    }
+
+    /**
+     * Verifies that a room destruction request cannot be issued by a non-owner (but an entity not in the room).
+     */
+    @SmackIntegrationTest(section = "10.9", quote = "If the <user@host> of the 'from' address received on a destroy request does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender")
+    public void testAuthorizationNonParticipant() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-nonparticipant");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
+        try {
+            createMuc(mucAsSeenByOwner, nicknameOwner);
+
+            // Execute system under test.
+            final MUCOwner request = new MUCOwner();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.setDestroy(new Destroy(null, null));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException xmppErrorException = assertThrows(XMPPException.XMPPErrorException.class, () -> { conTwo.sendIqRequestAndWaitForResponse(request); },
+                "Expected an error to be returned when '" + conTwo.getUser() + "' (not joined in the room, not a room owner) tried to destroy room '" + mucAddress + "' (but no error was received).");
+            assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (not joined in the room, not a room owner) tried to destroy room '" + mucAddress);
+        } finally {
+            // Tear down test fixture.
+            try {
+                if (mucAsSeenByOwner.isJoined()) {
+                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
                 }
             } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
                 // Room was likely already destroyed.
