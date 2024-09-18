@@ -2,9 +2,6 @@ name: Build & Test
 
 on: [pull_request]
 
-env:
-  OPENFIRE_VERSION: 4_8_3 # The version of Openfire to use, using underscores, to match artifact filenames in https://github.com/igniterealtime/Openfire/releases/
-
 permissions:
   checks: write
 
@@ -44,16 +41,23 @@ jobs:
           repository: igniterealtime/Openfire
           sparse-checkout: |
             .github
+      - name: Set current date as env variable
+        run: echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       - uses: actions/cache@v4
         id: cache
         with:
           path: openfire.tar.gz
-          key: openfire-${{env.OPENFIRE_VERSION}}
-      - name: Download Openfire
+          key: openfire-daily-${{env.NOW}}
+      - name: Download a recent Openfire daily build.
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          DOTTED_VERSION=$(echo ${{env.OPENFIRE_VERSION}} | tr _ .)
-          curl -L https://github.com/igniterealtime/Openfire/releases/download/v$DOTTED_VERSION/openfire_${{env.OPENFIRE_VERSION}}.tar.gz -o openfire.tar.gz
+          # This tries to find the most recent daily build, going back 30 days if none are available.
+          #Note that the cache above will cause whatever build that's download to be considered 'todays' build.
+          for i in $(seq 0 30); do
+            STAMP=`date --date="$i day ago" +%F`;
+            echo "Attempting to download Openfire build for $STAMP"
+            curl --fail -L "https://download.igniterealtime.org/openfire/dailybuilds/openfire_$STAMP.tar.gz" -o openfire.tar.gz && break
+          done
       - name: Extract Openfire
         run: |
           tar -xzf openfire.tar.gz
@@ -133,16 +137,23 @@ jobs:
           repository: igniterealtime/Openfire
           sparse-checkout: |
             .github
+      - name: Set current date as env variable
+        run: echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       - uses: actions/cache@v4
         id: cache
         with:
           path: openfire.tar.gz
-          key: openfire-${{env.OPENFIRE_VERSION}}
-      - name: Download Openfire
+          key: openfire-daily-${{env.NOW}}
+      - name: Download a recent Openfire daily build.
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          DOTTED_VERSION=$(echo ${{env.OPENFIRE_VERSION}} | tr _ .)
-          curl -L https://github.com/igniterealtime/Openfire/releases/download/v$DOTTED_VERSION/openfire_${{env.OPENFIRE_VERSION}}.tar.gz -o openfire.tar.gz
+          # This tries to find the most recent daily build, going back 30 days if none are available.
+          #Note that the cache above will cause whatever build that's download to be considered 'todays' build.
+          for i in $(seq 0 30); do
+            STAMP=`date --date="$i day ago" +%F`;
+            echo "Attempting to download Openfire build for $STAMP"
+            curl --fail -L "https://download.igniterealtime.org/openfire/dailybuilds/openfire_$STAMP.tar.gz" -o openfire.tar.gz && break
+          done
       - name: Extract Openfire
         run: |
           tar -xzf openfire.tar.gz
