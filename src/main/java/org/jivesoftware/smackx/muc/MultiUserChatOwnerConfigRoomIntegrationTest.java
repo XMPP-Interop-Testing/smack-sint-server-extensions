@@ -740,7 +740,7 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 .setMembersOnly(false)
                 .submitConfigurationForm();
 
-            mucAsSeenByOwner.grantMembership(conThree.getUser());
+            mucAsSeenByOwner.grantMembership(conThree.getUser().asBareJid());
 
             mucAsSeenByMember.join(nicknameMember);
 
