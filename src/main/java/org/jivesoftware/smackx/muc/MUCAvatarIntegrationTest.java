@@ -24,12 +24,8 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
-import org.jivesoftware.smackx.vcardtemp.VCardManager;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
-import org.jivesoftware.smackx.vcardtemp.provider.VCardProvider;
 import org.jxmpp.jid.EntityBareJid;
-import org.jxmpp.jid.Jid;
-import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
@@ -83,7 +79,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             vCard.setAvatar(TINY_PNG_BASE64, "image/png");
             vCard.setTo(mucAddress);
             vCard.setType(IQ.Type.set);
-            vCard.setStanzaId();
 
             // Execute system under test.
             conOne.sendIqRequestAndWaitForResponse(vCard);
@@ -113,7 +108,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             vCard.setAvatar(TINY_PNG_BASE64, "image/png");
             vCard.setTo(muc.getRoom());
             vCard.setType(IQ.Type.set);
-            vCard.setStanzaId();
 
             conOne.sendIqRequestAndWaitForResponse(vCard);
         } catch (XMPPException.XMPPErrorException e) {
@@ -137,7 +131,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             final VCard vCard = new VCard();
             vCard.setTo(mucAddress);
             vCard.setType(IQ.Type.set);
-            vCard.setStanzaId();
 
             // Execute system under test.
             conOne.sendIqRequestAndWaitForResponse(vCard);
@@ -146,7 +139,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             final VCard request = new VCard();
             request.setTo(mucAddress);
             request.setType(IQ.Type.get);
-            request.setStanzaId();
             final VCard response = conOne.sendIqRequestAndWaitForResponse(request);
             assertNull(response.getAvatar());
         } catch (XMPPException.XMPPErrorException e) {
@@ -173,7 +165,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             final VCard request = new VCard();
             request.setTo(mucAddress);
             request.setType(IQ.Type.get);
-            request.setStanzaId();
 
             // Execute system under test.
             final VCard response = conOne.sendIqRequestAndWaitForResponse(request);
@@ -205,7 +196,6 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
             vCard.setAvatar(TINY_PNG_BASE64, "image/png");
             vCard.setTo(mucAddress);
             vCard.setType(IQ.Type.set);
-            vCard.setStanzaId();
 
             // Execute system under test.
             conOne.sendIqRequestAndWaitForResponse(vCard);

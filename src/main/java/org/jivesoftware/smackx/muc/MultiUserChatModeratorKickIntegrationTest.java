@@ -264,11 +264,11 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
             oneSeesThree.waitForResult(timeout);
 
             // Make 'two' a member that is an admin
-            mucAsSeenByOne.grantMembership(conTwo.getUser());
+            mucAsSeenByOne.grantMembership(conTwo.getUser().asBareJid());
             mucAsSeenByOne.grantModerator(nicknameTwo);
 
             // Make 'three' an admin
-            mucAsSeenByOne.grantAdmin(conThree.getUser());
+            mucAsSeenByOne.grantAdmin(conThree.getUser().asBareJid());
 
             twoSeesThree.waitForResult(timeout);
             twoGetsModerator.waitForResult(timeout);
@@ -324,7 +324,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
                 }
             });
 
-            mucAsSeenByOne.grantMembership(conTwo.getUser());
+            mucAsSeenByOne.grantMembership(conTwo.getUser().asBareJid());
             mucAsSeenByOne.grantModerator(nicknameTwo);
 
             twoGetsModerator.waitForResult(timeout);
@@ -379,7 +379,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
                 }
             });
 
-            mucAsSeenByOne.grantAdmin(conTwo.getUser());
+            mucAsSeenByOne.grantAdmin(conTwo.getUser().asBareJid());
             mucAsSeenByOne.grantModerator(nicknameTwo);
 
             twoGetsModerator.waitForResult(timeout);

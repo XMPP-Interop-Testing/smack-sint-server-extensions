@@ -117,7 +117,12 @@ public class MultiUserChatAdminBanListIntegrationTest extends AbstractMultiUserC
             mucAsSeenByOwner.grantAdmin(conTwo.getUser().asBareJid());
             mucAsSeenByAdmin.join(nicknameAdmin);
             try {
-                mucAsSeenByAdmin.banUser(targetAddress, "Attempt to create a ban list with a full JID (which shouldn't be possible).");
+                final MUCAdmin iq = new MUCAdmin();
+                iq.setTo(mucAddress);
+                iq.setType(IQ.Type.set);
+                final MUCItem item = new MUCItem(MUCAffiliation.outcast, targetAddress, "Attempt to create a ban list with a full JID (which shouldn't be possible).");
+                iq.addItem(item);
+                this.connection.sendIqRequestAndWaitForResponse(iq);
             } catch (XMPPException.XMPPErrorException e) {
                 throw new TestNotPossibleException("Unable to create a ban list using a full JID.");
             }
