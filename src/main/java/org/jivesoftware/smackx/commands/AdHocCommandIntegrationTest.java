@@ -814,7 +814,39 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
-    //TODO: Once we know how to fix the blacklist cleanup...
+    @SmackIntegrationTest(section = "4.12")
+    public void testEditWhiteList() throws Exception {
+        checkServerSupportCommand(EDIT_ALLOWED_LIST);
+        final String whitelistDomain = "xmpp.someotherdomain.org";
+        try {
+            // Setup test fixture.
+
+            // Execute system under test: Pretend it's a 1-stage command initially, so that we can check that the current list of Allowed Users is populated
+            AdHocCommandData result = executeCommandSimple(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid());
+
+            // Verify results.
+            assertFormFieldHasValues("whitelistjids", 0, result);
+
+            // Execute system under test: Run the full 2-stage command to alter the Whitelist.
+            result = executeCommandWithArgs(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid(),
+                "whitelistjids", whitelistDomain
+            );
+
+            // Verify Results.
+            assertNoteType(AdHocCommandNote.Type.info, result);
+            assertNoteContains("Operation finished successfully", result);
+
+            // Pretend it's a 1-stage command again, so that we can check that the new list of Allowed Users is correct.
+            result = executeCommandSimple(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid());
+            assertFormFieldEquals("whitelistjids", whitelistDomain, result);
+
+        } finally {
+            // Tear down test fixture.
+            executeCommandWithArgs(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid(),
+                "whitelistjids", ""
+            );
+        }
+    }
 
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
     @SmackIntegrationTest(section = "4.5")
