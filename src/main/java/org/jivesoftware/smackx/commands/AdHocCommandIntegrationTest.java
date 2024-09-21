@@ -36,8 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpecificationReference(document = "XEP-0133", version = "1.3.1")
 public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
@@ -117,10 +116,14 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
                 throw new IllegalStateException("Field " + args[i] + " not found in form");
             }
             if (NON_STRING_FORM_FIELD_TYPES.contains(field.getType())){
-                form.setAnswer(args[i], Stream.of(args[i + 1]
-                        .split(",", -1))
-                    .map(String::trim)
-                    .collect(Collectors.toList()));
+                if(args[i + 1].isEmpty()){
+                    form.setAnswer(args[i], Collections.emptyList());
+                } else {
+                    form.setAnswer(args[i], Stream.of(args[i + 1]
+                            .split(",", -1))
+                        .map(String::trim)
+                        .collect(Collectors.toList()));
+                }
             } else {
                 form.setAnswer(args[i], args[i + 1]);
             }
@@ -776,8 +779,7 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
-    //@SmackIntegrationTest(section = "4.11")
-    // Disabled whilst we can't tidy up after ourselves.
+    @SmackIntegrationTest(section = "4.11")
     public void testEditBlackList() throws Exception {
         checkServerSupportCommand(EDIT_BLOCKED_LIST);
         final String blacklistDomain = "xmpp.someotherdomain.org";
@@ -805,10 +807,9 @@ public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
         } finally {
             // Tear down test fixture.
-            //TODO: FIND A WAY TO RETURN THE BLACKLIST TO AN EMPTY STATE
-            //executeCommandWithArgs(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid(),
-            //    "blacklistjids", null
-            //);
+            executeCommandWithArgs(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid(),
+                "blacklistjids", ""
+            );
         }
     }
 
