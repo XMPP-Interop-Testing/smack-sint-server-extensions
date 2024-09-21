@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpecificationReference(document = "XEP-0133")
+@SpecificationReference(document = "XEP-0133", version = "1.3.1")
 public class AdHocCommandIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final AdHocCommandManager adHocCommandManagerForAdmin;
