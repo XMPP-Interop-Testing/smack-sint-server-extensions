@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#destroyroom">XEP-0045 Section 10.9</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatOwnerDestroyRoomIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -326,7 +326,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
      * Verifies that a room destruction request causes all occupants to be removed, receiving a notification that contains
      * all optional data.
      */
-    @SmackIntegrationTest(section = "10.9", quote = "The service is responsible for removing all the occupants. [...] sending only one presence stanza of type \"unavailable\" to each occupant so that the user knows he or she has been removed from the room. If extended presence information specifying the JID of an alternate location and the reason for the room destruction was provided by the room owner, the presence stanza MUST include that information.")
+    @SmackIntegrationTest(section = "10.9", quote = "The service is responsible for removing all the occupants. [...] sending only one presence stanza of type \"unavailable\" to each occupant so that the user knows he or she has been removed from the room. [...] If extended presence information specifying the JID of an alternate location and/or the reason for the room destruction was provided by the room owner, the presence stanza MUST include that information.")
     public void testPresenceOptional() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TimeoutException
     {
         // Setup test fixture.

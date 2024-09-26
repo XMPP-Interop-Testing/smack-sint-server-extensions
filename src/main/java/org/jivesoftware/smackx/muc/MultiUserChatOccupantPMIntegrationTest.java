@@ -25,7 +25,10 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.MessageBuilder;
+import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smackx.muc.packet.MUCUser;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
 import org.jivesoftware.smackx.xdata.form.Form;
@@ -35,14 +38,14 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for section "7.5 Occupant Use Cases: Sending a Private Message" of XEP-0045: "Multi-User Chat"
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#privatemessage">XEP-0045 Section 7.5</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatOccupantPMIntegrationTest(SmackIntegrationTestEnvironment environment)

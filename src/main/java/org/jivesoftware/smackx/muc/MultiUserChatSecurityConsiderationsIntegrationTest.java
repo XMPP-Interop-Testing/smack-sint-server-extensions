@@ -33,14 +33,14 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for section 14 "Security Considerations" of XEP-0045: "Multi-User Chat"
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#security">XEP-0045 Section 10</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.35.0")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatSecurityConsiderationsIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatSecurityConsiderationsIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, TestNotPossibleException, MultiUserChatException.MucAlreadyJoinedException, MultiUserChatException.MissingMucCreationAcknowledgeException, MultiUserChatException.NotAMucServiceException, XmppStringprepException

@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#modifymod">XEP-0045 Section 9.8</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatAdminModeratorListIntegrationTest(SmackIntegrationTestEnvironment environment)

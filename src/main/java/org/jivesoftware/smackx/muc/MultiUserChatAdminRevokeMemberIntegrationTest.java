@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#revokemember">XEP-0045 Section 9.4</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatAdminRevokeMemberIntegrationTest(SmackIntegrationTestEnvironment environment)

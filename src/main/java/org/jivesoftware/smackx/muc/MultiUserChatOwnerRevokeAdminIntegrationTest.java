@@ -32,15 +32,14 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for section "10.7 Owner Use Cases: Revoking Admin Status" of XEP-0045: "Multi-User Chat"
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#revokeadmin">XEP-0045 Section 10.7</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatOwnerRevokeAdminIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatOwnerRevokeAdminIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -257,186 +256,185 @@ public class MultiUserChatOwnerRevokeAdminIntegrationTest extends AbstractMultiU
         }
     }
 
-    // TODO enable these tests after https://github.com/xsf/xeps/pull/1370 gets merged. Until then, the specification does not seem to restrict revokation of admin status to owners.
-//    /**
-//     * Verifies that a non-owner, non-joined user cannot revoke someone's admin status (when the target is not in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testUserNotAllowedToRevokeAdminStatus() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-user-notallowed");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            final MUCAdmin grantRequest = new MUCAdmin();
-//            grantRequest.setTo(mucAddress);
-//            grantRequest.setType(IQ.Type.set);
-//            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
-//
-//            conOne.sendIqRequestAndWaitForResponse(grantRequest);
-//
-//            // Execute system under test.
-//            final MUCAdmin revokeRequest = new MUCAdmin();
-//            revokeRequest.setTo(mucAddress);
-//            revokeRequest.setType(IQ.Type.set);
-//            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner, non-joined user cannot revoke someone's admin status (when the target is in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testUserNotAllowedToRevokeAdminStatusInRoom() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-user-notallowed-inroom");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByTarget.join(nicknameTarget);
-//
-//            final MUCAdmin grantRequest = new MUCAdmin();
-//            grantRequest.setTo(mucAddress);
-//            grantRequest.setType(IQ.Type.set);
-//            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
-//
-//            conOne.sendIqRequestAndWaitForResponse(grantRequest);
-//
-//            // Execute system under test.
-//            final MUCAdmin revokeRequest = new MUCAdmin();
-//            revokeRequest.setTo(mucAddress);
-//            revokeRequest.setType(IQ.Type.set);
-//            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner (that has joined the room) cannot revoke someone's admin status (when the target is not in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testParticipantNotAllowedToRevokeAdminStatus() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-participant-notallowed");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            final MUCAdmin grantRequest = new MUCAdmin();
-//            grantRequest.setTo(mucAddress);
-//            grantRequest.setType(IQ.Type.set);
-//            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
-//
-//            conOne.sendIqRequestAndWaitForResponse(grantRequest);
-//
-//            // Execute system under test.
-//            final MUCAdmin revokeRequest = new MUCAdmin();
-//            revokeRequest.setTo(mucAddress);
-//            revokeRequest.setType(IQ.Type.set);
-//            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner (that has joined the room) cannot revoke someone's admin status (when the target is in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testParticipantNotAllowedToRevokeAdminStatusInRoom() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-participant-notallowed-inroom");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//
-//        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.join(nicknameTarget);
-//            participantSeesTarget.waitForResult(timeout);
-//
-//            final MUCAdmin grantRequest = new MUCAdmin();
-//            grantRequest.setTo(mucAddress);
-//            grantRequest.setType(IQ.Type.set);
-//            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
-//
-//            conOne.sendIqRequestAndWaitForResponse(grantRequest);
-//
-//            // Execute system under test.
-//            final MUCAdmin revokeRequest = new MUCAdmin();
-//            revokeRequest.setTo(mucAddress);
-//            revokeRequest.setType(IQ.Type.set);
-//            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
+    /**
+     * Verifies that a non-owner, non-joined user cannot revoke someone's admin status (when the target is not in the room).
+     */
+    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testUserNotAllowedToRevokeAdminStatus() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-user-notallowed");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            final MUCAdmin grantRequest = new MUCAdmin();
+            grantRequest.setTo(mucAddress);
+            grantRequest.setType(IQ.Type.set);
+            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
+
+            conOne.sendIqRequestAndWaitForResponse(grantRequest);
+
+            // Execute system under test.
+            final MUCAdmin revokeRequest = new MUCAdmin();
+            revokeRequest.setTo(mucAddress);
+            revokeRequest.setType(IQ.Type.set);
+            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner, non-joined user cannot revoke someone's admin status (when the target is in the room).
+     */
+    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testUserNotAllowedToRevokeAdminStatusInRoom() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-user-notallowed-inroom");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByTarget.join(nicknameTarget);
+
+            final MUCAdmin grantRequest = new MUCAdmin();
+            grantRequest.setTo(mucAddress);
+            grantRequest.setType(IQ.Type.set);
+            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
+
+            conOne.sendIqRequestAndWaitForResponse(grantRequest);
+
+            // Execute system under test.
+            final MUCAdmin revokeRequest = new MUCAdmin();
+            revokeRequest.setTo(mucAddress);
+            revokeRequest.setType(IQ.Type.set);
+            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner (that has joined the room) cannot revoke someone's admin status (when the target is not in the room).
+     */
+    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testParticipantNotAllowedToRevokeAdminStatus() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-participant-notallowed");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            final MUCAdmin grantRequest = new MUCAdmin();
+            grantRequest.setTo(mucAddress);
+            grantRequest.setType(IQ.Type.set);
+            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
+
+            conOne.sendIqRequestAndWaitForResponse(grantRequest);
+
+            // Execute system under test.
+            final MUCAdmin revokeRequest = new MUCAdmin();
+            revokeRequest.setTo(mucAddress);
+            revokeRequest.setType(IQ.Type.set);
+            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner (that has joined the room) cannot revoke someone's admin status (when the target is in the room).
+     */
+    @SmackIntegrationTest(section = "10.7", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testParticipantNotAllowedToRevokeAdminStatusInRoom() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-revoke-participant-notallowed-inroom");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+
+        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.join(nicknameTarget);
+            participantSeesTarget.waitForResult(timeout);
+
+            final MUCAdmin grantRequest = new MUCAdmin();
+            grantRequest.setTo(mucAddress);
+            grantRequest.setType(IQ.Type.set);
+            grantRequest.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid()));
+
+            conOne.sendIqRequestAndWaitForResponse(grantRequest);
+
+            // Execute system under test.
+            final MUCAdmin revokeRequest = new MUCAdmin();
+            revokeRequest.setTo(mucAddress);
+            revokeRequest.setType(IQ.Type.set);
+            revokeRequest.addItem(new MUCItem(MUCAffiliation.none, conThree.getUser().asBareJid()));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(revokeRequest);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to revoke admin status from another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to revoke admin status from user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
 
     /**
      * Verifies that an admin that got its admin status removed no longer exists on the admin list.

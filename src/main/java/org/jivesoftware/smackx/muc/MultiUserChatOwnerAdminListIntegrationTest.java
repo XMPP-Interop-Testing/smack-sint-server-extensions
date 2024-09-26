@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#modifyadmin">XEP-0045 Section 10.8</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatOwnerAdminListIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -106,7 +106,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
      *
      * This test uses a semi-anonymous room, as a XEP update is in the works that allows these requests for non-anonymous rooms.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender in semi-anonymous rooms.")
     public void testUserRequestsAdminList() throws Exception
     {
         // Setup test fixture.
@@ -138,7 +138,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
      *
      * This test uses a semi-anonymous room, as a XEP update is in the works that allows these requests for non-anonymous rooms.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "[T]he owner [...] requests the admin list by querying the room for all users with an affiliation of 'admin'. [...] If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender in semi-anonymous rooms.")
     public void testParticipantRequestsAdminList() throws Exception
     {
         // Setup test fixture.
@@ -334,7 +334,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that an admin (non-owner) cannot make an admin list modification.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to view or modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
     public void testAdminListRejectAdmin() throws Exception
     {
         // Setup test fixture.
@@ -371,7 +371,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that a member (non-owner) cannot make an admin list modification.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to view or modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
     public void testAdminListRejectMember() throws Exception
     {
         // Setup test fixture.
@@ -408,7 +408,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that an outcast (non-owner) cannot make an admin list modification.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to view or modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
     public void testAdminListRejectOutcast() throws Exception
     {
         // Setup test fixture.
@@ -442,7 +442,7 @@ public class MultiUserChatOwnerAdminListIntegrationTest extends AbstractMultiUse
     /**
      * Asserts that a user without an affiliation (non-owner) cannot make an admin list modification.
      */
-    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to view or modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
+    @SmackIntegrationTest(section = "10.8", quote = "Only owners shall be allowed to modify the admin list. If a non-owner attempts to modify the admin list, the service MUST deny the request and return a <forbidden/> error to the sender.")
     public void testAdminListRejectNoneAffiliation() throws Exception
     {
         // Setup test fixture.

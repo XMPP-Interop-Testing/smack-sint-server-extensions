@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#kick">XEP-0045 Section 8.2</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatModeratorKickIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -211,7 +211,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
      */
     @SmackIntegrationTest(section = "8.2", quote =
         "A user cannot be kicked by a moderator with a lower affiliation. Therefore, if a moderator who is a member " +
-        "attempts to kick an admin [...], the service MUST deny the request and return a <not-allowed/> error to the sender")
+        "attempts to kick an admin, [...] the service MUST deny the request and return a <not-allowed/> error to the sender")
     public void mucTestModeratorMemberCannotKickAdmin() throws Exception
     {
         final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-member-cannot-kick-admin");

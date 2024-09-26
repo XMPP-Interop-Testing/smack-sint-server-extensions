@@ -23,6 +23,7 @@ import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smackx.muc.packet.MUCAdmin;
 import org.jivesoftware.smackx.muc.packet.MUCItem;
 import org.jxmpp.jid.EntityBareJid;
@@ -31,15 +32,14 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for section "10.6 Owner Use Cases: Granting Admin Status" of XEP-0045: "Multi-User Chat"
  *
  * @see <a href="https://xmpp.org/extensions/xep-0045.html#grantadmin">XEP-0045 Section 10.6</a>
  */
-@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+@SpecificationReference(document = "XEP-0045", version = "1.35.1")
 public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUserChatIntegrationTest
 {
     public MultiUserChatOwnerGrantAdminIntegrationTest(SmackIntegrationTestEnvironment environment)
@@ -313,158 +313,157 @@ public class MultiUserChatOwnerGrantAdminIntegrationTest extends AbstractMultiUs
         }
     }
 
-    // TODO enable these tests after https://github.com/xsf/xeps/pull/1370 gets merged. Until then, the specification does not seem to restrict granting of admin as something only owners can do.
-//    /**
-//     * Verifies that a non-owner, non-joined user cannot grant someone admin status (when the target is not in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testUserNotAllowedToGrantAdminStatus() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-user-notallowed");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            // Execute system under test.
-//            final MUCAdmin request = new MUCAdmin();
-//            request.setTo(mucAddress);
-//            request.setType(IQ.Type.set);
-//            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(request);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner, non-joined user cannot grant someone admin status (when the target is in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testUserNotAllowedToGrantAdminStatusInRoom() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-user-notallowed-inroom");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByTarget.join(nicknameTarget);
-//
-//            // Execute system under test.
-//            final MUCAdmin request = new MUCAdmin();
-//            request.setTo(mucAddress);
-//            request.setType(IQ.Type.set);
-//            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(request);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner (that has joined the room) cannot grant someone admin status (when the target is not in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testParticipantNotAllowedToGrantAdminStatus() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-participant-notallowed");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            // Execute system under test.
-//            final MUCAdmin request = new MUCAdmin();
-//            request.setTo(mucAddress);
-//            request.setType(IQ.Type.set);
-//            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(request);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
-//
-//    /**
-//     * Verifies that a non-owner (that has joined the room) cannot grant someone admin status (when the target is in the room).
-//     */
-//    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
-//    public void testParticipantNotAllowedToGrantAdminStatusInRoom() throws Exception
-//    {
-//        // Setup test fixture.
-//        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-participant-notallowed-inroom");
-//        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
-//        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
-//
-//        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
-//        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
-//        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
-//
-//        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
-//
-//        createMuc(mucAsSeenByOwner, nicknameOwner);
-//        try {
-//            mucAsSeenByParticipant.join(nicknameParticipant);
-//
-//            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
-//            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
-//                @Override
-//                public void joined(EntityFullJid participant) {
-//                    if (participant.equals(targetMucAddress)) {
-//                        participantSeesTarget.signal();
-//                    }
-//                }
-//            });
-//            mucAsSeenByTarget.join(nicknameTarget);
-//            participantSeesTarget.waitForResult(timeout);
-//
-//            // Execute system under test.
-//            final MUCAdmin request = new MUCAdmin();
-//            request.setTo(mucAddress);
-//            request.setType(IQ.Type.set);
-//            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
-//
-//            // Verify result.
-//            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
-//                conTwo.sendIqRequestAndWaitForResponse(request);
-//            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
-//            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
-//        } finally {
-//            // Tear down test fixture.
-//            tryDestroy(mucAsSeenByOwner);
-//        }
-//    }
+    /**
+     * Verifies that a non-owner, non-joined user cannot grant someone admin status (when the target is not in the room).
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testUserNotAllowedToGrantAdminStatus() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-user-notallowed");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(request);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner, non-joined user cannot grant someone admin status (when the target is in the room).
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testUserNotAllowedToGrantAdminStatusInRoom() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-user-notallowed-inroom");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByTarget.join(nicknameTarget);
+
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(request);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner) tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner (that has joined the room) cannot grant someone admin status (when the target is not in the room).
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testParticipantNotAllowedToGrantAdminStatus() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-participant-notallowed");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(request);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
+
+    /**
+     * Verifies that a non-owner (that has joined the room) cannot grant someone admin status (when the target is in the room).
+     */
+    @SmackIntegrationTest(section = "10.6", quote = "If the <user@host> of the 'from' address does not match the bare JID of a room owner, the service MUST return a <forbidden/> error to the sender.")
+    public void testParticipantNotAllowedToGrantAdminStatusInRoom() throws Exception
+    {
+        // Setup test fixture.
+        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-admin-grant-participant-notallowed-inroom");
+        final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
+
+        final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
+        final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
+        final Resourcepart nicknameTarget = Resourcepart.from("target-" + randomString);
+
+        final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
+
+        createMuc(mucAsSeenByOwner, nicknameOwner);
+        try {
+            mucAsSeenByParticipant.join(nicknameParticipant);
+
+            final SimpleResultSyncPoint participantSeesTarget = new SimpleResultSyncPoint();
+            mucAsSeenByParticipant.addParticipantStatusListener(new ParticipantStatusListener() {
+                @Override
+                public void joined(EntityFullJid participant) {
+                    if (participant.equals(targetMucAddress)) {
+                        participantSeesTarget.signal();
+                    }
+                }
+            });
+            mucAsSeenByTarget.join(nicknameTarget);
+            participantSeesTarget.waitForResult(timeout);
+
+            // Execute system under test.
+            final MUCAdmin request = new MUCAdmin();
+            request.setTo(mucAddress);
+            request.setType(IQ.Type.set);
+            request.addItem(new MUCItem(MUCAffiliation.admin, conThree.getUser().asBareJid(), "Granting Admin Status as part of an integration test."));
+
+            // Verify result.
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                conTwo.sendIqRequestAndWaitForResponse(request);
+            }, "Expected an error after '" + conTwo.getUser() + "' (that is not an owner, but joined the room as '" + nicknameParticipant + "') tried to grant admin status to another user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(), "Unexpected error condition in the (expected) error that was returned to '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "') after it tried to grant admin status to user ('" + conThree.getUser().asBareJid() + "', joined as '" + nicknameTarget + "') in room '" + mucAddress + "' while not being an owner.");
+        } finally {
+            // Tear down test fixture.
+            tryDestroy(mucAsSeenByOwner);
+        }
+    }
 
     /**
      * Verifies that a (bare) JID that is granted admin status by an owner appears on the Admin List.
