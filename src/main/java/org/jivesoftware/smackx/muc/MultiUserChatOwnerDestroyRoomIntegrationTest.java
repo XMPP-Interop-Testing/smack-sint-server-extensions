@@ -93,12 +93,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             }
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -142,12 +138,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             }
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -179,12 +171,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             }
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -216,12 +204,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             }
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -253,12 +237,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             }
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -312,12 +292,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             // Tear down test fixture.
             mucAsSeenByOwner.removeUserStatusListener(ownerListener);
             mucAsSeenByParticipant.removeUserStatusListener(participantListener);
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -382,12 +358,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             // Tear down test fixture.
             mucAsSeenByOwner.removeUserStatusListener(ownerListener);
             mucAsSeenByParticipant.removeUserStatusListener(participantListener);
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -428,12 +400,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameAdmin + "', an admin, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -474,12 +442,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameMember + "', a member, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -516,12 +480,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (an outcast, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -556,12 +516,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (joined as '" + nicknameParticipant + "', an unaffiliated participant, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
@@ -593,12 +549,8 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
             assertEquals(StanzaError.Condition.forbidden, xmppErrorException.getStanzaError().getCondition(), "Unexpected condition in the (expected) error after '" + conTwo.getUser() + "' (not joined in the room, not a room owner) tried to destroy room '" + mucAddress);
         } finally {
             // Tear down test fixture.
-            try {
-                if (mucAsSeenByOwner.isJoined()) {
-                    tryDestroy(mucAsSeenByOwner); // If the test fails, then this is also likely to fail.
-                }
-            } catch (XMPPException.XMPPErrorException e) { // TODO remove this catch after SMACK-949 gets fixed.
-                // Room was likely already destroyed.
+            if (mucAsSeenByOwner.isJoined()) {
+                tryDestroy(mucAsSeenByOwner);
             }
         }
     }
