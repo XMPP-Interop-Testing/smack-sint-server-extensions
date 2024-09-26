@@ -92,7 +92,7 @@ jobs:
           -Dsinttest.adminAccountPassword=admin \
           -Dsinttest.enabledConnections=tcp \
           -Dsinttest.dnsResolver=javax \
-          -Dsinttest.disabledTests="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest,ServiceDiscoveryIntegrationTest,MultiUserChatOccupantPMIntegrationTest,FormTest" \
+          -Dsinttest.disabledTests="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest,ServiceDiscoveryIntegrationTest,MultiUserChatOccupantPMIntegrationTest" \
           -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
           -Dsinttest.debugger="org.igniterealtime.smack.inttest.util.FileLoggerFactory" \
           -DlogDir=logs \
@@ -176,7 +176,7 @@ jobs:
             --timeout=5000 \
             --adminAccountUsername=admin \
             --adminAccountPassword=admin \
-            --disabledTests="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest,ServiceDiscoveryIntegrationTest,MultiUserChatOccupantPMIntegrationTest,FormTest"
+            --disabledTests="EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest,ServiceDiscoveryIntegrationTest,MultiUserChatOccupantPMIntegrationTest"
         shell: bash
 
       - name: Expose XMPP debug logs
