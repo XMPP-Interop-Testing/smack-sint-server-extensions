@@ -15,6 +15,9 @@ Usage:
     --disabledTests=DISABLEDTESTS         Comma-separated list of tests to skip, e.g. EntityCapsTest,SoftwareInfoIntegrationTest
     --disabledSpecifications=DISABLEDSPECIFICATIONS
                                           Comma-separated list of specifications to skip, e.g. XEP-0030,XEP-0199
+    --enabledTests=ENABLEDTESTS           Comma-separated list of the only tests to run, e.g. EntityCapsTest,SoftwareInfoIntegrationTest
+    --enabledSpecifications=ENABLEDSPECIFICATIONS
+                                          Comma-separated list of the only specifications to run, e.g. XEP-0030,XEP-0199
     --help                                This help message
 EOF
 }
@@ -35,11 +38,11 @@ while [ $# -gt 0 ]; do
       ;;
     --adminAccountUsername*)
       if [[ "$1" != *=* ]]; then shift; fi
-      ADMINACCOUTNUSERNAME="${1#*=}"
+      ADMINACCOUNTUSERNAME="${1#*=}"
       ;;
     --adminAccountPassword*)
       if [[ "$1" != *=* ]]; then shift; fi
-      ADMINACCOUTNPASSWORD="${1#*=}"
+      ADMINACCOUNTPASSWORD="${1#*=}"
       ;;
     --disabledTests*)
       if [[ "$1" != *=* ]]; then shift; fi
@@ -48,6 +51,14 @@ while [ $# -gt 0 ]; do
     --disabledSpecifications*)
       if [[ "$1" != *=* ]]; then shift; fi
       DISABLEDSPECIFICATIONS="${1#*=}"
+      ;;
+    --enabledTests*)
+      if [[ "$1" != *=* ]]; then shift; fi
+      ENABLEDTESTS="${1#*=}"
+      ;;
+    --enabledSpecifications*)
+      if [[ "$1" != *=* ]]; then shift; fi
+      ENABLEDSPECIFICATIONS="${1#*=}"
       ;;
     --help|-h)
       usage
@@ -63,26 +74,39 @@ done
 
 # Deal with errors
 if [ ! -v DOMAIN ]; then echo "Domain is not set"; exit 1; fi
-if [ ! -v ADMINACCOUTNUSERNAME ] && [ -v ADMINACCOUTNPASSWORD ]; then echo "Admin username is not set, but password is. Credentials must be specified as a pair"; exit 1; fi
-if [ ! -v ADMINACCOUTNPASSWORD ] && [ -v ADMINACCOUTNUSERNAME ]; then echo "Admin password is not set, but username is. Credentials must be specified as a pair"; exit 1; fi
+if [ ! -v ADMINACCOUNTUSERNAME ] && [ -v ADMINACCOUNTPASSWORD ]; then echo "Admin username is not set, but password is. Credentials must be specified as a pair"; exit 1; fi
+if [ ! -v ADMINACCOUNTPASSWORD ] && [ -v ADMINACCOUNTUSERNAME ]; then echo "Admin password is not set, but username is. Credentials must be specified as a pair"; exit 1; fi
 
-# If host is local, replace with host.docker.internal
-#if [ "$HOST" == "127.0.0.1" ] || [ "$HOST" == "localhost" ]; then
-#  HOST="host.docker.internal"
-#fi
+JAVACMD=()
+JAVACMD+=("java")
+JAVACMD+=("-Dsinttest.service=$DOMAIN")
+JAVACMD+=("-Dsinttest.host=$HOST")
+JAVACMD+=("-Dsinttest.securityMode=disabled")
+JAVACMD+=("-Dsinttest.replyTimeout=$TIMEOUT")
+if [ "$ADMINACCOUNTUSERNAME" != "" ]; then
+  JAVACMD+=("-Dsinttest.adminAccountUsername=$ADMINACCOUNTUSERNAME")
+fi
+if [ "$ADMINACCOUNTPASSWORD" != "" ]; then
+  JAVACMD+=("-Dsinttest.adminAccountPassword=$ADMINACCOUNTPASSWORD")
+fi
+JAVACMD+=("-Dsinttest.enabledConnections=tcp")
+JAVACMD+=("-Dsinttest.dnsResolver=javax")
+if [ "$DISABLEDSPECIFICATIONS" != "" ]; then
+    JAVACMD+=("-Dsinttest.disabledSpecifications=$DISABLEDSPECIFICATIONS")
+fi
+if [ "$DISABLEDTESTS" != "" ]; then
+    JAVACMD+=("-Dsinttest.disabledTests=$DISABLEDTESTS")
+fi
+if [ "$ENABLEDSPECIFICATIONS" != "" ]; then
+    JAVACMD+=("-Dsinttest.enabledSpecifications=$ENABLEDSPECIFICATIONS")
+fi
+if [ "$ENABLEDTESTS" != "" ]; then
+    JAVACMD+=("-Dsinttest.enabledTests=$ENABLEDTESTS")
+fi
+JAVACMD+=("-Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor")
+JAVACMD+=("-Dsinttest.debugger=org.igniterealtime.smack.inttest.util.FileLoggerFactory")
+JAVACMD+=("-DlogDir=logs")
+JAVACMD+=("-jar")
+JAVACMD+=("/usr/local/sintse/sintse.jar")
 
-java \
-  -Dsinttest.service="$DOMAIN" \
-  -Dsinttest.host="$HOST" \
-  -Dsinttest.securityMode=disabled \
-  -Dsinttest.replyTimeout=$TIMEOUT \
-  -Dsinttest.adminAccountUsername="$ADMINACCOUTNUSERNAME" \
-  -Dsinttest.adminAccountPassword="$ADMINACCOUTNPASSWORD" \
-  -Dsinttest.enabledConnections=tcp \
-  -Dsinttest.dnsResolver=javax \
-  -Dsinttest.disabledSpecifications="$DISABLEDSPECIFICATIONS" \
-  -Dsinttest.disabledTests="$DISABLEDTESTS" \
-  -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
-  -Dsinttest.debugger="org.igniterealtime.smack.inttest.util.FileLoggerFactory" \
-  -DlogDir="logs" \
-  -jar /usr/local/sintse/sintse.jar
+"${JAVACMD[@]}"
