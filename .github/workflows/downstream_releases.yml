@@ -1,0 +1,36 @@
+name: Trigger Downstream Releases
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to trigger, e.g. v1.2.3'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: version
+        name: Calculate version to trigger
+        run: |
+            if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
+                echo "Version: ${{ github.event.inputs.version }}"
+                echo "::set-output name=version::${{ github.event.inputs.version }}"
+            else
+                echo "Version: ${{ github.event.release.tag_name }}"
+                echo "::set-output name=version::${{ github.event.release.tag_name }}"
+            fi
+      
+      - name: Call downstream job for GitHub Actions
+        run: |
+            curl -L \
+                -X POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${{ secrets.TOKEN_FOR_ACTION_REPO }}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                https://api.github.com/repos/XMPP-Interop-Testing/xmpp-interop-tests-action/dispatches \
+                -d '{"event_type":"make-pr","client_payload":{"version":${{ steps.version.outputs.version }}}}'
