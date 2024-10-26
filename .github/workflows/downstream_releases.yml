@@ -10,8 +10,10 @@ on:
         required: true
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - id: version
@@ -24,7 +26,11 @@ jobs:
                 echo "Version: ${{ github.event.release.tag_name }}"
                 echo "::set-output name=version::${{ github.event.release.tag_name }}"
             fi
-      
+
+  github-actions:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
       - name: Call downstream job for GitHub Actions
         run: |
             curl -L \
@@ -33,4 +39,4 @@ jobs:
                 -H "Authorization: Bearer ${{ secrets.TOKEN_FOR_ACTION_REPO }}" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 https://api.github.com/repos/XMPP-Interop-Testing/xmpp-interop-tests-action/dispatches \
-                -d '{"event_type":"make-pr","client_payload":{"version":${{ steps.version.outputs.version }}}}'
+                -d '{"event_type":"make-pr","client_payload":{"version":${{ needs.prepare.outputs.version }}}}'
