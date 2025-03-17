@@ -1205,7 +1205,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             // Execute system under test.
             final Presence firstReflectedPresence = room.join(Resourcepart.from("test-user"));
             final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
-            room.leave();;
+            room.leave();
+
+            Thread.sleep(100); // FIXME: Delete this line that's put in to work around a race condition in Smack.
+
             final Presence secondReflectedPresence = room.join(Resourcepart.from("test-user"));
             final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
 
@@ -1272,7 +1275,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             // Execute system under test.
             final Presence firstReflectedPresence = room.join(firstNickname);
             final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
-            room.leave();;
+            room.leave();
+
+            Thread.sleep(100); // FIXME: Delete this line that's put in to work around a race condition in Smack.
+
             final Presence secondReflectedPresence = room.join(secondNickname);
             final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
 
