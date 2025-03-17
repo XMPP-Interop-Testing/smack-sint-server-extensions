@@ -1360,4 +1360,26 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             removeRoom();
         }
     }
+
+    @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST have a maximum length of 128 characters.")
+    public void testOccupantIdLength() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        // Setup test fixture.
+        createRoom();
+        final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
+        final MultiUserChat room = mucManagerOne.getMultiUserChat(testRoomAddress);
+
+        try {
+            // Execute system under test.
+            final Presence reflectedPresence = room.join(Resourcepart.from("test-user"));
+
+            // Verify result.
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertTrue(extension.getId().length() <= 128, "Expected the occupant-id value for user '" + conOne.getUser() + "' in room '" + testRoomAddress + "' to have at most 128 characters. However, value consists of more: " + extension.getId().length() + ". Offending occupant-id: '" + extension.getId() + "'");
+        } finally {
+            // Tear down test fixture.
+            removeRoom();
+        }
+    }
 }
