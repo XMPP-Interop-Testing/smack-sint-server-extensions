@@ -1338,4 +1338,26 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             removeRoom();
         }
     }
+
+    @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST be generated such that it is pseudonymous. This means that it MUST be sufficiently hard to determine the real bare JID of an occupant from its occupant identifier.")
+    public void testOccupantIdDoesntContainUsername() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        // Setup test fixture.
+        createRoom();
+        final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
+        final MultiUserChat room = mucManagerOne.getMultiUserChat(testRoomAddress);
+
+        try {
+            // Execute system under test.
+            final Presence reflectedPresence = room.join(Resourcepart.from("test-user"));
+
+            // Verify result.
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertFalse(extension.getId().contains(conOne.getUser().getLocalpart().toString()), "Expected the occupant-id value ('" + extension.getId() + "') for user '" + conOne.getUser() + "' in room '" + testRoomAddress + "' to be psuedonymous. However, the local-part of the user's real JID is a literal part of the occupant-id.");
+        } finally {
+            // Tear down test fixture.
+            removeRoom();
+        }
+    }
 }
