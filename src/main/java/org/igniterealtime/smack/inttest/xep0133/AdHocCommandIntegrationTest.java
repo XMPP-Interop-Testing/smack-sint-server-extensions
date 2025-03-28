@@ -1,16 +1,35 @@
-package org.jivesoftware.smackx.commands;
+/**
+ * Copyright 2025 Dan Caseley
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.igniterealtime.smack.inttest.xep0133;
 
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.PresenceBuilder;
+import org.jivesoftware.smack.roster.packet.RosterPacket;
+import org.jivesoftware.smackx.commands.AdHocCommandNote;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.FormField;
@@ -28,6 +47,11 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests for the XEP-0133: Service Administration
+ *
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html">XEP-0133: Service Administration</a>
+ */
 @SpecificationReference(document = "XEP-0133", version = "1.3.1")
 public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegrationTest {
 
@@ -138,7 +162,14 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertNoteType(AdHocCommandNote.Type.info, result);
             assertNoteContains("Operation finished successfully", result);
 
-            // TODO Assert that the newly created user is now available.
+            try {
+                AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+                userConnection.connect();
+                userConnection.login(addedUser.getLocalpartOrThrow().toString(), "password");
+                assertTrue(userConnection.isAuthenticated());
+            } catch (Exception e) {
+                fail("Failed to login as the newly created user: " + addedUser, e);
+            }
         } finally {
             // Tear down test fixture.
             deleteUser(addedUser);
@@ -287,6 +318,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.4")
     public void testReenableUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
+        checkServerSupportCommand(DISABLE_A_USER);
+
         final Jid disabledUser = JidCreate.entityBareFrom("reenableusertest" + testRunId + "@example.org");
         try {
             // Setup test fixture.
@@ -369,6 +402,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.5")
     public void testEndUserSession() throws Exception {
         checkServerSupportCommand(END_USER_SESSION);
+        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+
         final Jid userToEndSession = JidCreate.bareFrom("endsessiontest" + testRunId + "@example.org");
         try {
             createUser(userToEndSession);
@@ -445,14 +480,24 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testUserRoster() throws Exception {
         checkServerSupportCommand(GET_USER_ROSTER);
 
+        // Setup test fixture.
+        IntegrationTestRosterUtil.ensureBothAccountsAreSubscribedToEachOther(conOne, conTwo, 10000);
+
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_USER_ROSTER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", adminConnection.getUser().asEntityBareJidString()
+            "accountjids", conOne.getUser().asEntityBareJidString()
         );
 
         // Verify results.
-        // TODO: Actually populate a roster of one of the test accounts, instead of depending on an assumed state of the roster of the admin user.
-        assertFormFieldJidEquals("accountjids", Collections.singleton(adminConnection.getUser().asEntityBareJid()), result);
+        assertFormFieldJidEquals("accountjids", Collections.singleton(conOne.getUser().asEntityBareJid()), result);
+        List<Element> elements = result.getForm().getExtensionElements();
+        assertEquals(1, elements.size());
+        assertTrue(elements.get(0) instanceof RosterPacket);
+        RosterPacket roster = (RosterPacket) elements.get(0);
+        assertTrue(roster.getRosterItems().stream().anyMatch(item -> item.getJid().equals(conTwo.getUser().asEntityBareJid())));
+
+        // Tear down test fixture.
+        IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
     }
 
     @SmackIntegrationTest(section = "4.9")
@@ -488,9 +533,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         );
 
         // Verify results.
-        assertFormFieldExists("rostersize", result);
-        assertFormFieldExists("onlineresources", result);
-        // TODO: Examples are non-normative, so we can't really check the values, and I'm not 100% happy with these assertions.
+        assertFormFieldCountAtLeast(1, result);
+        // Which stats a server should support isn't defined, so we can't check for specific fields or values.
+        // Instead, we assume that supporting the command means that the server will return at least one field.
     }
 
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
@@ -580,6 +625,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.14")
     public void testDisabledUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_DISABLED_USERS);
+        checkServerSupportCommand(REENABLE_A_USER);
+        checkServerSupportCommand(DISABLE_A_USER);
 
         // Setup test fixture.
         final Jid disabledUser = JidCreate.bareFrom("disableusernumtest" + testRunId + "@example.org");
@@ -597,8 +644,10 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertTrue(Integer.parseInt(result.getForm().getField("disabledusersnum").getFirstValue()) >= 1);
         } finally {
             // Tear down test fixture.
+            executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
             deleteUser(disabledUser);
-            // TODO consider unmarking the user as being disabled, as deleting the user might not propagate.
         }
     }
 
@@ -664,7 +713,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
 
         // Setup test fixture.
-        // TODO clear the list
+        // Nothing to do. Assumes no users are disabled by default (and that other tests tidy up after themselves).
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
@@ -677,6 +726,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.19")
     public void testDisabledUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
+        checkServerSupportCommand(DISABLE_A_USER);
 
         final Jid disabledUser = JidCreate.bareFrom("disableuserlisttest" + testRunId + "@example.org");
         createUser(disabledUser);

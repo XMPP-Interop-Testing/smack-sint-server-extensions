@@ -1,4 +1,19 @@
-package org.jivesoftware.smackx.commands;
+/**
+ * Copyright 2025 Dan Caseley
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.igniterealtime.smack.inttest.xep0133;
 
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
@@ -6,6 +21,10 @@ import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smackx.commands.AdHocCommand;
+import org.jivesoftware.smackx.commands.AdHocCommandManager;
+import org.jivesoftware.smackx.commands.AdHocCommandNote;
+import org.jivesoftware.smackx.commands.AdHocCommandResult;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.FormField;
@@ -146,6 +165,14 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
     void assertFormFieldHasValues(String fieldName, int valueCount, AdHocCommandData data) {
         FormField field = data.getForm().getField(fieldName);
         assertEquals(valueCount, field.getValues().size());
+    }
+
+    void assertFormFieldCountEquals(int expectedCount, AdHocCommandData data) {
+        assertEquals(expectedCount, data.getForm().getFields().size());
+    }
+
+    void assertFormFieldCountAtLeast(int expectedCount, AdHocCommandData data) {
+        assertTrue(data.getForm().getFields().size() >= expectedCount);
     }
 
     void assertNoteType(AdHocCommandNote.Type expectedType, AdHocCommandData data) {
