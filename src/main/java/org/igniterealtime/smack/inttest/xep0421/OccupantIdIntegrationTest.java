@@ -23,15 +23,9 @@ import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.xep0421.provider.OccupantId;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.filter.StanzaExtensionFilter;
-import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smack.packet.XmlElement;
+import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
@@ -45,6 +39,10 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
+
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,6 +105,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "3.1", quote = "When a user enters a room, they send a presence to claim the nickname in the MUC. A MUC that supports occupant identifiers attaches an <occupant-id> element within the \"urn:xmpp:occupant-id:0\" namespace to the presence sent to all occupants in the room.")
     public void testOccupantIdInReflectedJoinPresence() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
     {
+        fixtureForReflectedJoinPresence(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedJoinPresence() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        fixtureForReflectedJoinPresence(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedJoinPresence(final Function<Presence, Void> assertion) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -117,8 +134,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = room.join(Resourcepart.from("test-user"));
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -128,6 +144,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "3.1", quote = "When a user enters a room, they send a presence to claim the nickname in the MUC. A MUC that supports occupant identifiers attaches an <occupant-id> element within the \"urn:xmpp:occupant-id:0\" namespace to the presence sent to all occupants in the room.")
     public void testOccupantIdInBroadcastJoinPresence() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastJoinPresence(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastJoinPresence() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastJoinPresence(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    public void fixtureForBroadcastJoinPresence(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -135,7 +174,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -154,8 +192,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -164,6 +201,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "3.2", quote = "A MUC supporting occupant identifiers attaches an <occupant-id> element within the \"urn:xmpp:occupant-id:0\" to the message sent to all occupants in the room.")
     public void testOccupantIdInReflectedMessage() throws Exception
+    {
+        fixtureForReflectedMessage(reflectedMessage -> {
+            final XmlElement extension = reflectedMessage.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedMessage() throws Exception
+    {
+        fixtureForReflectedMessage(reflectedMessage -> {
+            final List<OccupantId> extensions = reflectedMessage.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedMessage(final Function<Message, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -185,8 +241,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Message reflectedMessage = messageReceived.waitForResult(timeout);
 
             // Verify result.
-            final XmlElement extension = reflectedMessage.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedMessage);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -196,6 +251,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "3.2", quote = "A MUC supporting occupant identifiers attaches an <occupant-id> element within the \"urn:xmpp:occupant-id:0\" to the message sent to all occupants in the room.")
     public void testOccupantIdInBroadcastMessage() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastMessage(recipientNickname, broadcastedMessage -> {
+            final OccupantId extension = broadcastedMessage.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastMessage() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastMessage(recipientNickname, broadcastedMessage -> {
+            final List<OccupantId> extensions = broadcastedMessage.getExtensions(OccupantId.class);
+            assertNotNull(extensions, "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastMessage(final Resourcepart recipientNickname, final Function<Message, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -203,7 +281,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart senderNickname = Resourcepart.from("test-sender");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid senderRoomAddress = JidCreate.fullFrom(testRoomAddress, senderNickname);
 
         try {
@@ -223,8 +300,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Message result = messageReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -260,9 +336,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Message reflectedMessage = messageReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedMessage.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
-            assertNotEquals(needle, extension.getId(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
+            final List<OccupantId> extensions = reflectedMessage.getExtensions(OccupantId.class);
+            assertFalse(extensions.isEmpty(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertFalse(extensions.size() > 1, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            assertNotEquals(needle, extensions.get(0).getId(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -305,9 +382,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Message result = messageReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain an occupant-id element (but it did not).");
-            assertNotEquals(needle, extension.getId(), "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
+            final List<OccupantId> extensions = result.getExtensions(OccupantId.class);
+            assertFalse(extensions.isEmpty(), "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain an occupant-id element (but it did not).");
+            assertFalse(extensions.size() > 1, "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            assertNotEquals(needle, extensions.get(0).getId(), "Expected the message received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' sent that message in room to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -346,9 +424,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
-            assertNotEquals(needleA, extension.getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.isEmpty(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            assertNotEquals(needleA, extensions.get(0).getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -396,9 +475,10 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain an occupant-id element (but it did not).");
-            assertNotEquals(needleA, extension.getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
+            final List<OccupantId> extensions = result.getExtensions(OccupantId.class);
+            assertFalse(extensions.isEmpty(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain an occupant-id element (but it did not).");
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            assertNotEquals(needleA, extensions.get(0).getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -407,6 +487,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAvailabilityStatusChange() throws Exception
+    {
+        fixtureForReflectedAvailabilityStatusChange(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAvailabilityStatusChange() throws Exception
+    {
+        fixtureForReflectedAvailabilityStatusChange(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAvailabilityStatusChange(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -429,8 +528,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their availability status in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -440,6 +538,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAvailabilityStatusChange() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAvailabilityStatusChange(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAvailabilityStatusChange() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAvailabilityStatusChange(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAvailabilityStatusChange(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -447,7 +568,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -468,8 +588,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their availability status in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -478,6 +597,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedNicknameChange() throws Exception
+    {
+        fixtureForReflectedNicknameChange(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their nickname in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedNicknameChange() throws Exception
+    {
+        fixtureForReflectedNicknameChange(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their nickname in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedNicknameChange(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -500,8 +638,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they changed their nickname in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -511,6 +648,28 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastNicknameChange() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastNicknameChange(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their nickname in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastNicknameChange() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        fixtureForBroadcastNicknameChange(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their nickname in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastNicknameChange(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -518,7 +677,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -539,8 +697,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' changed their nickname in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -549,6 +706,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedLeavePresence() throws Exception
+    {
+        fixtureForReflectedLeavePresence(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they leave room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedLeavePresence() throws Exception
+    {
+        fixtureForReflectedLeavePresence(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they leave room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedLeavePresence(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -563,8 +739,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = room.leave();
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they leave room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -574,6 +749,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastLeavePresence() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastLeavePresence(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' leaves the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastLeavePresence() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastLeavePresence(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' leaves the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastLeavePresence(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -581,7 +779,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -601,8 +798,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' leaves the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -611,6 +807,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedRoleChangeToParticipant() throws Exception
+    {
+        fixtureForReflectedRoleChangeToParticipant(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted voice in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedRoleChangeToParticipant() throws Exception
+    {
+        fixtureForReflectedRoleChangeToParticipant(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted voice in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedRoleChangeToParticipant(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom(true);
@@ -633,8 +848,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted voice in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -644,6 +858,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastRoleChangeToParticipant() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastRoleChangeToParticipant(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted voice in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastRoleChangeToParticipant() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastRoleChangeToParticipant(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted voice in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastRoleChangeToParticipant(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom(true);
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -651,7 +888,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -671,8 +907,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted voice in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -681,6 +916,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedRoleChangeToVisitor() throws Exception
+    {
+        fixtureForReflectedRoleChangeToVisitor(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after voice was revoked in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedRoleChangeToVisitor() throws Exception
+    {
+        fixtureForReflectedRoleChangeToVisitor(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after voice was revoked in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedRoleChangeToVisitor(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom(true);
@@ -712,8 +966,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = becomesVisitor.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after voice was revoked in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -723,6 +976,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastRoleChangeToVisitor() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastRoleChangeToVisitor(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' voice was revoked in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastRoleChangeToVisitor() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastRoleChangeToVisitor(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' voice was revoked in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastRoleChangeToVisitor(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom(true);
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -730,7 +1006,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -759,8 +1034,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = becomesVisitor.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' voice was revoked in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -769,6 +1043,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedRoleChangeToModerator() throws Exception
+    {
+        fixtureForReflectedRoleChangeToModerator(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted moderator privileges in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedRoleChangeToModerator() throws Exception
+    {
+        fixtureForReflectedRoleChangeToModerator(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted moderator privileges in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedRoleChangeToModerator(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -791,8 +1084,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted moderator privileges in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -802,6 +1094,27 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastRoleChangeToModerator() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        fixtureForBroadcastRoleChangeToModerator(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted moderator privileges in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastRoleChangeToModerator() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        fixtureForBroadcastRoleChangeToModerator(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted moderator privileges in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastRoleChangeToModerator(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -809,7 +1122,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -829,8 +1141,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted moderator privileges in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -839,6 +1150,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAffiliationChangeToOutcast() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToOutcast(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where banned in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAffiliationChangeToOutcast() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToOutcast(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where banned in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAffiliationChangeToOutcast(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -864,8 +1194,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where banned in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -875,6 +1204,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAffiliationChangeToOutcast() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToOutcast(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' was banned in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAffiliationChangeToOutcast() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToOutcast(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' was banned in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAffiliationChangeToOutcast(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -882,7 +1234,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -903,8 +1254,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' was banned in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -913,6 +1263,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAffiliationChangeToNone() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToNone(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where revoked membership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAffiliationChangeToNone() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToNone(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where revoked membership in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAffiliationChangeToNone(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -944,8 +1313,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = seeRevoke.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where revoked membership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -955,6 +1323,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAffiliationChangeToNone() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToNone(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where revoked membership in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAffiliationChangeToNone() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToNone(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where revoked membership in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAffiliationChangeToNone(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -962,7 +1353,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -990,8 +1380,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = seeRevoke.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where revoked membership in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1000,6 +1389,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAffiliationChangeToMember() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToMember(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted membership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAffiliationChangeToMember() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToMember(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted membership in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAffiliationChangeToMember(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -1022,8 +1430,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted membership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1033,6 +1440,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAffiliationChangeToMember() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToMember(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted membership in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAffiliationChangeToMember() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToMember(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted membership in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAffiliationChangeToMember(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -1040,7 +1470,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -1060,8 +1489,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted membership in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1070,6 +1498,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAffiliationChangeToAdmin() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToAdmin(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted admin in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAffiliationChangeToAdmin() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToAdmin(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted admin in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAffiliationChangeToAdmin(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -1092,8 +1539,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted admin in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1103,6 +1549,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAffiliationChangeToAdmin() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToAdmin(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted admin in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAffiliationChangeToAdmin() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToAdmin(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted admin in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAffiliationChangeToAdmin(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -1110,7 +1579,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -1130,8 +1598,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted admin in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1140,6 +1607,25 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInReflectedAffiliationChangeToOwner() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToOwner(reflectedPresence -> {
+            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted ownership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedAffiliationChangeToOwner() throws Exception
+    {
+        fixtureForReflectedAffiliationChangeToOwner(reflectedPresence -> {
+            final List<OccupantId> extensions = reflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted ownership in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedAffiliationChangeToOwner(final Function<Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -1162,8 +1648,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = reflectedPresence.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence sent back to user '" + conOne.getUser() + "' after they where granted ownership in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            assertion.apply(reflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1173,6 +1658,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "4", quote = "The <occupant-id> element MUST be attached to [...] every presence sent by a MUC.")
     public void testOccupantIdInBroadcastAffiliationChangeToOwner() throws Exception
     {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToOwner(recipientNickname, broadcastedPresence -> {
+            final OccupantId extension = broadcastedPresence.getExtension(OccupantId.class);
+            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted ownership in the room to contain an occupant-id element (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastAffiliationChangeToOwner() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+
+        fixtureForBroadcastAffiliationChangeToOwner(recipientNickname, broadcastedPresence -> {
+            final List<OccupantId> extensions = broadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted ownership in the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastAffiliationChangeToOwner(final Resourcepart recipientNickname, final Function<Presence, Void> assertion) throws Exception
+    {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
@@ -1180,7 +1688,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -1200,8 +1707,7 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             final Presence result = presenceReceived.waitForResult(timeout);
 
             // Verify result.
-            final OccupantId extension = result.getExtension(OccupantId.class);
-            assertNotNull(extension, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' where granted ownership in the room to contain an occupant-id element (but it did not).");
+            assertion.apply(result);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1209,7 +1715,27 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     }
 
     @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST be generated such that it is stable. This means that if a user joins the same room a second time, the occupant identifier MUST be the same as was assigned the first time.")
-    public void testOccupantIdInReflectedJoinPresenceRemainsTheSame() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    public void testOccupantIdInReflectedJoinPresenceAfterRejoin() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        fixtureForReflectedJoinPresenceAfterRejoin((firstReflectedPresence, secondReflectedPresence) -> {
+            final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
+            final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
+            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain the same occupant-id value when they re-join the same room (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedJoinPresenceAfterRejoin() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        fixtureForReflectedJoinPresenceAfterRejoin((firstReflectedPresence, secondReflectedPresence) -> {
+            final List<OccupantId> extensions = secondReflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they rejoined room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedJoinPresenceAfterRejoin(final BiFunction<Presence, Presence, Void> assertion) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
     {
         // Setup test fixture.
         createRoom();
@@ -1219,16 +1745,14 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         try {
             // Execute system under test.
             final Presence firstReflectedPresence = room.join(Resourcepart.from("test-user"));
-            final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
             room.leave();
 
             Thread.sleep(100); // FIXME: Delete this line that's put in to work around a race condition in Smack.
 
             final Presence secondReflectedPresence = room.join(Resourcepart.from("test-user"));
-            final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
 
             // Verify result.
-            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' to contain the same occupant-id value when they re-join the same room (but it did not).");
+            assertion.apply(firstReflectedPresence, secondReflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1236,7 +1760,29 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     }
 
     @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST be generated such that it is stable. This means that if a user joins the same room a second time, the occupant identifier MUST be the same as was assigned the first time.")
-    public void testOccupantIdInBroadcastJoinPresenceRemainsTheSame() throws Exception
+    public void testOccupantIdInBroadcastJoinPresenceAfterRejoin() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        fixtureForBroadcastJoinPresenceAfterRejoin(recipientNickname, (firstBroadcastedPresence, secondBroadcastedPresence) -> {
+            final OccupantId firstOccupantId = firstBroadcastedPresence.getExtension(OccupantId.class);
+            final OccupantId secondOccupantId = secondBroadcastedPresence.getExtension(OccupantId.class);
+            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room to contain the same occupant-id value when the same user leaves and re-join the room (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastJoinPresenceAfterRejoin() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        fixtureForBroadcastJoinPresenceAfterRejoin(recipientNickname, (firstBroadcastedPresence, secondBroadcastedPresence) -> {
+            final List<OccupantId> extensions = secondBroadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' rejoined the room to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastJoinPresenceAfterRejoin(final Resourcepart recipientNickname, final BiFunction<Presence, Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -1245,7 +1791,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
         final Resourcepart joinerNickname = Resourcepart.from("test-joiner");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid joinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerNickname);
 
         try {
@@ -1262,14 +1807,12 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             // Execute system under test.
             roomOne.join(joinerNickname);
             final Presence firstPresence = presenceReceived.waitForResult(timeout);
-            final OccupantId firstOccupantId = firstPresence.getExtension(OccupantId.class);
             roomOne.leave();
             roomOne.join(joinerNickname);
             final Presence secondPresence = presenceReceived.waitForResult(timeout);
-            final OccupantId secondOccupantId = secondPresence.getExtension(OccupantId.class);
 
             // Verify result.
-            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room to contain the same occupant-id value when the same user leaves and re-join the room (but it did not).");
+            assertion.apply(firstPresence, secondPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1277,28 +1820,50 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     }
 
     @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST be generated such that it is stable. This means that if a user joins the same room a second time, the occupant identifier MUST be the same as was assigned the first time. A user in the sense of this specification is identified by its real bare JID. ")
-    public void testOccupantIdInReflectedJoinPresenceRemainsTheSameAfterNicknameChange() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    public void testOccupantIdInReflectedJoinPresenceAfterNicknameChangeAndRejoin() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        final Resourcepart firstNickname = Resourcepart.from("test-user-A");
+        final Resourcepart secondNickname = Resourcepart.from("test-user-B");
+
+        fixtureForReflectedJoinPresenceAfterNicknameChangeAndRejoin(firstNickname, secondNickname, (firstReflectedPresence, secondReflectedPresence) -> {
+            final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
+            final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
+            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' (using nickname '" + firstNickname + "') to contain the same occupant-id value when they re-join the same room using a different nickname ('" + secondNickname + "') (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInReflectedJoinPresenceAfterNicknameChangeAndRejoin() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
+    {
+        final Resourcepart firstNickname = Resourcepart.from("test-user-A");
+        final Resourcepart secondNickname = Resourcepart.from("test-user-B");
+
+        fixtureForReflectedJoinPresenceAfterNicknameChangeAndRejoin(firstNickname, secondNickname, (firstReflectedPresence, secondReflectedPresence) -> {
+            final List<OccupantId> extensions = secondReflectedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence sent back to user '" + conOne.getUser() + "' after they re joined room '" + testRoomAddress + "' (using nickname '" + secondNickname + "', having used '" + firstNickname + "' earlier) to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForReflectedJoinPresenceAfterNicknameChangeAndRejoin(final Resourcepart firstNickname, final Resourcepart secondNickname, final BiFunction<Presence, Presence, Void> assertion) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException, XmppStringprepException, MultiUserChatException.NotAMucServiceException, MultiUserChatException.MucNotJoinedException
     {
         // Setup test fixture.
         createRoom();
         final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
         final MultiUserChat room = mucManagerOne.getMultiUserChat(testRoomAddress);
-        final Resourcepart firstNickname = Resourcepart.from("test-user-A");
-        final Resourcepart secondNickname = Resourcepart.from("test-user-B");
 
         try {
             // Execute system under test.
             final Presence firstReflectedPresence = room.join(firstNickname);
-            final OccupantId firstOccupantId = firstReflectedPresence.getExtension(OccupantId.class);
             room.leave();
 
             Thread.sleep(100); // FIXME: Delete this line that's put in to work around a race condition in Smack.
 
             final Presence secondReflectedPresence = room.join(secondNickname);
-            final OccupantId secondOccupantId = secondReflectedPresence.getExtension(OccupantId.class);
 
             // Verify result.
-            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence sent back to user '" + conOne.getUser() + "' after they joined room '" + testRoomAddress + "' (using nickname '" + firstNickname + "') to contain the same occupant-id value when they re-join the same room using a different nickname ('" + secondNickname + "') (but it did not).");
+            assertion.apply(firstReflectedPresence, secondReflectedPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1306,7 +1871,35 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
     }
 
     @SmackIntegrationTest(section = "4.1", quote = "The occupant identifier MUST be generated such that it is stable. This means that if a user joins the same room a second time, the occupant identifier MUST be the same as was assigned the first time. A user in the sense of this specification is identified by its real bare JID. ")
-    public void testOccupantIdInBroadcastJoinPresenceRemainsTheSameAfterNicknameChange() throws Exception
+    public void testOccupantIdInBroadcastJoinPresenceAfterNicknameChangeAndRejoin() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        final Resourcepart joinerFirstNickname = Resourcepart.from("test-joiner-A");
+        final Resourcepart joinerSecondNickname = Resourcepart.from("test-joiner-B");
+
+        fixtureForBroadcastJoinPresenceAfterNicknameChangeAndRejoin(recipientNickname, joinerFirstNickname, joinerSecondNickname, (firstBroadcastedPresence, secondBroadcastedPresence) -> {
+            final OccupantId firstOccupantId = firstBroadcastedPresence.getExtension(OccupantId.class);
+            final OccupantId secondOccupantId = secondBroadcastedPresence.getExtension(OccupantId.class);
+            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room (using nickname '" + joinerFirstNickname + "') to contain the same occupant-id value when the same user leaves and re-join the room using a different nickname ('" + joinerSecondNickname + "') (but it did not).");
+            return null;
+        });
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "Messages and presences MUST NOT contain more then one <occupant-id> element.")
+    public void testSingleOccupantIdInBroadcastJoinPresenceAfterNicknameChangeAndRejoin() throws Exception
+    {
+        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
+        final Resourcepart joinerFirstNickname = Resourcepart.from("test-joiner-A");
+        final Resourcepart joinerSecondNickname = Resourcepart.from("test-joiner-B");
+
+        fixtureForBroadcastJoinPresenceAfterNicknameChangeAndRejoin(recipientNickname, joinerFirstNickname, joinerSecondNickname, (firstBroadcastedPresence, secondBroadcastedPresence) -> {
+            final List<OccupantId> extensions = secondBroadcastedPresence.getExtensions(OccupantId.class);
+            assertFalse(extensions.size() > 1, "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' rejoined the room (using nickname '" + joinerFirstNickname + "', having used '" + joinerSecondNickname + "' earlier) to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
+            return null;
+        });
+    }
+
+    void fixtureForBroadcastJoinPresenceAfterNicknameChangeAndRejoin(final Resourcepart recipientNickname, final Resourcepart joinerFirstNickname, final Resourcepart joinerSecondNickname, final BiFunction<Presence, Presence, Void> assertion) throws Exception
     {
         // Setup test fixture.
         createRoom();
@@ -1314,9 +1907,6 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final MultiUserChatManager mucManagerTwo = MultiUserChatManager.getInstanceFor(conTwo);
         final MultiUserChat roomOne = mucManagerOne.getMultiUserChat(testRoomAddress);
         final MultiUserChat roomTwo = mucManagerTwo.getMultiUserChat(testRoomAddress);
-        final Resourcepart joinerFirstNickname = Resourcepart.from("test-joiner-A");
-        final Resourcepart joinerSecondNickname = Resourcepart.from("test-joiner-B");
-        final Resourcepart recipientNickname = Resourcepart.from("test-recipient");
         final FullJid firstJoinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerFirstNickname);
         final FullJid secondJoinerRoomAddress = JidCreate.fullFrom(testRoomAddress, joinerSecondNickname);
 
@@ -1340,14 +1930,12 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             // Execute system under test.
             roomOne.join(joinerFirstNickname);
             final Presence firstPresence = firstPresenceReceived.waitForResult(timeout);
-            final OccupantId firstOccupantId = firstPresence.getExtension(OccupantId.class);
             roomOne.leave();
             roomOne.join(joinerSecondNickname);
             final Presence secondPresence = secondPresenceReceived.waitForResult(timeout);
-            final OccupantId secondOccupantId = secondPresence.getExtension(OccupantId.class);
 
             // Verify result.
-            assertEquals(firstOccupantId.getId(), secondOccupantId.getId(), "Expected the presence received by occupant '" + conTwo.getUser() + "' (using nickname '" + recipientNickname + "') in room '" + testRoomAddress + "' after user '" + conOne.getUser()+ "' joined the room (using nickname '" + joinerFirstNickname + "') to contain the same occupant-id value when the same user leaves and re-join the room using a different nickname ('" + joinerSecondNickname + "') (but it did not).");
+            assertion.apply(firstPresence, secondPresence);
         } finally {
             // Tear down test fixture.
             removeRoom();
