@@ -20,10 +20,7 @@ import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
-import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.StanzaListener;
-import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
@@ -43,7 +40,6 @@ import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -399,7 +395,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
-    @SmackIntegrationTest(section = "4.5")
+    @SmackIntegrationTest(section = "4.5", quote = "An administrator may need to terminate one or all of the user's current sessions [...] if the JID is of the form <user@host/resource>, the service MUST end only the session associated with that resource.s")
     public void testEndUserSession() throws Exception {
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
@@ -408,37 +404,31 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         try {
             createUser(userToEndSession);
 
-            // Fetch user details to get the user loaded
-            //AdHocCommandData result = executeCommandWithArgs(GET_USER_PROPERTIES, adminConnection.getUser().asEntityBareJid(),
-            //    "accountjids", userToEndSession.toString()
-            //);
-
-            //assertFormFieldExists("accountjids", result);
-
             // Login as the user to be able to end their session
             AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
             userConnection.connect();
             userConnection.login(userToEndSession.getLocalpartOrThrow().toString(), "password");
 
-            AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
-                "max_items", "25"
-            );
-            List<String> jids = result.getForm().getField("activeuserjids").getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
-            assertTrue(jids.contains(userConnection.getUser().asEntityBareJidString()));
+            final SimpleResultSyncPoint isDisconnected = new SimpleResultSyncPoint();
+            userConnection.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isDisconnected.signal();
+                }
+            });
 
             // End the user's session
-            result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
-                "accountjids", userToEndSession.toString()
+            AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
+                "accountjids",  userConnection.getUser().toString() // _full_ JID. Should close only this session.
             );
 
-            assertNoteType(AdHocCommandNote.Type.info, result);
-            assertNoteContains("Operation finished successfully", result);
-
-            result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
-                "max_items", "25"
-            );
-            jids = result.getForm().getField("activeuserjids").getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
-            assertFalse(jids.contains(userConnection.getUser().asEntityBareJidString()));
+            assertEquals(AdHocCommandData.Status.completed, result.getStatus(), "Expected the status of the " + END_USER_SESSION + "command that was executed by '" + adminConnection.getUser() + " to represent that the command is done executing (but it does not).");
+            assertResult(isDisconnected, "Expected the connection of '" + userConnection.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the target's full JID (but the connection remains connected).");
         } finally {
             deleteUser(userToEndSession);
         }
