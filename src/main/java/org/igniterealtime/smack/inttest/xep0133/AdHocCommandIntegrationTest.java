@@ -21,11 +21,10 @@ import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.packet.Element;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.packet.PresenceBuilder;
+import org.jivesoftware.smack.filter.FlexibleStanzaTypeFilter;
+import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
+import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.commands.AdHocCommandNote;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
@@ -33,6 +32,7 @@ import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Resourcepart;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -395,22 +395,27 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#end-user-session" name="End User Session"
-    @SmackIntegrationTest(section = "4.5", quote = "An administrator may need to terminate one or all of the user's current sessions [...] if the JID is of the form <user@host/resource>, the service MUST end only the session associated with that resource.s")
-    public void testEndUserSession() throws Exception {
+    @SmackIntegrationTest(section = "4.5", quote = "An administrator may need to terminate one [...] of the user's current sessions [...] if the JID is of the form <user@host/resource>, the service MUST end only the session associated with that resource.")
+    public void testEndUserSessionFullJid() throws Exception {
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid userToEndSession = JidCreate.bareFrom("endsessiontest" + testRunId + "@example.org");
+        final Jid testUser = JidCreate.bareFrom("endsessiontest-full-" + testRunId + "@example.org");
+        AbstractXMPPConnection userConnectionOne = null;
+        AbstractXMPPConnection userConnectionTwo = null;
         try {
-            createUser(userToEndSession);
+            createUser(testUser);
 
             // Login as the user to be able to end their session
-            AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
-            userConnection.connect();
-            userConnection.login(userToEndSession.getLocalpartOrThrow().toString(), "password");
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            userConnectionTwo.connect();
+            userConnectionOne.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
+            userConnectionTwo.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-two-" + StringUtils.randomString(5)));
 
             final SimpleResultSyncPoint isDisconnected = new SimpleResultSyncPoint();
-            userConnection.addConnectionListener(new ConnectionListener() {
+            userConnectionOne.addConnectionListener(new ConnectionListener() {
                 @Override
                 public void connectionClosed() {
                     isDisconnected.signal();
@@ -422,15 +427,164 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 }
             });
 
+            final String needle = "wait for me " + StringUtils.randomString(13);
+            final SimpleResultSyncPoint receivedMessage = new SimpleResultSyncPoint();
+            userConnectionTwo.addSyncStanzaListener((stanza) -> receivedMessage.signal(), new FlexibleStanzaTypeFilter<Message>() {
+                protected boolean acceptSpecific(Message message) {
+                    return message.getFrom().equals(adminConnection.getUser()) && needle.equals(message.getBody());
+            }});
+
             // End the user's session
             AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
-                "accountjids",  userConnection.getUser().toString() // _full_ JID. Should close only this session.
+                "accountjids",  userConnectionOne.getUser().toString() // _full_ JID. Should close only this session.
             );
 
             assertEquals(AdHocCommandData.Status.completed, result.getStatus(), "Expected the status of the " + END_USER_SESSION + "command that was executed by '" + adminConnection.getUser() + " to represent that the command is done executing (but it does not).");
-            assertResult(isDisconnected, "Expected the connection of '" + userConnection.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the target's full JID (but the connection remains connected).");
+            assertResult(isDisconnected, "Expected the connection of '" + userConnectionOne.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the target's full JID (but the connection remains connected).");
+
+            // Send a message to the _other_ resource. As the server must process the stanzas sent by admin in order, the message would likely not be received when that other resource also got disconnected.
+            adminConnection.sendStanza(MessageBuilder.buildMessage().setBody(needle).to(userConnectionTwo.getUser()).build());
+            receivedMessage.waitForResult(timeout);
+            assertTrue(userConnectionTwo.isConnected(), "Did not expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the full JID of a different resource of that user ('" + userConnectionOne.getUser() + "').");
         } finally {
-            deleteUser(userToEndSession);
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+            if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
+                userConnectionTwo.disconnect();
+            }
+            deleteUser(testUser);
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.5", quote = "An administrator may need to terminate [...] all of the user's current sessions [...] If the JID is of the form <user@host>, the service MUST end all of the user's sessions")
+    public void testEndUserSessionBareJid() throws Exception {
+        checkServerSupportCommand(END_USER_SESSION);
+        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+
+        final Jid testUser = JidCreate.bareFrom("endsessiontest-bare-" + testRunId + "@example.org");
+        AbstractXMPPConnection userConnectionOne = null;
+        AbstractXMPPConnection userConnectionTwo = null;
+        try {
+            createUser(testUser);
+
+            // Login as the user to be able to end their session
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            userConnectionTwo.connect();
+            userConnectionOne.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
+            userConnectionTwo.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-two-" + StringUtils.randomString(5)));
+
+            final SimpleResultSyncPoint isOneDisconnected = new SimpleResultSyncPoint();
+            userConnectionOne.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isOneDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isOneDisconnected.signal();
+                }
+            });
+
+            final SimpleResultSyncPoint isTwoDisconnected = new SimpleResultSyncPoint();
+            userConnectionTwo.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isTwoDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isTwoDisconnected.signal();
+                }
+            });
+
+            // End the user's sessions
+            AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
+                "accountjids",  userConnectionOne.getUser().asBareJid().toString() // bare_ JID. Should close all sessions.
+            );
+
+            assertEquals(AdHocCommandData.Status.completed, result.getStatus(), "Expected the status of the " + END_USER_SESSION + "command that was executed by '" + adminConnection.getUser() + " to represent that the command is done executing (but it does not).");
+            assertResult(isOneDisconnected, "Expected the connection of '" + userConnectionOne.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the target's bare JID (but the connection remains connected).");
+            assertResult(isTwoDisconnected, "Expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the target's bare JID (but the connection remains connected).");
+        } finally {
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+            if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
+                userConnectionTwo.disconnect();
+            }
+            deleteUser(testUser);
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.5", quote = "An administrator may need to terminate [...] all of the user's current sessions")
+    public void testEndUserSessionTwoUsers() throws Exception {
+        checkServerSupportCommand(END_USER_SESSION);
+        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+
+        final Jid testUserOne = JidCreate.bareFrom("endsessiontest-one-" + testRunId + "@example.org");
+        final Jid testUserTwo = JidCreate.bareFrom("endsessiontest-two-" + testRunId + "@example.org");
+        AbstractXMPPConnection userConnectionOne = null;
+        AbstractXMPPConnection userConnectionTwo = null;
+        try {
+            createUser(testUserOne);
+            createUser(testUserTwo);
+
+            // Login as the user to be able to end their session
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            userConnectionTwo.connect();
+            userConnectionOne.login(testUserOne.getLocalpartOrThrow().toString(), "password");
+            userConnectionTwo.login(testUserTwo.getLocalpartOrThrow().toString(), "password");
+
+            final SimpleResultSyncPoint isOneDisconnected = new SimpleResultSyncPoint();
+            userConnectionOne.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isOneDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isOneDisconnected.signal();
+                }
+            });
+
+            final SimpleResultSyncPoint isTwoDisconnected = new SimpleResultSyncPoint();
+            userConnectionTwo.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isTwoDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isTwoDisconnected.signal();
+                }
+            });
+
+            // End the user's sessions
+            AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", userConnectionOne.getUser().asBareJid().toString() + "," + userConnectionTwo.getUser().asBareJid().toString()
+            );
+
+            assertEquals(AdHocCommandData.Status.completed, result.getStatus(), "Expected the status of the " + END_USER_SESSION + "command that was executed by '" + adminConnection.getUser() + " to represent that the command is done executing (but it does not).");
+            assertResult(isOneDisconnected, "Expected the connection of '" + userConnectionOne.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the a list of targets that included this one (but the connection remains connected).");
+            assertResult(isTwoDisconnected, "Expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the a list of targets that included this one (but the connection remains connected).");
+        } finally {
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+            if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
+                userConnectionTwo.disconnect();
+            }
+            deleteUser(testUserOne);
+            deleteUser(testUserTwo);
         }
     }
 
