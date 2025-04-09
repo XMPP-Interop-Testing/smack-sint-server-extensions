@@ -147,7 +147,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUser() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final Jid addedUser = JidCreate.bareFrom("addusertest" + testRunId + "@example.org");
+        final Jid addedUser = JidCreate.bareFrom(Localpart.from("addusertest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -188,7 +188,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUserWithMismatchedPassword() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final Jid newUser = JidCreate.bareFrom("addusermismatchedpasswordtest" + testRunId + "@example.org");
+        final Jid newUser = JidCreate.bareFrom(Localpart.from("addusermismatchedpasswordtest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -255,7 +255,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDeleteUser() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
-        final Jid deletedUser = JidCreate.bareFrom("deleteusertest" + testRunId + "@example.org");
+        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest" + testRunId), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
         // Execute system under test.
@@ -271,7 +271,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDeleteUserWithFullJid() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
-        final Jid deletedUser = JidCreate.bareFrom("deleteusertest2" + testRunId + "@example.org");
+        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest2" + testRunId), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
         // Execute system under test.
@@ -291,7 +291,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDisableUser() throws Exception {
         checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.bareFrom("disableusertest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
         try {
             createUser(disabledUser);
 
@@ -314,7 +314,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
         checkServerSupportCommand(DISABLE_A_USER);
 
-        final Jid disabledUser = JidCreate.entityBareFrom("reenableusertest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Setup test fixture.
             createUser(disabledUser);
@@ -338,7 +338,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.4")
     public void testReenableNonDisabledUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
-        final Jid disabledUser = JidCreate.entityBareFrom("reenableusernondisabledtest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusernondisabledtest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Setup test fixture.
             createUser(disabledUser);
@@ -361,7 +361,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
 
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.entityBareFrom("reenablenonexistingusertest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenablenonexistingusertest" + testRunId), connection.getXMPPServiceDomain());
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -394,7 +394,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUser = JidCreate.bareFrom("endsessiontest-full-" + testRunId + "@example.org");
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-full-" + testRunId), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -455,7 +455,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUser = JidCreate.bareFrom("endsessiontest-bare-" + testRunId + "@example.org");
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-bare-" + testRunId), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -519,8 +519,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUserOne = JidCreate.bareFrom("endsessiontest-one-" + testRunId + "@example.org");
-        final Jid testUserTwo = JidCreate.bareFrom("endsessiontest-two-" + testRunId + "@example.org");
+        final Jid testUserOne = JidCreate.bareFrom(Localpart.from("endsessiontest-one-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUserTwo = JidCreate.bareFrom(Localpart.from("endsessiontest-two-" + testRunId), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -588,7 +588,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testChangePassword() throws Exception {
         checkServerSupportCommand(CHANGE_USER_PASSWORD);
         // Setup test fixture.
-        final Jid userToChangePassword = JidCreate.bareFrom("changepasswordtest" + testRunId + "@example.org");
+        final Jid userToChangePassword = JidCreate.bareFrom(Localpart.from("changepasswordtest" + testRunId), connection.getXMPPServiceDomain());
         try {
             createUser(userToChangePassword);
 
@@ -767,7 +767,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(DISABLE_A_USER);
 
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.bareFrom("disableusernumtest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusernumtest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Create and disable a user
             createUser(disabledUser);
@@ -872,7 +872,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
         checkServerSupportCommand(DISABLE_A_USER);
 
-        final Jid disabledUser = JidCreate.bareFrom("disableuserlisttest" + testRunId + "@example.org");
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableuserlisttest" + testRunId), connection.getXMPPServiceDomain());
         createUser(disabledUser);
 
         executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -1128,7 +1128,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.29")
     public void testEditAdminList() throws Exception {
         checkServerSupportCommand(EDIT_ADMIN_LIST);
-        final Jid adminToAdd = JidCreate.bareFrom("editadminlisttest" + testRunId + "@example.org");
+        final Jid adminToAdd = JidCreate.bareFrom(Localpart.from("editadminlisttest" + testRunId), connection.getXMPPServiceDomain());
         try {
             // Setup test fixture.
             createUser(adminToAdd);
