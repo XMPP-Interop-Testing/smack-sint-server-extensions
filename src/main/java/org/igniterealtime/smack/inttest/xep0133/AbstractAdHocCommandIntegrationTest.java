@@ -21,6 +21,7 @@ import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smackx.commands.AdHocCommand;
 import org.jivesoftware.smackx.commands.AdHocCommandManager;
 import org.jivesoftware.smackx.commands.AdHocCommandNote;
@@ -196,4 +197,18 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
         }
     }
 
+    void assertCommandCompletedSuccessfully(final AdHocCommandData result, final String message) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
+    {
+        assertEquals(IQ.Type.result, result.getType(), message + " Unexpected value of the 'type' attribute of the IQ response.");
+        assertEquals(AdHocCommandData.Status.completed, result.getStatus(), message + " Unexpected value of the 'status' attribute of the 'command' child element of the IQ response.");
+        assertTrue(result.getNotes().stream().noneMatch(note -> note.getType().equals(AdHocCommandNote.Type.error)), message + " Unexpected 'error' note in the 'command' child element of the IQ response.");
+    }
+
+    void assertCommandFailed(final AdHocCommandData result, final String message)
+    {
+        // There is no unique representation of a failed command, but either there's an IQ level error, or there's an error-note in the command status.
+        final boolean isError = result.getType().equals(AdHocCommandData.Type.error);
+        final boolean hasErrorNote = result.getNotes().stream().anyMatch(note -> note.getType().equals(AdHocCommandNote.Type.error));
+        assertTrue(isError || hasErrorNote, message + " Expected the value of the 'type' attribute of the IQ response to be 'error' and/or the 'command' child element of the IQ response to contain an 'error' note (but neither was true).");
+    }
 }
