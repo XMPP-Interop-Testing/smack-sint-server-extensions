@@ -101,15 +101,18 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         );
     }
 
-    private void deleteUser(String jid) throws Exception {
-        executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", jid
-        );
+    private void tryDeleteUser(String jid) throws Exception {
+        try {
+            executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", jid
+            );
+        } catch (XMPPException e) {
+            // Ignore
+        }
     }
-    private void deleteUser(Jid jid) throws Exception {
-        executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", jid.toString()
-        );
+
+    private void tryDeleteUser(Jid jid) throws Exception {
+        tryDeleteUser(jid.toString());
     }
 
     @SmackIntegrationTest(section = "3", quote =
@@ -169,7 +172,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             }
         } finally {
             // Tear down test fixture.
-            deleteUser(addedUser);
+            tryDeleteUser(addedUser);
         }
     }
 
@@ -204,7 +207,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertNoteContains("Passwords do not match", result);
         } finally {
             // Tear down test fixture.
-            deleteUser(newUser);
+            tryDeleteUser(newUser);
         }
     }
 
@@ -225,7 +228,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandFailed(result, "Expected response to the " + ADD_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent failure (but it does not) as the provided 'accountjid' value is not an address of the local XMPP domain.");
         } finally {
             // Tear down test fixture.
-            deleteUser(newUser);
+            tryDeleteUser(newUser);
         }
     }
 
@@ -246,7 +249,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandFailed(result, "Expected response to the " + ADD_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent failure (but it does not) as the provided 'accountjid' value is not a valid JID.");
         } finally {
             // Tear down test fixture.
-            deleteUser(newUserInvalidJid); // Should not exist, but just in case this somehow made it through, delete it.
+            tryDeleteUser(newUserInvalidJid);
         }
     }
 
@@ -258,13 +261,18 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest" + testRunId), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", deletedUser.toString()
-        );
+        try {
+            // Execute system under test.
+            AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", deletedUser.toString()
+            );
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_A_USER + " command (targeting a user by bare JID) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_A_USER + " command (targeting a user by bare JID) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+        } finally {
+            // Tear down test fixture.
+            tryDeleteUser(deletedUser);
+        }
     }
 
     @SmackIntegrationTest(section = "4.2")
@@ -274,16 +282,21 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest2" + testRunId), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", deletedUser.toString() + "/resource"
-        );
+        try {
+            // Execute system under test.
+            AdHocCommandData result = executeCommandWithArgs(DELETE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", deletedUser.toString() + "/resource"
+            );
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_A_USER + " command (targeting a user by full JID) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        // Although https://xmpp.org/extensions/xep-0133.html#delete-user specifies that the client should send the bare
-        // JID, there's no error handling specified for the case where the full JID is sent, and so it's expected that
-        // the server should handle it gracefully.
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_A_USER + " command (targeting a user by full JID) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Although https://xmpp.org/extensions/xep-0133.html#delete-user specifies that the client should send the bare
+            // JID, there's no error handling specified for the case where the full JID is sent, and so it's expected that
+            // the server should handle it gracefully.
+        } finally {
+            // Tear down test fixture.
+            tryDeleteUser(deletedUser);
+        }
     }
 
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
@@ -304,7 +317,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandCompletedSuccessfully(result, "Expected response to the " + DISABLE_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUser);
+            tryDeleteUser(disabledUser);
         }
     }
 
@@ -331,7 +344,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandCompletedSuccessfully(result, "Expected response to the " + REENABLE_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUser);
+            tryDeleteUser(disabledUser);
         }
     }
 
@@ -352,7 +365,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandCompletedSuccessfully(result, "Expected response to the " + REENABLE_A_USER + " command (targeting a user that was not disabled) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
         } finally {
             // Tear down test fixture.
-            deleteUser(disabledUser);
+            tryDeleteUser(disabledUser);
         }
     }
 
@@ -446,7 +459,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
                 userConnectionTwo.disconnect();
             }
-            deleteUser(testUser);
+            tryDeleteUser(testUser);
         }
     }
 
@@ -510,7 +523,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
                 userConnectionTwo.disconnect();
             }
-            deleteUser(testUser);
+            tryDeleteUser(testUser);
         }
     }
 
@@ -576,8 +589,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
                 userConnectionTwo.disconnect();
             }
-            deleteUser(testUserOne);
-            deleteUser(testUserTwo);
+            tryDeleteUser(testUserOne);
+            tryDeleteUser(testUserTwo);
         }
     }
 
@@ -607,7 +620,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertDoesNotThrow(() -> userConnection.login(userToChangePassword.getLocalpartOrThrow().toString(), "password2"));
         } finally {
             // Tear down test fixture.
-            deleteUser(userToChangePassword);
+            tryDeleteUser(userToChangePassword);
         }
     }
 
@@ -786,7 +799,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
                 "accountjids", disabledUser.toString()
             );
-            deleteUser(disabledUser);
+            tryDeleteUser(disabledUser);
         }
     }
 
@@ -875,18 +888,20 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableuserlisttest" + testRunId), connection.getXMPPServiceDomain());
         createUser(disabledUser);
 
-        executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
-            "accountjids", disabledUser.toString()
-        );
+        try {
+            executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
 
-        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
-            "max_items", "25");
+            AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
+                "max_items", "25");
 
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_DISABLED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldJidEquals("disableduserjids", Collections.singleton(disabledUser), result);
-
-        //Clean-up
-        deleteUser(disabledUser);
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_DISABLED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            assertFormFieldJidEquals("disableduserjids", Collections.singleton(disabledUser), result);
+        } finally {
+            // Tear down test fixture.
+            tryDeleteUser(disabledUser);
+        }
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
@@ -1157,7 +1172,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             )), result);
         } finally {
             // Tear down test fixture.
-            deleteUser(adminToAdd);
+            tryDeleteUser(adminToAdd);
             executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
                 "adminjids", adminConnection.getUser().asEntityBareJidString()
             );
