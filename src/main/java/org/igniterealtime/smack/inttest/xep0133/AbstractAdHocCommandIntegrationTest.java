@@ -64,9 +64,10 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
         adHocCommandManagerForAdmin = AdHocCommandManager.getInstance(adminConnection);
     }
 
-    public static final List<FormField.Type> NON_STRING_FORM_FIELD_TYPES = Arrays.asList(
+    public static final List<FormField.Type> MULTI_VALUE_FORM_TYPES = Arrays.asList(
         FormField.Type.jid_multi,
-        FormField.Type.list_multi
+        FormField.Type.list_multi,
+        FormField.Type.text_multi
     );
 
     void fillForm(FillableForm form, String[] args){
@@ -75,7 +76,7 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
             if (field == null) {
                 throw new IllegalStateException("Field " + args[i] + " not found in form");
             }
-            if (NON_STRING_FORM_FIELD_TYPES.contains(field.getType())){
+            if (MULTI_VALUE_FORM_TYPES.contains(field.getType())) {
                 if(args[i + 1].isEmpty()){
                     form.setAnswer(args[i], Collections.emptyList());
                 } else {
