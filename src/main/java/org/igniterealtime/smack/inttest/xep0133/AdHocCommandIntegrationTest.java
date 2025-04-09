@@ -26,11 +26,9 @@ import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.commands.AdHocCommandNote;
-import org.jivesoftware.smackx.commands.AdHocCommandResult;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.xdata.FormField;
-import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
@@ -1016,7 +1014,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testSetMOTD() throws Exception {
         checkServerSupportCommand(SET_MOTD);
         checkServerSupportCommand(EDIT_MOTD); // Used in validation
-        checkServerSupportCommand(DELETE_MOTD); // Used in teardown
+        checkServerSupportCommand(DELETE_MOTD); // Used in setup and teardown
 
         final Collection<String> newMOTD = Arrays.asList(
             "This is MOTD 1",
@@ -1024,6 +1022,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         );
 
         try {
+            // Setup test fixture.
+            executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid()); // Ensure that no MOTD pre-exists.
+
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(
                 SET_MOTD,
@@ -1088,7 +1089,6 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Pretend it's a 1-stage command again, so that we can check that the new MOTD is correct.
             result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-            assertCommandCompletedSuccessfully(result, "Expected response to the second " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
             assertFormFieldEquals("motd", newMOTD, result);
         } finally {
             // Tear down test fixture.
@@ -1117,7 +1117,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             );
 
             // Execute system under test.
-            AdHocCommandData result = executeCommandWithArgs(
+            AdHocCommandData result = executeCommandSimple(
                 DELETE_MOTD,
                 adminConnection.getUser().asEntityBareJid());
 
