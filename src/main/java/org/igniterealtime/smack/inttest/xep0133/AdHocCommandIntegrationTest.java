@@ -1016,117 +1016,182 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testSetMOTD() throws Exception {
         checkServerSupportCommand(SET_MOTD);
         checkServerSupportCommand(EDIT_MOTD); // Used in validation
+        checkServerSupportCommand(DELETE_MOTD); // Used in teardown
 
         final Collection<String> newMOTD = Arrays.asList(
             "This is MOTD 1",
             "This is MOTD 2"
         );
 
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(
-            SET_MOTD,
-            adminConnection.getUser().asEntityBareJid(),
-            "motd",
-            String.join(",", newMOTD)
-        );
+        try {
+            // Execute system under test.
+            AdHocCommandData result = executeCommandWithArgs(
+                SET_MOTD,
+                adminConnection.getUser().asEntityBareJid(),
+                "motd",
+                String.join(",", newMOTD)
+            );
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
-        // Check value using the edit form
-        result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-        assertFormFieldEquals("motd", newMOTD, result);
+            // Check value using the edit form
+            result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
+            assertFormFieldEquals("motd", newMOTD, result);
+        } finally {
+            // Tear down test fixture.
+            try {
+                executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid());
+            } catch (XMPPException e) {
+                // Ignore
+            }
+        }
     }
 
     //node="http://jabber.org/protocol/admin#edit-motd" name="Edit Message of the Day"
     @SmackIntegrationTest(section = "4.25")
     public void testEditMOTD() throws Exception {
+        checkServerSupportCommand(SET_MOTD); // Used in setup
         checkServerSupportCommand(EDIT_MOTD);
+        checkServerSupportCommand(DELETE_MOTD); // Used in teardown
 
-        final Collection<String> newMOTD = Arrays.asList(
-            "This is MOTD A",
-            "This is MOTD B"
-        );
+        // Setup test fixture.
+        try {
+            executeCommandWithArgs(
+                SET_MOTD,
+                adminConnection.getUser().asEntityBareJid(),
+                "motd",
+                String.join(",", "This should be replaced.")
+            );
 
-        // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current MOTD form
-        AdHocCommandData result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
+            final Collection<String> newMOTD = Arrays.asList(
+                "This is MOTD A",
+                "This is MOTD B"
+            );
 
-        // Verify results.
-        assertFormFieldExists("motd", result);
+            // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current MOTD form
+            AdHocCommandData result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
 
-        // Execute system under test: Now run the full thing
-        result = executeCommandWithArgs(
-            EDIT_MOTD,
-            adminConnection.getUser().asEntityBareJid(),
-            "motd",
-            String.join(",", newMOTD)
-        );
+            // Verify results.
+            assertFormFieldExists("motd", result);
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Execute system under test: Now run the full thing
+            result = executeCommandWithArgs(
+                EDIT_MOTD,
+                adminConnection.getUser().asEntityBareJid(),
+                "motd",
+                String.join(",", newMOTD)
+            );
 
-        // Pretend it's a 1-stage command again, so that we can check that the new MOTD is correct.
-        result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-        assertCommandCompletedSuccessfully(result, "Expected response to the second " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldEquals("motd", newMOTD, result);
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+
+            // Pretend it's a 1-stage command again, so that we can check that the new MOTD is correct.
+            result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
+            assertCommandCompletedSuccessfully(result, "Expected response to the second " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            assertFormFieldEquals("motd", newMOTD, result);
+        } finally {
+            // Tear down test fixture.
+            try {
+                executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid());
+            } catch (XMPPException e) {
+                // Ignore
+            }
+        }
     }
 
     //node="http://jabber.org/protocol/admin#delete-motd" name="Delete Message of the Day"
     @SmackIntegrationTest(section = "4.26")
     public void testDeleteMOTD() throws Exception {
-        checkServerSupportCommand(DELETE_MOTD);
+        checkServerSupportCommand(SET_MOTD); // Used in setup
         checkServerSupportCommand(EDIT_MOTD); // Used in validation
+        checkServerSupportCommand(DELETE_MOTD);
 
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(
-            DELETE_MOTD,
-            adminConnection.getUser().asEntityBareJid());
+        try {
+            // Setup test fixture.
+            executeCommandWithArgs(
+                SET_MOTD,
+                adminConnection.getUser().asEntityBareJid(),
+                "motd",
+                String.join(",", "This should be removed.")
+            );
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Execute system under test.
+            AdHocCommandData result = executeCommandWithArgs(
+                DELETE_MOTD,
+                adminConnection.getUser().asEntityBareJid());
 
-        // Check value using the edit form
-        result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-        assertFormFieldEquals("motd", List.of(), result);
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + DELETE_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+
+            // Check value using the edit form
+            result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
+            assertFormFieldEquals("motd", List.of(), result);
+        } finally {
+            // Tear down test fixture.
+            try {
+                executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid());
+            } catch (XMPPException e) {
+                // Ignore
+            }
+        }
     }
 
     //node="http://jabber.org/protocol/admin#set-welcome" name="Set Welcome Message"
     @SmackIntegrationTest(section = "4.27")
     public void testSetWelcome() throws Exception {
         checkServerSupportCommand(SET_WELCOME_MESSAGE);
+        checkServerSupportCommand(DELETE_WELCOME_MESSAGE); // Used in teardown.
 
         final Collection<String> newWelcomeMessage = Arrays.asList(
             "Line 1 of welcome message",
             "Line 2 of welcome message"
         );
 
-        // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current Welcome Message form
-        AdHocCommandData result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
+        try {
+            // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current Welcome Message form
+            AdHocCommandData result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
 
-        // Verify results.
-        assertFormFieldExists("welcome", result);
+            // Verify results.
+            assertFormFieldExists("welcome", result);
 
-        // Execute system under test: Now run the full thing
-        result = executeCommandWithArgs(
-            SET_WELCOME_MESSAGE,
-            adminConnection.getUser().asEntityBareJid(),
-            "welcome",
-            String.join(",", newWelcomeMessage)
-        );
+            // Execute system under test: Now run the full thing
+            result = executeCommandWithArgs(
+                SET_WELCOME_MESSAGE,
+                adminConnection.getUser().asEntityBareJid(),
+                "welcome",
+                String.join(",", newWelcomeMessage)
+            );
 
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_WELCOME_MESSAGE + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            // Verify results.
+            assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_WELCOME_MESSAGE + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
-        // Pretend it's a 1-stage command again, so that we can check that the new welcome message is correct.
-        result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
-        assertFormFieldEquals("welcome", newWelcomeMessage, result);
+            // Pretend it's a 1-stage command again, so that we can check that the new welcome message is correct.
+            result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
+            assertFormFieldEquals("welcome", newWelcomeMessage, result);
+        } finally {
+            // Tear down test fixture.
+            try {
+                executeCommandSimple(DELETE_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
+            } catch (XMPPException e) {
+                // Ignore.
+            }
+        }
     }
 
     //node="http://jabber.org/protocol/admin#delete-welcome" name="Delete Welcome Message"
     @SmackIntegrationTest(section = "4.28")
     public void testDeleteWelcome() throws Exception {
         checkServerSupportCommand(DELETE_WELCOME_MESSAGE);
-        checkServerSupportCommand(SET_WELCOME_MESSAGE); // Used for validation
+        checkServerSupportCommand(SET_WELCOME_MESSAGE); // Used for setup and validation
+
+        // Setup test fixture.
+        executeCommandWithArgs(
+            SET_WELCOME_MESSAGE,
+            adminConnection.getUser().asEntityBareJid(),
+            "welcome",
+            String.join(",", "This should be deleted.")
+        );
 
         // Execute system under test.
         AdHocCommandData result = executeCommandSimple(DELETE_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
