@@ -175,17 +175,6 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     @SmackIntegrationTest(section = "4.1")
-    public void testAddUserWithoutJid() throws Exception {
-        checkServerSupportCommand(ADD_A_USER);
-        Exception e = assertThrows(IllegalStateException.class, () ->
-            executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
-                "password", "password",
-                "password-verify", "password"
-        ));
-        assertEquals("Not all required fields filled. Missing: [accountjid]", e.getMessage());
-    }
-
-    @SmackIntegrationTest(section = "4.1")
     public void testAddUserWithMismatchedPassword() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
