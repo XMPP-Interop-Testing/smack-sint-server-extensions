@@ -314,6 +314,138 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
+    @SmackIntegrationTest(section = "4.3", quote = "An administrator may need to temporarily disable a user account. Disabling a user MUST result in the termination of any active sessions for the user and in the prevention of further user logins until the account is re-enabled")
+    public void testDisableUserGetsSessionsTerminated() throws Exception {
+        checkServerSupportCommand(DISABLE_A_USER);
+        // Setup test fixture.
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
+        AbstractXMPPConnection userConnectionOne = null;
+        AbstractXMPPConnection userConnectionTwo = null;
+        try {
+            createUser(disabledUser);
+
+            // Login as the user to be able to see their sessions being ended
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            userConnectionTwo.connect();
+            userConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
+            userConnectionTwo.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-two-" + StringUtils.randomString(5)));
+
+            final SimpleResultSyncPoint isOneDisconnected = new SimpleResultSyncPoint();
+            userConnectionOne.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isOneDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isOneDisconnected.signal();
+                }
+            });
+            final SimpleResultSyncPoint isTwoDisconnected = new SimpleResultSyncPoint();
+            userConnectionTwo.addConnectionListener(new ConnectionListener() {
+                @Override
+                public void connectionClosed() {
+                    isTwoDisconnected.signal();
+                }
+
+                @Override
+                public void connectionClosedOnError(Exception e) {
+                    isTwoDisconnected.signal();
+                }
+            });
+
+            // Execute system under test.
+            executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
+
+            // Verify results.
+            assertResult(isOneDisconnected, "Expected the connection of '" + userConnectionOne.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + DISABLE_A_USER + " ad-hoc command using the target's bare JID (but the connection remains connected).");
+            assertResult(isTwoDisconnected, "Expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + DISABLE_A_USER + " ad-hoc command using the target's bare JID (but the connection remains connected).");
+        } finally {
+            // Tear down test fixture.
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+            if (userConnectionTwo != null && userConnectionTwo.isConnected()) {
+                userConnectionTwo.disconnect();
+            }
+            tryDeleteUser(disabledUser);
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.3", quote = "An administrator may need to temporarily disable a user account. Disabling a user MUST result in [...] the prevention of further user logins until the account is re-enabled")
+    public void testDisableUserCantLogin() throws Exception {
+        checkServerSupportCommand(DISABLE_A_USER);
+
+        // Setup test fixture.
+        AbstractXMPPConnection userConnectionOne = null;
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
+        try {
+            createUser(disabledUser);
+
+            // Execute system under test.
+            executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
+
+            // Verify results.
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            AbstractXMPPConnection finalUserConnectionOne = userConnectionOne;
+            assertThrows(SASLErrorException.class, () -> finalUserConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5))), "Expected '" + disabledUser + "' to not be able to login after their account was disabled by '" + adminConnection.getUser() + "' using the '" + DISABLE_A_USER + "' command (but the user was able to login).");
+        } finally {
+            // Tear down test fixture.
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+
+            tryDeleteUser(disabledUser);
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.3", quote = "An administrator may need to temporarily disable a user account. Disabling a user [...] MUST NOT result in the destruction of any implementation-specific data for the account (e.g., database entries or a roster file)")
+    public void testDisableUserDoesntAffectRoster() throws Exception {
+        checkServerSupportCommand(DISABLE_A_USER);
+        checkServerSupportCommand(GET_USER_ROSTER); // Used in assertion.
+
+        // Setup test fixture.
+        AbstractXMPPConnection userConnectionOne = null;
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
+        try {
+            createUser(disabledUser);
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            userConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
+            final EntityBareJid contactJid = JidCreate.entityBareFrom("foo@bar.example.org");
+            final String contactName = "test user";
+            Roster.getInstanceFor(userConnectionOne).createItem(contactJid, contactName, null);
+
+            // Execute system under test.
+            executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
+
+            // Verify results.
+            AdHocCommandData rosterData = executeCommandWithArgs(GET_USER_ROSTER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
+            List<Element> elements = rosterData.getForm().getExtensionElements();
+            RosterPacket roster = (RosterPacket) elements.get(0);
+            assertTrue(roster.getRosterItems().stream().anyMatch(item -> item.getJid().equals(contactJid) && item.getName().equals(contactName)), "Expected the roster of the disabled user '" + disabledUser + "' to remain unaffected, but an entry (jid: '" + contactJid + "', name: '" + contactName + "') that was added before the user was disabled does not appear on the roster anymore.");
+        } finally {
+            // Tear down test fixture.
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
+
+            tryDeleteUser(disabledUser);
+        }
+    }
+
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
     @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#reenable-user\".")
     public void testReenableUser() throws Exception {
