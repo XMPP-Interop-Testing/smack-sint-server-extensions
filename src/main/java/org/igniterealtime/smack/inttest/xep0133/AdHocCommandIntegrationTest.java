@@ -130,8 +130,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
     @SmackIntegrationTest(section = "3", quote =
         "A server or component MUST advertise any administrative commands it supports via Service Discovery (XEP-0030) " +
-            "(as described in XEP-0050: Ad-Hoc Commands); such commands exist as well-defined discovery nodes associated " +
-            "with the service in question.")
+        "(as described in XEP-0050: Ad-Hoc Commands); such commands exist as well-defined discovery nodes associated " +
+        "with the service in question.")
     public void testGetCommandsForAdmin() throws Exception {
         // Setup test fixture.
 
@@ -144,7 +144,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
-    @SmackIntegrationTest(section = "4.1")
+    @SmackIntegrationTest(section = "4.1", quote = "Adding a user MUST result in the creation of an account [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#add-user\".")
     public void testAddUser() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -174,7 +174,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.1")
+    @SmackIntegrationTest(section = "4.1", quote = "Adding a user MUST result in the creation of an account [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#add-user\".")
     public void testAddUserWithMismatchedPassword() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -198,7 +198,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.1")
+    @SmackIntegrationTest(section = "4.1", quote = "Adding a user MUST result in the creation of an account [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#add-user\".")
     public void testAddUserWithRemoteJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -219,7 +219,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.1")
+    @SmackIntegrationTest(section = "4.1", quote = "Adding a user MUST result in the creation of an account [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#add-user\".")
     public void testAddUserWithInvalidJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
@@ -241,7 +241,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#delete-user" name="Delete a User"
-    @SmackIntegrationTest(section = "4.2")
+    @SmackIntegrationTest(section = "4.2", quote = "An administrator may need to permanently delete a user account. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#delete-user\".")
     public void testDeleteUser() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
@@ -262,7 +262,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.2")
+    @SmackIntegrationTest(section = "4.2", quote = "An administrator may need to permanently delete a user account. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#delete-user\".")
     public void testDeleteUserWithFullJid() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
@@ -287,7 +287,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#disable-user" name="Disable a User"
-    @SmackIntegrationTest(section = "4.3")
+    @SmackIntegrationTest(section = "4.3", quote = "An administrator may need to temporarily disable a user account. Disabling a user MUST result in the termination of any active sessions for the user and in the prevention of further user logins until the account is re-enabled")
     public void testDisableUser() throws Exception {
         checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
@@ -309,7 +309,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#reenable-user" name="Re-Enable a User"
-    @SmackIntegrationTest(section = "4.4")
+    @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#reenable-user\".")
     public void testReenableUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
         checkServerSupportCommand(DISABLE_A_USER);
@@ -335,8 +335,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.4")
-    public void testReenableNonDisabledUser() throws Exception {
+    @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled. Re-enabling a user MUST result in granting the user the ability to access the service again.")
+    public void testReenableUserCanLogin() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
         final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusernondisabledtest" + testRunId), connection.getXMPPServiceDomain());
         try {
@@ -356,7 +356,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.4")
+    @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled.")
     public void testReenableNonExistingUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
 
@@ -372,7 +372,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         assertCommandFailed(result, "Expected response to the " + REENABLE_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent failure (but it does not) as the targeted user does not exist.");
     }
 
-    @SmackIntegrationTest(section = "4.4")
+    @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled.")
     public void testReenableRemoteUser() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
 
@@ -584,7 +584,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     // No s4.6 test - retracted
 
     //node="http://jabber.org/protocol/admin#change-user-password" name="Change User Password"
-    @SmackIntegrationTest(section = "4.7")
+    @SmackIntegrationTest(section = "4.7", quote = "An administrator may need to change a user's password. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#change-user-password\".")
     public void testChangePassword() throws Exception {
         checkServerSupportCommand(CHANGE_USER_PASSWORD);
         // Setup test fixture.
@@ -612,7 +612,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-user-roster" name="Get User Roster"
-    @SmackIntegrationTest(section = "4.8")
+    @SmackIntegrationTest(section = "4.8", quote = "An administrator may need to retrieve a user's roster [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-user-roster\".")
     public void testUserRoster() throws Exception {
         checkServerSupportCommand(GET_USER_ROSTER);
 
@@ -637,7 +637,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
     }
 
-    @SmackIntegrationTest(section = "4.9")
+    @SmackIntegrationTest(section = "4.9", quote = "An administrator may need to retrieve a user's last login time [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-user-lastlogin\".")
     public void testGetUserLastLoginTime() throws Exception {
         checkServerSupportCommand(GET_USER_LAST_LOGIN_TIME);
 
@@ -661,7 +661,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         }
     }
 
-    @SmackIntegrationTest(section = "4.10")
+    @SmackIntegrationTest(section = "4.10", quote = "An administrator may want to gather statistics about a particular user's interaction with the service [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#user-stats\".")
     public void testGetUserStatistics() throws Exception {
         checkServerSupportCommand(GET_USER_STATISTICS);
 
@@ -678,7 +678,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#edit-blacklist" name="Edit Blocked List"
-    @SmackIntegrationTest(section = "4.11")
+    @SmackIntegrationTest(section = "4.11", quote = "The service may enable an administrator to define one or more service-wide blacklists [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#edit-blacklist\"")
     public void testEditBlackList() throws Exception {
         checkServerSupportCommand(EDIT_BLOCKED_LIST);
         final String blacklistDomain = "xmpp.someotherdomain.org";
@@ -712,7 +712,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#edit-whitelist" name="Edit Allowed List"
-    @SmackIntegrationTest(section = "4.12")
+    @SmackIntegrationTest(section = "4.12", quote = "The service may enable an administrator to define one or more service-wide whitelists (lists of entities that are allowed to communicate the service). [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#add-to-whitelist\"")
     public void testEditWhiteList() throws Exception {
         checkServerSupportCommand(EDIT_ALLOWED_LIST);
         final String whitelistDomain = "xmpp.someotherdomain.org";
@@ -746,7 +746,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-num" name="Get Number of Registered Users"
-    @SmackIntegrationTest(section = "4.13")
+    @SmackIntegrationTest(section = "4.13", quote = "It may be helpful to enable an administrator to retrieve the number of registered users. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-registered-users-num\".")
     public void testGetRegisteredUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_REGISTERED_USERS);
 
@@ -760,7 +760,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
-    @SmackIntegrationTest(section = "4.14")
+    @SmackIntegrationTest(section = "4.14", quote = "Given that admins may be able to disable user accounts, it may be helpful to enable an administrator to retrieve the number of disabled users. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-disabled-users-num\".")
     public void testDisabledUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_DISABLED_USERS);
         checkServerSupportCommand(REENABLE_A_USER);
@@ -791,7 +791,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-num" name="Get Number of Online Users"
-    @SmackIntegrationTest(section = "4.15")
+    @SmackIntegrationTest(section = "4.15", quote = "It may be helpful to enable an administrator to retrieve the number of registered users who are online at any one moment. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-online-users-num\".")
     public void testGetOnlineUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_ONLINE_USERS);
 
@@ -805,7 +805,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
-    @SmackIntegrationTest(section = "4.16")
+    @SmackIntegrationTest(section = "4.16", quote = "Some services may distinguish users who are online and actively using the service from users who are online but idle. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-active-users-num\".")
     public void testGetActiveUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_ACTIVE_USERS);
 
@@ -819,7 +819,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
-    @SmackIntegrationTest(section = "4.17")
+    @SmackIntegrationTest(section = "4.17", quote = "Some services may distinguish users who are online and actively using the service from users who are online but idle. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-idle-users-num\".")
     public void testGetIdleUsersNumber() throws Exception {
         checkServerSupportCommand(GET_NUMBER_OF_IDLE_USERS);
 
@@ -832,7 +832,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
-    @SmackIntegrationTest(section = "4.18")
+    @SmackIntegrationTest(section = "4.18", quote = " it may be helpful to enable an administrator to retrieve a list of all registered users [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-registered-users-list\".")
     public void testGetRegisteredUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_REGISTERED_USERS);
 
@@ -867,7 +867,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         assertFormFieldEquals("disableduserjids", new ArrayList<>(), result);
     }
 
-    @SmackIntegrationTest(section = "4.19")
+    @SmackIntegrationTest(section = "4.19", quote = "It may be helpful to enable an administrator to retrieve a list of all disabled users. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-disabled-users-list\".")
     public void testDisabledUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
         checkServerSupportCommand(DISABLE_A_USER);
@@ -892,7 +892,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-online-users-list" name="Get List of Online Users"
-    @SmackIntegrationTest(section = "4.20")
+    @SmackIntegrationTest(section = "4.20", quote = "It may be helpful to enable an administrator to retrieve a list of all online users. [..] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-online-users-list\".")
     public void testGetOnlineUsersListSimple() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_ONLINE_USERS);
 
@@ -910,7 +910,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
-    @SmackIntegrationTest(section = "4.21")
+    @SmackIntegrationTest(section = "4.21", quote = "It may be helpful to enable an administrator to retrieve a list of all active users. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-active-users\".")
     public void testGetActiveUsersListSimple() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
@@ -946,7 +946,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users" name="Get List of Idle Users"
-    @SmackIntegrationTest(section = "4.22")
+    @SmackIntegrationTest(section = "4.22", quote = "It may be helpful to enable an administrator to retrieve a list of all idle users. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-idle-users\".")
     public void testGetIdleUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_IDLE_USERS);
         conOne.sendStanza(PresenceBuilder.buildPresence().ofType(Presence.Type.unavailable).setMode(Presence.Mode.away).build());
@@ -964,7 +964,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
-    @SmackIntegrationTest(section = "4.23")
+    @SmackIntegrationTest(section = "4.23", quote = "Administrators of some existing Jabber servers have found it useful to be able to send an announcement to all online users of the server [...] The message shall be sent only to users who currently have a \"session\" with the service. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#announce\".")
     public void testSendAnnouncementToOnlineUsers() throws Exception {
         checkServerSupportCommand(SEND_ANNOUNCEMENT_TO_ONLINE_USERS);
         // Setup test fixture.
@@ -999,10 +999,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#set-motd" name="Set Message of the Day"
-    @SmackIntegrationTest(section = "4.24")
+    @SmackIntegrationTest(section = "4.24", quote = "Administrators of some existing Jabber servers have found it useful to be able to send a \"message of the day\" that is delivered to any user who logs in to the server that day [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#set-motd\".")
     public void testSetMOTD() throws Exception {
         checkServerSupportCommand(SET_MOTD);
-        checkServerSupportCommand(EDIT_MOTD); // Used in validation
         checkServerSupportCommand(DELETE_MOTD); // Used in setup and teardown
 
         final Collection<String> newMOTD = Arrays.asList(
@@ -1039,7 +1038,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#edit-motd" name="Edit Message of the Day"
-    @SmackIntegrationTest(section = "4.25")
+    @SmackIntegrationTest(section = "4.25", quote = "After setting a message of the day, an administrator may want to edit that message [...]. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#edit-motd\".")
     public void testEditMOTD() throws Exception {
         checkServerSupportCommand(SET_MOTD); // Used in setup
         checkServerSupportCommand(EDIT_MOTD);
@@ -1090,7 +1089,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#delete-motd" name="Delete Message of the Day"
-    @SmackIntegrationTest(section = "4.26")
+    @SmackIntegrationTest(section = "4.26", quote = "Sometimes a previously-set \"message of the day\" is no longer appropriate and needs to be deleted. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#delete-motd\".")
     public void testDeleteMOTD() throws Exception {
         checkServerSupportCommand(SET_MOTD); // Used in setup
         checkServerSupportCommand(EDIT_MOTD); // Used in validation
@@ -1127,7 +1126,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#set-welcome" name="Set Welcome Message"
-    @SmackIntegrationTest(section = "4.27")
+    @SmackIntegrationTest(section = "4.27", quote = "Some existing Jabber servers send an informative \"welcome message\" to newly registered users of the server when they first log in. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#set-welcome\".")
     public void testSetWelcome() throws Exception {
         checkServerSupportCommand(SET_WELCOME_MESSAGE);
         checkServerSupportCommand(DELETE_WELCOME_MESSAGE); // Used in teardown.
@@ -1169,7 +1168,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#delete-welcome" name="Delete Welcome Message"
-    @SmackIntegrationTest(section = "4.28")
+    @SmackIntegrationTest(section = "4.28", quote = "Sometimes a previously-set \"message of the day\" is no longer appropriate and needs to be deleted. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#delete-motd\".")
     public void testDeleteWelcome() throws Exception {
         checkServerSupportCommand(DELETE_WELCOME_MESSAGE);
         checkServerSupportCommand(SET_WELCOME_MESSAGE); // Used for setup and validation
@@ -1194,7 +1193,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
-    @SmackIntegrationTest(section = "4.29")
+    @SmackIntegrationTest(section = "4.29", quote = "An administrator may want to directly edit the list of users who have administrative privileges [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#edit-admin\".")
     public void testEditAdminList() throws Exception {
         checkServerSupportCommand(EDIT_ADMIN_LIST);
         final Jid adminToAdd = JidCreate.bareFrom(Localpart.from("editadminlisttest" + testRunId), connection.getXMPPServiceDomain());
@@ -1234,7 +1233,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#restart" name="Restart Service"
-    @SmackIntegrationTest(section = "4.30")
+    @SmackIntegrationTest(section = "4.30", quote = "A service may allow an administrator to restart the service. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#restart\".")
     public void testRestartServiceNoParams() throws Exception {
         checkServerSupportCommand(RESTART_SERVICE);
 
@@ -1249,7 +1248,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     }
 
     //node="http://jabber.org/protocol/admin#shutdown" name="Shut Down Service"
-    @SmackIntegrationTest(section = "4.31")
+    @SmackIntegrationTest(section = "4.31", quote = "A service may allow an administrator to shut down the service. The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#shutdown\".")
     public void testShutdownServiceNoParams() throws Exception {
         checkServerSupportCommand(SHUTDOWN_SERVICE);
 
