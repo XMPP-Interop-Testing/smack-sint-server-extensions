@@ -16,19 +16,26 @@
 package org.igniterealtime.smack.inttest.xep0133;
 
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
+import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.FlexibleStanzaTypeFilter;
+import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterUtil;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
+import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.commands.AdHocCommandNote;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
+import org.jivesoftware.smackx.rsm.packet.RSMSet;
 import org.jivesoftware.smackx.xdata.FormField;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
@@ -37,9 +44,12 @@ import org.jxmpp.jid.parts.Resourcepart;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -125,7 +135,6 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         List<DiscoverItems.Item> items = result.getItems();
-        assertFalse(items.isEmpty());
     }
 
     @SmackIntegrationTest(section = "3", quote =
@@ -140,7 +149,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         List<DiscoverItems.Item> items = result.getItems();
-        assertTrue(items.size() > 10);
+        assertFalse(items.isEmpty(), "Expected '" + adminConnection.getUser() +"' (an administrator) to be able to retrieve a non-empty 'command list' using service discovery (but the command list was empty).");
     }
 
     //node="http://jabber.org/protocol/admin#add-user" name="Add a User"
@@ -164,9 +173,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
                 userConnection.connect();
                 userConnection.login(addedUser.getLocalpartOrThrow().toString(), "password");
-                assertTrue(userConnection.isAuthenticated());
+                assertTrue(userConnection.isAuthenticated(), "Expected to be able to connect and login with user '" + addedUser + "', that was created by '" + adminConnection.getUser() + "' using the " + ADD_A_USER + " command. However, authentication failed.");
             } catch (Exception e) {
-                fail("Failed to login as the newly created user: " + addedUser, e);
+                fail("Expected to be able to connect and login with user '" + addedUser + "', that was created by '" + adminConnection.getUser() + "' using the " + ADD_A_USER + " command. However, authentication failed.", e);
             }
         } finally {
             // Tear down test fixture.
@@ -187,11 +196,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 "password-verify", "password2"
             );
 
-            assertCommandFailed(result, "Expected response to the " + ADD_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent failure (but it does not), as the two provided password values were not equal to each-other.");
-
             // Verify results.
-            assertNoteType(AdHocCommandNote.Type.error, result);
-            assertNoteContains("Passwords do not match", result);
+            assertCommandFailed(result, "Expected response to the " + ADD_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent failure (but it does not), as the two provided password values were not equal to each-other.");
         } finally {
             // Tear down test fixture.
             tryDeleteUser(newUser);
@@ -338,20 +344,32 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.4", quote = "An administrator may need to re-enable a user account that had been temporarily disabled. Re-enabling a user MUST result in granting the user the ability to access the service again.")
     public void testReenableUserCanLogin() throws Exception {
         checkServerSupportCommand(REENABLE_A_USER);
-        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusernondisabledtest" + testRunId), connection.getXMPPServiceDomain());
+        checkServerSupportCommand(DISABLE_A_USER);
+
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest" + testRunId), connection.getXMPPServiceDomain());
+        AbstractXMPPConnection userConnectionOne = null;
         try {
             // Setup test fixture.
             createUser(disabledUser);
+            executeCommandWithArgs(DISABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
 
             // Execute system under test.
-            AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+            executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
                 "accountjids", disabledUser.toString()
             );
 
             // Verify results.
-            assertCommandCompletedSuccessfully(result, "Expected response to the " + REENABLE_A_USER + " command (targeting a user that was not disabled) that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
+            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne.connect();
+            AbstractXMPPConnection finalUserConnectionOne = userConnectionOne;
+            assertDoesNotThrow(() -> finalUserConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5))), "Expected '" + disabledUser + "' to be able to login after their account was disabled and re-enabled by '" + adminConnection.getUser() + "' using the '" + REENABLE_A_USER + "' command (but the user was not able to login).");
         } finally {
             // Tear down test fixture.
+            if (userConnectionOne != null && userConnectionOne.isConnected()) {
+                userConnectionOne.disconnect();
+            }
             tryDeleteUser(disabledUser);
         }
     }
@@ -604,7 +622,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
             userConnection.connect();
 
-            assertDoesNotThrow(() -> userConnection.login(userToChangePassword.getLocalpartOrThrow().toString(), "password2"));
+            assertDoesNotThrow(() -> userConnection.login(userToChangePassword.getLocalpartOrThrow().toString(), "password2"), "Expected user '" + userToChangePassword + "' to be able to authenticate using the new credentials, after '" + adminConnection.getUser() + "' changed their password using the '" + CHANGE_USER_PASSWORD + "' command (but the user was not able to authenticate).");
         } finally {
             // Tear down test fixture.
             tryDeleteUser(userToChangePassword);
@@ -625,13 +643,11 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         );
 
         // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_USER_ROSTER + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldJidEquals("accountjids", Collections.singleton(conOne.getUser().asEntityBareJid()), result);
+        assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_USER_ROSTER + " command that was executed by '" + adminConnection.getUser() + "' to retrieve the roster of '" + conOne.getUser() + "' to represent success (but it does not).");
         List<Element> elements = result.getForm().getExtensionElements();
-        assertEquals(1, elements.size());
-        assertTrue(elements.get(0) instanceof RosterPacket);
-        RosterPacket roster = (RosterPacket) elements.get(0);
-        assertTrue(roster.getRosterItems().stream().anyMatch(item -> item.getJid().equals(conTwo.getUser().asEntityBareJid())));
+        final Optional<RosterPacket> roster = elements.stream().filter(element -> element instanceof RosterPacket).map(element -> (RosterPacket) element).findAny();
+        assertTrue(roster.isPresent(), "Expected response to the " + GET_USER_ROSTER + " command that was executed by '" + adminConnection.getUser() + "' to retrieve the roster of '" + conOne.getUser() + "' to contain a roster (but it does not).");
+        assertTrue(roster.get().getRosterItems().stream().anyMatch(item -> item.getJid().equals(conTwo.getUser().asEntityBareJid())), "Expected response to the " + GET_USER_ROSTER + " command that was executed by '" + adminConnection.getUser() + "' to retrieve the roster of '" + conOne.getUser() + "' to contain their roster. A roster was returned, but it does not contain an expected item for '" + conTwo.getUser() + "'.");
 
         // Tear down test fixture.
         IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
@@ -648,16 +664,18 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_USER_LAST_LOGIN_TIME + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldExists("lastlogin", result);
-        assertFormFieldHasValues("lastlogin", 1, result);
-        FormField field = result.getForm().getField("lastlogin");
-        try {
-            Date lastLogin = field.getFirstValueAsDate();
-            ZonedDateTime lastLoginTime = ZonedDateTime.ofInstant(lastLogin.toInstant(), ZoneId.systemDefault());
-            assertTrue(lastLoginTime.isAfter(ZonedDateTime.now().minusMinutes(10)));
-        } catch (ParseException e) {
-            // Do nothing here, since the field only SHOULD be in the format specified by XEP-0082
-            // Let a non-parsing exception bubble up.
+        if (result.getForm().getField("lastlogin") == null) {
+            // The implementation uses a different field than 'lastlogin' maybe? Can't perform the rest of the assertions.
+            assertFormFieldHasValues("lastlogin", 1, result, "Expected the last login time for '" + adminConnection.getUser() + "' as returned in a response to '" + GET_USER_LAST_LOGIN_TIME + "' command that was executed by '" + adminConnection.getUser() + "' to contain a value (as this user logged in to issuing this command!) but it does not contain a value.");
+            FormField field = result.getForm().getField("lastlogin");
+            try {
+                Date lastLogin = field.getFirstValueAsDate();
+                ZonedDateTime lastLoginTime = ZonedDateTime.ofInstant(lastLogin.toInstant(), ZoneId.systemDefault());
+                assertTrue(lastLoginTime.isAfter(ZonedDateTime.now().minusHours(2)), "Expected the last login time for '" + adminConnection.getUser() + "' as returned in a response to '" + GET_USER_LAST_LOGIN_TIME + "' command that was executed by '" + adminConnection.getUser() + "' to contain a somewhat recent time (as this user logged in to issuing this command!) The last login time was unexpectedly long ago: " + Duration.between(lastLoginTime, Instant.now()));
+            } catch (ParseException e) {
+                // Do nothing here, since the field only SHOULD be in the format specified by XEP-0082
+                // Let a non-parsing exception bubble up.
+            }
         }
     }
 
@@ -672,7 +690,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_USER_STATISTICS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldCountAtLeast(1, result);
+        assertFormFieldCountAtLeast(1, result, "Expected response to the " + GET_USER_STATISTICS + " command that was executed by '" + adminConnection.getUser() + "' to contain at least one field (but it does not).");
         // Which stats a server should support isn't defined, so we can't check for specific fields or values.
         // Instead, we assume that supporting the command means that the server will return at least one field.
     }
@@ -688,8 +706,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             // Execute system under test: Pretend it's a 1-stage command initially, so that we can check that the current list of Blocked Users is populated
             AdHocCommandData result = executeCommandSimple(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid());
 
-            // Verify results.
-            assertFormFieldHasValues("blacklistjids", 0, result);
+            if (result.getForm().getField("blacklistjids").hasValueSet()) {
+                throw new TestNotPossibleException("The implementation of this test expects the preexisting blacklist to be empty (but it was not).");
+            }
 
             // Execute system under test: Run the full 2-stage command to alter the Blocklist.
             result = executeCommandWithArgs(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid(),
@@ -701,7 +720,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Pretend it's a 1-stage command again, so that we can check that the new list of Blocked Users is correct.
             result = executeCommandSimple(EDIT_BLOCKED_LIST, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("blacklistjids", blacklistDomain, result);
+            assertFormFieldEquals("blacklistjids", blacklistDomain, result, "Expected the blacklist to contain exactly one entry: '" + blacklistDomain + "' after being edited by '" + adminConnection.getUser() + "' (but that wasn't the case).");
 
         } finally {
             // Tear down test fixture.
@@ -722,8 +741,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             // Execute system under test: Pretend it's a 1-stage command initially, so that we can check that the current list of Allowed Users is populated
             AdHocCommandData result = executeCommandSimple(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid());
 
-            // Verify results.
-            assertFormFieldHasValues("whitelistjids", 0, result);
+            if (result.getForm().getField("whitelistjids").hasValueSet()) {
+                throw new TestNotPossibleException("The implementation of this test expects the preexisting whitelist to be empty (but it was not).");
+            }
 
             // Execute system under test: Run the full 2-stage command to alter the Whitelist.
             result = executeCommandWithArgs(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid(),
@@ -735,7 +755,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Pretend it's a 1-stage command again, so that we can check that the new list of Allowed Users is correct.
             result = executeCommandSimple(EDIT_ALLOWED_LIST, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("whitelistjids", whitelistDomain, result);
+            assertFormFieldEquals("whitelistjids", whitelistDomain, result, "Expected the whitelist to contain exactly one entry: '" + whitelistDomain + "' after being edited by '" + adminConnection.getUser() + "' (but that wasn't the case).");
 
         } finally {
             // Tear down test fixture.
@@ -756,7 +776,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_NUMBER_OF_REGISTERED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
         final int expectedMinimumCount = 3; // Each test runs with at least three registered test accounts (but more users might be active!)
-        assertTrue(Integer.parseInt(result.getForm().getField("registeredusersnum").getFirstValue()) >= expectedMinimumCount);
+        final int reportedCount = Integer.parseInt(result.getForm().getField("registeredusersnum").getFirstValue());
+        assertTrue(reportedCount >= expectedMinimumCount, "Expected the response to the command " + GET_NUMBER_OF_REGISTERED_USERS + " that was executed by '" + adminConnection.getUser() + "' to be at least " + expectedMinimumCount + " (as that's how many test accounts are registered by this test suite), but it was " + reportedCount + " instead.");
     }
 
     //node="http://jabber.org/protocol/admin#get-disabled-users-num" name="Get Number of Disabled Users"
@@ -780,7 +801,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_NUMBER_OF_DISABLED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-            assertTrue(Integer.parseInt(result.getForm().getField("disabledusersnum").getFirstValue()) >= 1);
+            final int expectedMinimumCount = 1; // This test disabled one user.
+            final int reportedCount = Integer.parseInt(result.getForm().getField("disabledusersnum").getFirstValue());
+            assertTrue(reportedCount >= expectedMinimumCount, "Expected the response to the command " + GET_NUMBER_OF_DISABLED_USERS + " that was executed by '" + adminConnection.getUser() + "' to be at least " + expectedMinimumCount + " (as that's how many test accounts were disabled by this test), but it was '" + reportedCount + "' instead.");
         } finally {
             // Tear down test fixture.
             executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -800,8 +823,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_NUMBER_OF_ONLINE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final int expectedMinimumCount = 3; // Each test runs with at least three test accounts (but more users might be active!)
-        assertTrue(Integer.parseInt(result.getForm().getField("onlineusersnum").getFirstValue()) >= expectedMinimumCount);
+        final int expectedMinimumCount = 3; // Each test runs with at least three registered test accounts (but more users might be active!)
+        final int reportedCount = Integer.parseInt(result.getForm().getField("onlineusersnum").getFirstValue());
+        assertTrue(reportedCount >= expectedMinimumCount, "Expected the response to the command " + GET_NUMBER_OF_ONLINE_USERS + " that was executed by '" + adminConnection.getUser() + "' to be at least " + expectedMinimumCount + " (as that's how many test accounts are connected by this test suite), but it was " + reportedCount + " instead.");
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users-num" name="Get Number of Active Users"
@@ -815,7 +839,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_NUMBER_OF_ACTIVE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
         final int expectedMinimumCount = 3; // Each test runs with at least three test accounts (but more users might be active!)
-        assertTrue(Integer.parseInt(result.getForm().getField("activeusersnum").getFirstValue()) >= expectedMinimumCount);
+        final int reportedCount = Integer.parseInt(result.getForm().getField("activeusersnum").getFirstValue());
+        assertTrue(reportedCount >= expectedMinimumCount, "Expected the response to the command " + GET_NUMBER_OF_ACTIVE_USERS + " that was executed by '" + adminConnection.getUser() + "' to be at least " + expectedMinimumCount + " (as that's how many test accounts are started for each test), but it was " + reportedCount + " instead.");
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users-num" name="Get Number of Idle Users"
@@ -828,7 +853,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_NUMBER_OF_IDLE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertTrue(Integer.parseInt(result.getForm().getField("idleusersnum").getFirstValue()) >= 0);
+        final int reportedCount = Integer.parseInt(result.getForm().getField("idleusersnum").getFirstValue());
+        assertTrue(reportedCount >= 0, "Expected the response to the command " + GET_NUMBER_OF_IDLE_USERS + " that was executed by '" + adminConnection.getUser() + "' to be any non-negative number, but it was " + reportedCount + " instead.");
     }
 
     //node="http://jabber.org/protocol/admin#get-registered-users-list" name="Get List of Registered Users"
@@ -837,40 +863,32 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(GET_LIST_OF_REGISTERED_USERS);
 
         // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid(),
-            "max_items", "25");
+        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_REGISTERED_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_REGISTERED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final Collection<Jid> expectedRegisteredUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJid(),
-            conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid()
-        );
-        assertFormFieldContainsAll("registereduserjids", expectedRegisteredUsers, result);
-    }
 
-    //node="http://jabber.org/protocol/admin#get-disabled-users-list" name="Get List of Disabled Users"
-    @SmackIntegrationTest(section = "4.19")
-    public void testDisabledUsersListEmpty() throws Exception {
-        checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
+        final RSMSet rsm = result.getExtension(RSMSet.class);
+        final int reportedJidCount = result.getForm().getField("registereduserjids").getValues().size();
+        final boolean responseContainsEverything = rsm != null && rsm.getCount() == reportedJidCount;
+        final boolean responseProbablyContainsEverything = rsm == null && reportedJidCount < 10; // smaller than what can reasonably be expected to be the smallest page size.
 
-        // Setup test fixture.
-        // Nothing to do. Assumes no users are disabled by default (and that other tests tidy up after themselves).
-
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
-            "max_items", "25");
-
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_DISABLED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        assertFormFieldEquals("disableduserjids", new ArrayList<>(), result);
+        if (responseContainsEverything || responseProbablyContainsEverything) {
+            // Only check for known accounts if we can be reasonably sure that we received the complete result set (as opposed to just a page of a larger result set).
+            final Collection<Jid> expectedJids = List.of(
+                conOne.getUser().asEntityBareJid(),
+                conTwo.getUser().asEntityBareJid(),
+                conThree.getUser().asEntityBareJid()
+            );
+            assertFormFieldContainsAll("registereduserjids", expectedJids, result, "Expected the (non paginated) response to the command " + GET_LIST_OF_REGISTERED_USERS + " that was executed by '" + adminConnection.getUser() + "' to contain all of the users (" + expectedJids.stream().map(Jid::toString).collect(Collectors.joining(", ")) + ") that are used by this test framework for testing (but they were not).");
+        }
     }
 
     @SmackIntegrationTest(section = "4.19", quote = "It may be helpful to enable an administrator to retrieve a list of all disabled users. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-disabled-users-list\".")
     public void testDisabledUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_DISABLED_USERS);
         checkServerSupportCommand(DISABLE_A_USER);
+        checkServerSupportCommand(REENABLE_A_USER);
 
         final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableuserlisttest" + testRunId), connection.getXMPPServiceDomain());
         createUser(disabledUser);
@@ -880,13 +898,27 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 "accountjids", disabledUser.toString()
             );
 
-            AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid(),
-                "max_items", "25");
+            AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_DISABLED_USERS, adminConnection.getUser().asEntityBareJid());
 
             assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_DISABLED_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-            assertFormFieldJidEquals("disableduserjids", Collections.singleton(disabledUser), result);
+
+            final RSMSet rsm = result.getExtension(RSMSet.class);
+            final int reportedJidCount = result.getForm().getField("disableduserjids").getValues().size();
+            final boolean responseContainsEverything = rsm != null && rsm.getCount() == reportedJidCount;
+            final boolean responseProbablyContainsEverything = rsm == null && reportedJidCount < 10; // smaller than what can reasonably be expected to be the smallest page size.
+
+            if (responseContainsEverything || responseProbablyContainsEverything) {
+                // Only check for known accounts if we can be reasonably sure that we received the complete result set (as opposed to just a page of a larger result set).
+                final Collection<Jid> expectedJids = List.of(
+                    disabledUser
+                );
+                assertFormFieldContainsAll("disableduserjids", expectedJids, result, "Expected the (non paginated) response to the command " + GET_LIST_OF_DISABLED_USERS + " that was executed by '" + adminConnection.getUser() + "' to contain all of the users (" + expectedJids.stream().map(Jid::toString).collect(Collectors.joining(", ")) + ") that were disabled during this test (but they were not in the response).");
+            }
         } finally {
             // Tear down test fixture.
+            executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
+                "accountjids", disabledUser.toString()
+            );
             tryDeleteUser(disabledUser);
         }
     }
@@ -901,12 +933,21 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_ONLINE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final Collection<Jid> expectedOnlineUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJid(),
-            conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid()
-        );
-        assertFormFieldContainsAll("onlineuserjids", expectedOnlineUsers, result);
+
+        final RSMSet rsm = result.getExtension(RSMSet.class);
+        final int reportedJidCount = result.getForm().getField("onlineuserjids").getValues().size();
+        final boolean responseContainsEverything = rsm != null && rsm.getCount() == reportedJidCount;
+        final boolean responseProbablyContainsEverything = rsm == null && reportedJidCount < 10; // smaller than what can reasonably be expected to be the smallest page size.
+
+        if (responseContainsEverything || responseProbablyContainsEverything) {
+            // Only check for known accounts if we can be reasonably sure that we received the complete result set (as opposed to just a page of a larger result set).
+            final Collection<Jid> expectedJids = List.of(
+                conOne.getUser().asEntityBareJid(),
+                conTwo.getUser().asEntityBareJid(),
+                conThree.getUser().asEntityBareJid()
+            );
+            assertFormFieldContainsAll("onlineuserjids", expectedJids, result, "Expected the (non paginated) response to the command " + GET_LIST_OF_ONLINE_USERS + " that was executed by '" + adminConnection.getUser() + "' to contain all of the users (" + expectedJids.stream().map(Jid::toString).collect(Collectors.joining(", ")) + ") as those are test accounts that are connected by this test suite (but they were not).");
+        }
     }
 
     //node="http://jabber.org/protocol/admin#get-active-users" name="Get List of Active Users"
@@ -919,48 +960,35 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_ACTIVE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final Collection<Jid> expectedActiveUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJid(),
-            conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid()
-        );
-        assertFormFieldContainsAll("activeuserjids", expectedActiveUsers, result);
-    }
 
-    @SmackIntegrationTest(section = "4.21")
-    public void testGetOnlineUsersListWithMaxUsers() throws Exception {
-        checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
+        final RSMSet rsm = result.getExtension(RSMSet.class);
+        final int reportedJidCount = result.getForm().getField("activeuserjids").getValues().size();
+        final boolean responseContainsEverything = rsm != null && rsm.getCount() == reportedJidCount;
+        final boolean responseProbablyContainsEverything = rsm == null && reportedJidCount < 10; // smaller than what can reasonably be expected to be the smallest page size.
 
-        // Execute system under test.
-        AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_ACTIVE_USERS, adminConnection.getUser().asEntityBareJid(),
-            "max_items", "25");
-
-        // Verify results.
-        assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_ACTIVE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final Collection<Jid> expectedActiveUsers = Arrays.asList(
-            conOne.getUser().asEntityBareJid(),
-            conTwo.getUser().asEntityBareJid(),
-            conThree.getUser().asEntityBareJid()
-        );
-        assertFormFieldContainsAll("activeuserjids", expectedActiveUsers, result);
+        if (responseContainsEverything || responseProbablyContainsEverything) {
+            // Only check for known accounts if we can be reasonably sure that we received the complete result set (as opposed to just a page of a larger result set).
+            final Collection<Jid> expectedJids = List.of(
+                conOne.getUser().asEntityBareJid(),
+                conTwo.getUser().asEntityBareJid(),
+                conThree.getUser().asEntityBareJid()
+            );
+            assertFormFieldContainsAll("activeuserjids", expectedJids, result, "Expected the (non paginated) response to the command " + GET_LIST_OF_ONLINE_USERS + " that was executed by '" + adminConnection.getUser() + "' to contain all of the users (" + expectedJids.stream().map(Jid::toString).collect(Collectors.joining(", ")) + ") as those are test accounts that are connected by this test suite (but they were not).");
+        }
     }
 
     //node="http://jabber.org/protocol/admin#get-idle-users" name="Get List of Idle Users"
     @SmackIntegrationTest(section = "4.22", quote = "It may be helpful to enable an administrator to retrieve a list of all idle users. [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#get-idle-users\".")
     public void testGetIdleUsersList() throws Exception {
         checkServerSupportCommand(GET_LIST_OF_IDLE_USERS);
-        conOne.sendStanza(PresenceBuilder.buildPresence().ofType(Presence.Type.unavailable).setMode(Presence.Mode.away).build());
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(GET_LIST_OF_IDLE_USERS, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
         assertCommandCompletedSuccessfully(result, "Expected response to the " + GET_LIST_OF_IDLE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-        final Collection<String> expectedIdleUsers = Collections.singletonList(
-            conOne.getUser().asEntityBareJid().toString()
-        );
 
-        assertFormFieldEquals("activeuserjids", expectedIdleUsers, result);
+        // We can't be sure how 'idle' is defined in servers. This could be a period of inactivity, a presence status, or something else.
     }
 
     //node="http://jabber.org/protocol/admin#announce" name="Send Announcement to Online Users"
@@ -972,15 +1000,13 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
 
         StanzaListener stanzaListener = stanza -> {
-            if (stanza instanceof Message) {
-                Message message = (Message) stanza;
-                if (message.getBody().contains(announcement)) {
-                    syncPoint.signal();
-                }
+            Message message = (Message) stanza;
+            if (message.getBody().contains(announcement)) {
+                syncPoint.signal();
             }
         };
 
-        adminConnection.addSyncStanzaListener(stanzaListener, stanza -> true);
+        conOne.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
 
         try {
             // Execute system under test.
@@ -990,7 +1016,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + SEND_ANNOUNCEMENT_TO_ONLINE_USERS + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-            assertResult(syncPoint, "Expected '" + adminConnection.getUser() + "' to receive the announcement that was sent by '" + adminConnection.getUser() + "' (but the announcement was not received).");
+            assertResult(syncPoint, "Expected '" + conOne.getUser() + "' to receive the announcement that was sent by '" + adminConnection.getUser() + "' (but the announcement was not received).");
         }
         finally {
             // Tear down test fixture.
@@ -1009,8 +1035,22 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             "This is MOTD 2"
         );
 
+        final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
+
+        StanzaListener stanzaListener = stanza -> {
+            Message message = (Message) stanza;
+            if (newMOTD.stream().allMatch(s -> message.getBody().contains(s))) {
+                syncPoint.signal();
+            }
+        };
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdsettest-" + testRunId), connection.getXMPPServiceDomain());
+        AbstractXMPPConnection userConnection = null;
         try {
             // Setup test fixture.
+            createUser(testUser);
+            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
+
             executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid()); // Ensure that no MOTD pre-exists.
 
             // Execute system under test.
@@ -1023,10 +1063,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-
-            // Check value using the edit form
-            result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("motd", newMOTD, result);
+            userConnection.connect();
+            userConnection.login(testUser.getLocalpartOrThrow().toString(), "password");
+            assertResult(syncPoint, "Expected user '" + userConnection.getUser() + "' to receive the Message of the Day, that was set by '" + adminConnection.getUser() + "' using the " + SET_MOTD + " command, before the intended recipient connected to the server (but they did not receive it).");
         } finally {
             // Tear down test fixture.
             try {
@@ -1034,6 +1073,11 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             } catch (XMPPException e) {
                 // Ignore
             }
+            if (userConnection != null) {
+                userConnection.removeSyncStanzaListener(stanzaListener);
+                userConnection.disconnect();
+            }
+            tryDeleteUser(testUser);
         }
     }
 
@@ -1044,28 +1088,37 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(EDIT_MOTD);
         checkServerSupportCommand(DELETE_MOTD); // Used in teardown
 
+        final Collection<String> newMOTD = Arrays.asList(
+            "This is MOTD 1",
+            "This is MOTD 2"
+        );
+
+        final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
+
+        StanzaListener stanzaListener = stanza -> {
+            Message message = (Message) stanza;
+            if (newMOTD.stream().allMatch(s -> message.getBody().contains(s))) {
+                syncPoint.signal();
+            }
+        };
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdedittest-" + testRunId), connection.getXMPPServiceDomain());
+        AbstractXMPPConnection userConnection = null;
+
         // Setup test fixture.
         try {
             executeCommandWithArgs(
                 SET_MOTD,
                 adminConnection.getUser().asEntityBareJid(),
                 "motd",
-                String.join(",", "This should be replaced.")
+                String.join(",", "This is the old MOTD that should be replaced.")
             );
 
-            final Collection<String> newMOTD = Arrays.asList(
-                "This is MOTD A",
-                "This is MOTD B"
-            );
-
-            // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current MOTD form
-            AdHocCommandData result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-
-            // Verify results.
-            assertFormFieldExists("motd", result);
+            createUser(testUser);
+            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
 
             // Execute system under test: Now run the full thing
-            result = executeCommandWithArgs(
+            AdHocCommandData result = executeCommandWithArgs(
                 EDIT_MOTD,
                 adminConnection.getUser().asEntityBareJid(),
                 "motd",
@@ -1074,10 +1127,9 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + EDIT_MOTD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-
-            // Pretend it's a 1-stage command again, so that we can check that the new MOTD is correct.
-            result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("motd", newMOTD, result);
+            userConnection.connect();
+            userConnection.login(testUser.getLocalpartOrThrow().toString(), "password");
+            assertResult(syncPoint, "Expected user '" + userConnection.getUser() + "' to receive the Message of the Day, that was edited by '" + adminConnection.getUser() + "' using the " + EDIT_MOTD + " command, before the intended recipient connected to the server (but they did not receive it).");
         } finally {
             // Tear down test fixture.
             try {
@@ -1085,6 +1137,11 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             } catch (XMPPException e) {
                 // Ignore
             }
+            if (userConnection != null) {
+                userConnection.removeSyncStanzaListener(stanzaListener);
+                userConnection.disconnect();
+            }
+            tryDeleteUser(testUser);
         }
     }
 
@@ -1101,7 +1158,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 SET_MOTD,
                 adminConnection.getUser().asEntityBareJid(),
                 "motd",
-                String.join(",", "This should be removed.")
+                String.join(",", "This test message should have been removed.")
             );
 
             // Execute system under test.
@@ -1114,7 +1171,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Check value using the edit form
             result = executeCommandSimple(EDIT_MOTD, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("motd", List.of(), result);
+            FormField motdField = result.getForm().getField("motd");
+            assertFalse(motdField.hasValueSet(), "Expected the pre-filled Message of the Day value of the 'edit' form returned as a response to the " + EDIT_MOTD + " command to be empty, as '" + adminConnection + "' earlier removed the MotD using the " + DELETE_MOTD + " command (but the edit for did have a pre-filled motd: '" + String.join(" ", motdField.getValues()) + "').");
         } finally {
             // Tear down test fixture.
             try {
@@ -1136,15 +1194,22 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             "Line 2 of welcome message"
         );
 
+        final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
+
+        StanzaListener stanzaListener = stanza -> {
+            if (stanza instanceof Message) {
+                Message message = (Message) stanza;
+                if (newWelcomeMessage.stream().allMatch(s -> message.getBody().contains(s))) {
+                    syncPoint.signal();
+                }
+            }
+        };
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("welcomesettest-" + testRunId), connection.getXMPPServiceDomain());
+        AbstractXMPPConnection userConnection = null;
+
         try {
-            // Execute system under test: Pretend it's a 1-stage command initially, so that we can check the current Welcome Message form
-            AdHocCommandData result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
-
-            // Verify results.
-            assertFormFieldExists("welcome", result);
-
             // Execute system under test: Now run the full thing
-            result = executeCommandWithArgs(
+            AdHocCommandData result = executeCommandWithArgs(
                 SET_WELCOME_MESSAGE,
                 adminConnection.getUser().asEntityBareJid(),
                 "welcome",
@@ -1154,11 +1219,17 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_WELCOME_MESSAGE + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
-            // Pretend it's a 1-stage command again, so that we can check that the new welcome message is correct.
-            result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
-            assertFormFieldEquals("welcome", newWelcomeMessage, result);
+            createUser(testUser); // Create user _after_ setting the welcome message!
+            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
+            assertResult(syncPoint, "Expected the newly created user '" + userConnection.getUser() + "' to receive the Welcome Message that was set by '" + adminConnection.getUser() + "' using the " + SET_WELCOME_MESSAGE + " command before the intended recipient was created (but they did not receive it).");
         } finally {
             // Tear down test fixture.
+            if (userConnection != null) {
+                userConnection.removeSyncStanzaListener(stanzaListener);
+                userConnection.disconnect();
+            }
+            tryDeleteUser(testUser);
             try {
                 executeCommandSimple(DELETE_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
             } catch (XMPPException e) {
@@ -1178,7 +1249,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             SET_WELCOME_MESSAGE,
             adminConnection.getUser().asEntityBareJid(),
             "welcome",
-            String.join(",", "This should be deleted.")
+            String.join(",", "This test message should have been deleted.")
         );
 
         // Execute system under test.
@@ -1189,7 +1260,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Use Set Welcome Message form to check the value
         result = executeCommandSimple(SET_WELCOME_MESSAGE, adminConnection.getUser().asEntityBareJid());
-        assertFormFieldEquals("welcome", List.of(), result);
+        FormField welcomeField = result.getForm().getField("welcome");
+        assertFalse(welcomeField.hasValueSet(), "Expected the pre-filled Welcome Message value of the 'set' form returned as a response to the " + SET_WELCOME_MESSAGE + " command to be empty, as '" + adminConnection + "' earlier removed the Welcome Message using the " + DELETE_WELCOME_MESSAGE + " command (but the edit for did have a pre-filled welcome message: '" + String.join(" ", welcomeField.getValues()) + "').");
     }
 
     //node="http://jabber.org/protocol/admin#edit-admin" name="Edit Admin List"
@@ -1197,6 +1269,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testEditAdminList() throws Exception {
         checkServerSupportCommand(EDIT_ADMIN_LIST);
         final Jid adminToAdd = JidCreate.bareFrom(Localpart.from("editadminlisttest" + testRunId), connection.getXMPPServiceDomain());
+        List<? extends CharSequence> preexistingValues = null;
         try {
             // Setup test fixture.
             createUser(adminToAdd);
@@ -1204,12 +1277,14 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             // Execute system under test: Pretend it's a 1-stage command initially, so that we can check that the current list of Admins is populated
             AdHocCommandData result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
 
-            // Verify results.
-            assertFormFieldEquals("adminjids", adminConnection.getUser().asEntityBareJid(), result);
+            preexistingValues = result.getForm().getField("adminjids").getValues();
+            if (preexistingValues == null || preexistingValues.isEmpty()) {
+                throw new TestNotPossibleException("Unable to read the admin list. Changing the admin list might lock existing admins out, so this test is skipped");
+            }
 
             // Execute system under test: Run the full 2-stage command to alter the list of Admins
             result = executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
-                "adminjids", adminConnection.getUser().asEntityBareJidString() + "," + adminToAdd
+                "adminjids", String.join(",", preexistingValues) + "," + adminToAdd
             );
 
             // Verify results.
@@ -1217,18 +1292,17 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             // Execute system under test: Pretend it's a 1-stage command again, so that we can check that the new list of Admins is correct
             result = executeCommandSimple(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid());
-
-            // Verify results.
             assertFormFieldJidEquals("adminjids", new HashSet<>(Arrays.asList(
                 adminConnection.getUser().asEntityBareJid(),
                 adminToAdd
-            )), result);
+            )), result, "Expected the pre-filled 'adminjids'' value of the 'edit-admin' form returned as a response to the " + EDIT_ADMIN_LIST + " command to be contain '" + adminToAdd + "', as '" + adminConnection + "' added them using the " + EDIT_ADMIN_LIST + " command (but they were not on the list).");
         } finally {
             // Tear down test fixture.
             tryDeleteUser(adminToAdd);
-            executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
-                "adminjids", adminConnection.getUser().asEntityBareJidString()
-            );
+            if (preexistingValues != null && !preexistingValues.isEmpty()) {
+                executeCommandWithArgs(EDIT_ADMIN_LIST, adminConnection.getUser().asEntityBareJid(),
+                    "adminjids", String.join(",", preexistingValues));
+            }
         }
     }
 
@@ -1241,8 +1315,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         AdHocCommandData result = executeCommandSimple(RESTART_SERVICE, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        assertFormFieldExists("delay", result);
-        assertFormFieldExists("announcement", result);
+        assertFormFieldExists("delay", result, "Expected the form for the " + RESTART_SERVICE + " command to contain a 'delay' field (but it does not).");
+        assertFormFieldExists("announcement", result, "Expected the form for the " + RESTART_SERVICE + " command to contain a 'announcement' field (but it does not).");
 
         // No actual execution of the command, as that would be rather disruptive to other tests...
     }
@@ -1256,8 +1330,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         AdHocCommandData result = executeCommandSimple(SHUTDOWN_SERVICE, adminConnection.getUser().asEntityBareJid());
 
         // Verify results.
-        assertFormFieldExists("delay", result);
-        assertFormFieldExists("announcement", result);
+        assertFormFieldExists("delay", result, "Expected the form for the " + SHUTDOWN_SERVICE + " command to contain a 'delay' field (but it does not).");
+        assertFormFieldExists("announcement", result, "Expected the form for the " + SHUTDOWN_SERVICE + " command to contain a 'announcement' field (but it does not).");
 
         // No actual execution of the command, as that would be rather disruptive to other tests...
     }

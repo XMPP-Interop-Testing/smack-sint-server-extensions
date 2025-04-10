@@ -108,83 +108,36 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
             complete(submitForm).getResponse();
     }
 
-    AdHocCommandData executeMultistageCommandWithArgs(String commandNode, Jid jid, String[] args1, String[] args2) throws Exception {
-        AdHocCommand command = adHocCommandManagerForAdmin.getRemoteCommand(jid, commandNode);
-
-        AdHocCommandResult.StatusExecuting result = command.execute().asExecutingOrThrow();
-        FillableForm form = result.getFillableForm();
-        fillForm(form, args1);
-        SubmitForm submitForm = form.getSubmitForm();
-
-        result = command.next(submitForm).asExecutingOrThrow();
-        form = result.getFillableForm();
-        fillForm(form, args2);
-        submitForm = form.getSubmitForm();
-
-        return command.
-            complete(submitForm).getResponse();
-    }
-
-    void assertFormFieldEquals(String fieldName, Jid expectedValue, AdHocCommandData data) throws XmppStringprepException {
+    void assertFormFieldEquals(String fieldName, String expectedValue, AdHocCommandData data, String message) {
         FormField field = data.getForm().getField(fieldName);
-        assertEquals(expectedValue, JidCreate.from(field.getFirstValue()));
+        assertEquals(expectedValue, field.getFirstValue(), message);
     }
 
-    void assertFormFieldEquals(String fieldName, String expectedValue, AdHocCommandData data) {
-        FormField field = data.getForm().getField(fieldName);
-        assertEquals(expectedValue, field.getFirstValue());
-    }
-
-    void assertFormFieldEquals(String fieldName, int expectedValue, AdHocCommandData data) {
-        FormField field = data.getForm().getField(fieldName);
-        assertEquals(expectedValue, Integer.parseInt(field.getFirstValue()));
-    }
-
-    void assertFormFieldContainsAll(String fieldName, Collection<Jid> expectedValues, AdHocCommandData data) {
+    void assertFormFieldContainsAll(String fieldName, Collection<Jid> expectedValues, AdHocCommandData data, String message) {
         FormField field = data.getForm().getField(fieldName);
         List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
         Set<Jid> reportedValues = fieldValues.stream().map(JidCreate::fromOrThrowUnchecked).collect(Collectors.toSet());
-        assertTrue(reportedValues.containsAll(expectedValues));
+        assertTrue(reportedValues.containsAll(expectedValues), message);
     }
 
-    void assertFormFieldJidEquals(String fieldName, Set<Jid> expectedValues, AdHocCommandData data) {
+    void assertFormFieldJidEquals(String fieldName, Set<Jid> expectedValues, AdHocCommandData data, String message) {
         FormField field = data.getForm().getField(fieldName);
         List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
-        assertEquals(expectedValues, fieldValues.stream().map(JidCreate::fromOrThrowUnchecked).collect(Collectors.toSet()));
+        assertEquals(expectedValues, fieldValues.stream().map(JidCreate::fromOrThrowUnchecked).collect(Collectors.toSet()), message);
     }
 
-    void assertFormFieldEquals(String fieldName, Collection<String> expectedValues, AdHocCommandData data) {
+    void assertFormFieldExists(String fieldName, AdHocCommandData data, String message) {
         FormField field = data.getForm().getField(fieldName);
-        List<String> fieldValues = field.getValues().stream().map(CharSequence::toString).collect(Collectors.toList());
-        assertEquals(expectedValues, fieldValues);
+        assertNotNull(field, message);
     }
 
-    void assertFormFieldExists(String fieldName, AdHocCommandData data) {
+    void assertFormFieldHasValues(String fieldName, int valueCount, AdHocCommandData data, String message) {
         FormField field = data.getForm().getField(fieldName);
-        assertNotNull(field);
+        assertEquals(valueCount, field.getValues().size(), message);
     }
 
-    void assertFormFieldHasValues(String fieldName, int valueCount, AdHocCommandData data) {
-        FormField field = data.getForm().getField(fieldName);
-        assertEquals(valueCount, field.getValues().size());
-    }
-
-    void assertFormFieldCountEquals(int expectedCount, AdHocCommandData data) {
-        assertEquals(expectedCount, data.getForm().getFields().size());
-    }
-
-    void assertFormFieldCountAtLeast(int expectedCount, AdHocCommandData data) {
-        assertTrue(data.getForm().getFields().size() >= expectedCount);
-    }
-
-    void assertNoteType(AdHocCommandNote.Type expectedType, AdHocCommandData data) {
-        AdHocCommandNote note = data.getNotes().get(0);
-        assertEquals(expectedType, note.getType());
-    }
-
-    void assertNoteContains(String expectedValue, AdHocCommandData data) {
-        AdHocCommandNote note = data.getNotes().get(0);
-        assertTrue(note.getValue().contains(expectedValue));
+    void assertFormFieldCountAtLeast(int expectedCount, AdHocCommandData data, String message) {
+        assertTrue(data.getForm().getFields().size() >= expectedCount, message);
     }
 
     boolean serverSupportsCommand(String commandNode) throws Exception {
