@@ -26,11 +26,9 @@ import org.jivesoftware.smack.filter.FlexibleStanzaTypeFilter;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.roster.Roster;
-import org.jivesoftware.smack.roster.RosterUtil;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smack.util.StringUtils;
-import org.jivesoftware.smackx.commands.AdHocCommandNote;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.rsm.packet.RSMSet;
@@ -157,7 +155,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUser() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final Jid addedUser = JidCreate.bareFrom(Localpart.from("addusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid addedUser = JidCreate.bareFrom(Localpart.from("addusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -187,7 +185,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUserWithMismatchedPassword() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final Jid newUser = JidCreate.bareFrom(Localpart.from("addusermismatchedpasswordtest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid newUser = JidCreate.bareFrom(Localpart.from("addusermismatchedpasswordtest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -208,7 +206,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUserWithRemoteJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final Jid newUser = JidCreate.bareFrom("adduserinvalidjidtest" + testRunId + "@somewhereelse.org");
+        final Jid newUser = JidCreate.bareFrom("adduserinvalidjidtest-" + StringUtils.randomString(5) + "@somewhereelse.org");
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -229,7 +227,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testAddUserWithInvalidJid() throws Exception {
         checkServerSupportCommand(ADD_A_USER);
         // Setup test fixture.
-        final String newUserInvalidJid = "adduserinvalidjidtest" + testRunId + "@invalid@domain";
+        final String newUserInvalidJid = "adduserinvalidjidtest-" + StringUtils.randomString(5) + "@invalid@domain";
         try {
             // Execute system under test.
             AdHocCommandData result = executeCommandWithArgs(ADD_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -251,7 +249,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDeleteUser() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
-        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
         try {
@@ -272,7 +270,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDeleteUserWithFullJid() throws Exception {
         checkServerSupportCommand(DELETE_A_USER);
         // Setup test fixture.
-        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest2" + testRunId), connection.getXMPPServiceDomain());
+        final Jid deletedUser = JidCreate.bareFrom(Localpart.from("deleteusertest2-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         createUser(deletedUser);
 
         try {
@@ -297,7 +295,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDisableUser() throws Exception {
         checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             createUser(disabledUser);
 
@@ -318,7 +316,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testDisableUserGetsSessionsTerminated() throws Exception {
         checkServerSupportCommand(DISABLE_A_USER);
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -383,7 +381,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Setup test fixture.
         AbstractXMPPConnection userConnectionOne = null;
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             createUser(disabledUser);
 
@@ -414,7 +412,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         // Setup test fixture.
         AbstractXMPPConnection userConnectionOne = null;
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             createUser(disabledUser);
             userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
@@ -452,7 +450,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
         checkServerSupportCommand(DISABLE_A_USER);
 
-        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             // Setup test fixture.
             createUser(disabledUser);
@@ -478,7 +476,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
         checkServerSupportCommand(DISABLE_A_USER);
 
-        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         try {
             // Setup test fixture.
@@ -511,7 +509,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
 
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenablenonexistingusertest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.entityBareFrom(Localpart.from("reenablenonexistingusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -527,7 +525,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(REENABLE_A_USER);
 
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.entityBareFrom("reenableremoteusertest" + testRunId + "@elsewhere.org");
+        final Jid disabledUser = JidCreate.entityBareFrom("reenableremoteusertest-" + StringUtils.randomString(5) + "@elsewhere.org");
 
         // Execute system under test.
         AdHocCommandData result = executeCommandWithArgs(REENABLE_A_USER, adminConnection.getUser().asEntityBareJid(),
@@ -544,7 +542,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-full-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-full-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -605,7 +603,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-bare-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("endsessiontest-bare-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -669,8 +667,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(END_USER_SESSION);
         checkServerSupportCommand(GET_LIST_OF_ACTIVE_USERS);
 
-        final Jid testUserOne = JidCreate.bareFrom(Localpart.from("endsessiontest-one-" + testRunId), connection.getXMPPServiceDomain());
-        final Jid testUserTwo = JidCreate.bareFrom(Localpart.from("endsessiontest-two-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUserOne = JidCreate.bareFrom(Localpart.from("endsessiontest-one-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
+        final Jid testUserTwo = JidCreate.bareFrom(Localpart.from("endsessiontest-two-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnectionOne = null;
         AbstractXMPPConnection userConnectionTwo = null;
         try {
@@ -738,7 +736,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testChangePassword() throws Exception {
         checkServerSupportCommand(CHANGE_USER_PASSWORD);
         // Setup test fixture.
-        final Jid userToChangePassword = JidCreate.bareFrom(Localpart.from("changepasswordtest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid userToChangePassword = JidCreate.bareFrom(Localpart.from("changepasswordtest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             createUser(userToChangePassword);
 
@@ -920,7 +918,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(DISABLE_A_USER);
 
         // Setup test fixture.
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusernumtest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusernumtest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             // Create and disable a user
             createUser(disabledUser);
@@ -1022,7 +1020,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         checkServerSupportCommand(DISABLE_A_USER);
         checkServerSupportCommand(REENABLE_A_USER);
 
-        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableuserlisttest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableuserlisttest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         createUser(disabledUser);
 
         try {
@@ -1128,7 +1126,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     public void testSendAnnouncementToOnlineUsers() throws Exception {
         checkServerSupportCommand(SEND_ANNOUNCEMENT_TO_ONLINE_USERS);
         // Setup test fixture.
-        final String announcement = "testAnnouncement" + testRunId;
+        final String announcement = "testAnnouncement-" + StringUtils.randomString(5);
         final SimpleResultSyncPoint syncPoint = new SimpleResultSyncPoint();
 
         StanzaListener stanzaListener = stanza -> {
@@ -1175,7 +1173,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 syncPoint.signal();
             }
         };
-        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdsettest-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdsettest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnection = null;
         try {
             // Setup test fixture.
@@ -1233,7 +1231,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 syncPoint.signal();
             }
         };
-        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdedittest-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("motdedittest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnection = null;
 
         // Setup test fixture.
@@ -1336,7 +1334,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 }
             }
         };
-        final Jid testUser = JidCreate.bareFrom(Localpart.from("welcomesettest-" + testRunId), connection.getXMPPServiceDomain());
+        final Jid testUser = JidCreate.bareFrom(Localpart.from("welcomesettest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         AbstractXMPPConnection userConnection = null;
 
         try {
@@ -1400,7 +1398,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     @SmackIntegrationTest(section = "4.29", quote = "An administrator may want to directly edit the list of users who have administrative privileges [...] The command node for this use case SHOULD be \"http://jabber.org/protocol/admin#edit-admin\".")
     public void testEditAdminList() throws Exception {
         checkServerSupportCommand(EDIT_ADMIN_LIST);
-        final Jid adminToAdd = JidCreate.bareFrom(Localpart.from("editadminlisttest" + testRunId), connection.getXMPPServiceDomain());
+        final Jid adminToAdd = JidCreate.bareFrom(Localpart.from("editadminlisttest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         List<? extends CharSequence> preexistingValues = null;
         try {
             // Setup test fixture.
