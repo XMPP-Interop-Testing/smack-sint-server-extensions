@@ -41,8 +41,10 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -338,8 +340,50 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             // Verify result.
             final List<OccupantId> extensions = reflectedMessage.getExtensions(OccupantId.class);
             assertFalse(extensions.isEmpty(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
-            assertFalse(extensions.size() > 1, "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain not more than one occupant-id (but it contained " + extensions.size() + " occupant-id elements).");
-            assertNotEquals(needle, extensions.get(0).getId(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain a different occupant-id than the occupant-id provided by the client (but the received occupant-id was the same).");
+            final Set<String> receivedOccupantIDs = extensions.stream().map(OccupantId::getId).collect(Collectors.toSet());
+            assertFalse(receivedOccupantIDs.contains(needle), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to no longer contain the occupant-id provided by the client (but it did) The server should have replaced the client-provided occupant ID.");
+        } finally {
+            // Tear down test fixture.
+            removeRoom();
+        }
+    }
+
+    @SmackIntegrationTest(section = "4", quote = "If the message or presence received by the MUC service already contains <occupant-id> element, the MUC service MUST replace such element before reflecting the message or presence including it.")
+    public void testOccupantIdInReflectedMessageReplacedMultiple() throws Exception
+    {
+        // Setup test fixture.
+        createRoom();
+        final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
+        final MultiUserChat room = mucManagerOne.getMultiUserChat(testRoomAddress);
+
+        try {
+            room.join(Resourcepart.from("test-user"));
+            final ResultSyncPoint<Message, Exception> messageReceived = new ResultSyncPoint<>();
+
+            room.addMessageListener(message -> {
+                if (message.getFrom().equals(room.getMyRoomJid())) {
+                    messageReceived.signal(message);
+                }
+            });
+
+            final String needleA = "ReplaceMe" + StringUtils.randomString(5);
+            final String needleB = "ReplaceMe" + StringUtils.randomString(5);
+            final Message message = room.buildMessage()
+                .setBody("test")
+                .addExtension(new OccupantId(needleA))
+                .addExtension(new OccupantId(needleB))
+                .build();
+
+            // Execute system under test.
+            conOne.sendStanza(message);
+            final Message reflectedMessage = messageReceived.waitForResult(timeout);
+
+            // Verify result.
+            final List<OccupantId> extensions = reflectedMessage.getExtensions(OccupantId.class);
+            assertFalse(extensions.isEmpty(), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to contain an occupant-id element (but it did not).");
+            final Set<String> receivedOccupantIDs = extensions.stream().map(OccupantId::getId).collect(Collectors.toSet());
+            assertFalse(receivedOccupantIDs.contains(needleA), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to no longer contain any of the occupant-ids provided by the client (but at least one of the received occupant-id was the same) The server should have replaced all client-provided occupant IDs.");
+            assertFalse(receivedOccupantIDs.contains(needleB), "Expected the message sent back to user '" + conOne.getUser() + "' after they sent it in room '" + testRoomAddress + "' to no longer contain any of the occupant-ids provided by the client (but at least one of the received occupant-id was the same) The server should have replaced all client-provided occupant IDs.");
         } finally {
             // Tear down test fixture.
             removeRoom();
