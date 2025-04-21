@@ -105,7 +105,7 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
                 }
             }
         } catch (Exception e) {
-            throw new TestNotPossibleException("Unable to create or popluate MUC room.", e);
+            throw new TestNotPossibleException("Unable to create or populate MUC room.", e);
         }
     }
 
