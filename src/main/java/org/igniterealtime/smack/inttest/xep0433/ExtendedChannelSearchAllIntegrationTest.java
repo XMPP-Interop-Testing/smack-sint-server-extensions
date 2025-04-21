@@ -144,7 +144,11 @@ public class ExtendedChannelSearchAllIntegrationTest extends AbstractSmackIntegr
         searchRequest.setType(IQ.Type.get);
         searchRequest.setTo(searchService);
 
-        // Attempt to set the 'all' field
+        if (form.getField("all") == null || form.getField("q") == null) {
+            throw new TestNotPossibleException("The service does not support both the 'all' and 'q' search form fields.");
+        }
+
+        // Attempt to set the 'all' _and_ 'to' fields
         final FillableForm fillableForm = form.getFillableForm();
         for (final FormField field : fillableForm.getDataForm().getFields()) {
             if (field.getFieldName().equalsIgnoreCase("all")) {
@@ -197,6 +201,10 @@ public class ExtendedChannelSearchAllIntegrationTest extends AbstractSmackIntegr
         formRequest.setTo(searchService);
         final IQ response = conOne.sendIqRequestAndWaitForResponse(formRequest);
         final Form form = new Form(DataForm.from(response));
+
+        if (form.getField("all") == null) { // Also checked in the constructor, but for good measure, test it explicitly for this request too.
+            throw new TestNotPossibleException("The service does not support the 'all' search form field.");
+        }
 
         final ExtendedChannelSearchForm searchRequest = new ExtendedChannelSearchForm();
         searchRequest.setType(IQ.Type.get);
