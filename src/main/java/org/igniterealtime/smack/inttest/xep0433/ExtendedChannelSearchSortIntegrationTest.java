@@ -87,16 +87,16 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
     public void setUp() throws TestNotPossibleException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
     {
         // Create a number of rooms that will act as search results.
-        final MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+        final MultiUserChatManager mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
         final MultiUserChatManager mucManagerTwo = MultiUserChatManager.getInstanceFor(conTwo);
         final MultiUserChatManager mucManagerThree = MultiUserChatManager.getInstanceFor(conThree);
-        final DomainBareJid mucDomain = mucManager.getMucServiceDomains().stream().findFirst().orElseThrow(() -> new TestNotPossibleException("Unable to find a MUC service domain"));
+        final DomainBareJid mucDomain = mucManagerOne.getMucServiceDomains().stream().findFirst().orElseThrow(() -> new TestNotPossibleException("Unable to find a MUC service domain"));
 
         try {
             for (int i = 11; i <= ROOMS_AMOUNT + 10; i++) {
                 String roomNameLocal = String.join("-", ROOM_NAME_PREFIX, testRunId, Integer.toString(i));
                 EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from(roomNameLocal), mucDomain);
-                mucManager.getMultiUserChat(mucAddress).create(Resourcepart.from("test-user-one")).getConfigFormManager().setRoomName("Test Room " + i).submitConfigurationForm();
+                mucManagerOne.getMultiUserChat(mucAddress).create(Resourcepart.from("test-user-one")).getConfigFormManager().setRoomName("Test Room " + i).submitConfigurationForm();
                 if (i % 2 == 0) {
                     mucManagerTwo.getMultiUserChat(mucAddress).join(Resourcepart.from("test-user-two"));
                 }
@@ -113,7 +113,7 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
     public void tearDown() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
     {
         // Destroy the rooms that were used as search results.
-        final MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
+        final MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(conOne);
         final DomainBareJid mucDomain = mucManager.getMucServiceDomains().stream().findFirst().orElseThrow(() -> new IllegalStateException("Unable to find a MUC service domain"));
         for (int i = 1; i <= ROOMS_AMOUNT; i++) {
             String roomNameLocal = String.join("-", ROOM_NAME_PREFIX, testRunId, Integer.toString(i));
