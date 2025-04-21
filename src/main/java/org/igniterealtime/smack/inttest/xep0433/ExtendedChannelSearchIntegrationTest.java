@@ -102,6 +102,7 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
             mucManager.getMultiUserChat(mucAddress).destroy();
         }
     }
+
     @SmackIntegrationTest(section = "4.2", quote = "the Searcher MAY [...] request the search form from the Search Service.")
     public void testRequestSearchForm() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException
     {
@@ -143,6 +144,7 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
                 throw new TestNotPossibleException("Server requires form field that this test implementation does not support: " + field.getFieldName());
             }
         }
+
         searchRequest.addExtension(fillableForm.getDataFormToSubmit());
 
         // Execute system under test.
