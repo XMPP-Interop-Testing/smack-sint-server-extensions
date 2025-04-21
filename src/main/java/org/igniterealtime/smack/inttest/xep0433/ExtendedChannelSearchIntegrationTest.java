@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrationTest
 {
     protected static final int ROOMS_AMOUNT = 15;
-    protected static final String ROOM_NAME_PREFIX = "smack-inttest-xep0433-q";
+    protected static final String ROOM_NAME_PREFIX = "smack-int-test-xep0433-q-";
 
     final DomainBareJid searchService;
 
@@ -83,7 +83,7 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
             for (int i = 1; i <= ROOMS_AMOUNT; i++) {
                 String roomNameLocal = String.join("-", ROOM_NAME_PREFIX, testRunId, Integer.toString(i));
                 EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from(roomNameLocal), mucDomain);
-                mucManager.getMultiUserChat(mucAddress).create(Resourcepart.from("test-user")).getConfigFormManager().setRoomName("Test Room " + i).submitConfigurationForm();
+                mucManager.getMultiUserChat(mucAddress).create(Resourcepart.from("test-user")).getConfigFormManager().setRoomName("test room " + i).submitConfigurationForm();
             }
         } catch (Exception e) {
             throw new TestNotPossibleException("Unable to create MUC room.", e);
@@ -513,5 +513,48 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
         // Verify result.
         assertNotNull(field, "Expected the search form received from search service '" + searchService + "' by '" + conOne.getUser() + "' to include the mandatory field 'key' (but it did not).");
         assertEquals(FormField.Type.list_single, field.getType(), "Unexpected type of the field 'key' in the search form received from search service '" + searchService + "' by '" + conOne.getUser() + "')");
+    }
+
+    @SmackIntegrationTest(section = "6.1", quote = "[var] q [description] Input for the keyword-based search.")
+    public void testPositiveQSearch() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    {
+        // Setup test fixture.
+        final ExtendedChannelSearchForm formRequest = new ExtendedChannelSearchForm();
+        formRequest.setType(IQ.Type.get);
+        formRequest.setTo(searchService);
+        final IQ response = conOne.sendIqRequestAndWaitForResponse(formRequest);
+        final Form form = new Form(DataForm.from(response));
+
+        final ExtendedChannelSearchForm searchRequest = new ExtendedChannelSearchForm();
+        searchRequest.setType(IQ.Type.get);
+        searchRequest.setTo(searchService);
+
+        final FillableForm fillableForm = form.getFillableForm();
+        for (final FormField field : fillableForm.getDataForm().getFields()) {
+            if (field.getFieldName().equalsIgnoreCase("q")) {
+                fillableForm.setAnswer(field.getFieldName(), "test");
+            } else if (List.of("sinname", "sinaddress", "sindescription").contains(field.getFieldName().toLowerCase()) && field.getType().equals(FormField.Type.bool)) {
+                fillableForm.setAnswer(field.getFieldName(), true);
+            } else if (field.isRequired()) {
+                throw new TestNotPossibleException("Server requires form field that this test implementation does not support: " + field.getFieldName());
+            }
+        }
+
+        searchRequest.addExtension(fillableForm.getDataFormToSubmit());
+
+        // Execute system under test.
+        final ExtendedChannelResult searchResponse;
+        try {
+            searchResponse = conOne.sendIqRequestAndWaitForResponse(searchRequest);
+        } catch (XMPPException.XMPPErrorException e) {
+            if (e.getStanzaError().getCondition().equals(StanzaError.Condition.resource_constraint)) {
+                throw new TestNotPossibleException("Unable to execute search, as the service is rejecting the request due to rate limiting", e);
+            }
+            throw e;
+        }
+
+        // Verify result.
+        assertNotNull(searchResponse, "The search request issued by '" + conOne.getUser() + "' did not result in a response from '" + searchService + "'." );
+        assertFalse(searchResponse.getItems().isEmpty(), "The search request issued by '" + conOne.getUser() + "' (using the 'test' keyword for the 'q' field) did not contain any rooms from '" + searchService + "' (but at least "+ROOMS_AMOUNT+" rooms are known to exist that use this keyword in their address and name)." );
     }
 }
