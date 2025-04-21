@@ -229,7 +229,7 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
             }
         }
 
-        // Set the 'sort key' field (which is a required field) to a value that doesn't exist.
+        // Set the 'sort key' field (which is a required field to implement) to a value that doesn't exist.
         fillableForm.setAnswer("key", "this-is-not-an-existing-key");
 
         searchRequest.addExtension(fillableForm.getDataFormToSubmit());
