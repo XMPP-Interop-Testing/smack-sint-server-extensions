@@ -226,7 +226,7 @@ public class ExtendedChannelSearchAllIntegrationTest extends AbstractSmackIntegr
         searchRequest.addExtension(fillableForm.getDataFormToSubmit());
 
         // Execute system under test.
-        final IQ searchResponse;
+        final ExtendedChannelResult searchResponse;
         try {
             searchResponse = conOne.sendIqRequestAndWaitForResponse(searchRequest);
         } catch (XMPPException.XMPPErrorException e) {
@@ -247,5 +247,6 @@ public class ExtendedChannelSearchAllIntegrationTest extends AbstractSmackIntegr
 
         // Verify result.
         assertNotNull(searchResponse, "The search request issued by '" + conOne.getUser() + "' did not result in a response from '" + searchService + "'." );
+        assertFalse(searchResponse.getItems().isEmpty(), "The search request issued by '" + conOne.getUser() + "' (for all rooms) did not contain any rooms from '" + searchService + "' (but at least "+ROOMS_AMOUNT+" rooms are known to exist)." );
     }
 }
