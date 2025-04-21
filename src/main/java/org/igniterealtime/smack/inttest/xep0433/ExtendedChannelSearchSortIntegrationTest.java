@@ -175,7 +175,7 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
                 throw new TestNotPossibleException("The service did not return enough results for the implementation to be able to assert that they're consistently ordered.");
             }
             final List<String> addresses = result.getItems().stream().map(item -> item.address).collect(Collectors.toList());
-            assertTrue(isSorted(addresses, true) || isSorted(addresses, false), "Expected the items in the response to the search query to be ordered by address (but they were not).");
+            assertTrue(isSorted(addresses, false), "Expected the items in the response to the search query to be ordered by address (but they were not).");
         } catch (XMPPException.XMPPErrorException e) {
             final StanzaError stanzaError = e.getStanzaError();
             if (stanzaError.getCondition().equals(StanzaError.Condition.feature_not_implemented) && stanzaError.getExtension("invalid-sort-key", "urn:xmpp:channel-search:0:error") != null) {
