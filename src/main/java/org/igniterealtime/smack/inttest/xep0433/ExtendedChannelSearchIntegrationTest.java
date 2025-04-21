@@ -348,6 +348,8 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
         final IQ response = conOne.sendIqRequestAndWaitForResponse(formRequest);
         final Form form = new Form(DataForm.from(response));
 
+        final boolean searchHadQ = form.getField("q") != null;
+
         final ExtendedChannelSearchForm searchRequest = new ExtendedChannelSearchForm();
         searchRequest.setType(IQ.Type.get);
         searchRequest.setTo(searchService);
@@ -383,7 +385,11 @@ public class ExtendedChannelSearchIntegrationTest extends AbstractSmackIntegrati
 
         assertNotNull(searchResponse, "The search request issued by '" + conOne.getUser() + "' did not result in a response from '" + searchService + "'.");
         if (!searchResponse.getItems().isEmpty()) {
-            throw new TestNotPossibleException("A non-empty response was returned to a search request that was not intended to return any items in the response.");
+            if (!searchHadQ) {
+                throw new TestNotPossibleException("A non-empty response was returned to a search request that was not intended to return any items in the response.");
+            } else {
+                fail("The search request issued by '" + conOne.getUser() + "' that contains a very specific search query unexpectedly resulted in a response that contains a non-zero amount of items from '" + searchService + "'.");
+            }
         }
     }
 
