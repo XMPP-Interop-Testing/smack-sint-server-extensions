@@ -16,6 +16,7 @@ import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.roster.AbstractRosterListener;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jxmpp.jid.BareJid;
@@ -25,17 +26,14 @@ import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests that verify that behavior defined in section 2.3 "Updating a Roster Item" of section 2 "Managing the Roster" of RFC6121.
+ * Integration tests that verify that behavior defined in section 2.4 "Updating a Roster Item" of section 2 "Managing the Roster" of RFC6121.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -46,7 +44,7 @@ public class RFC6121Section2dot4RosterIntegrationTest extends AbstractSmackInteg
 
     private final SmackIntegrationTestEnvironment environment;
 
-    public RFC6121Section2dot4RosterIntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    public RFC6121Section2dot4RosterIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
         super(environment);
 
@@ -62,6 +60,175 @@ public class RFC6121Section2dot4RosterIntegrationTest extends AbstractSmackInteg
 
         // Check if the connections used in this test will have sent initial presence when they authenticated.
         isSendPresence = environment.conOne.getConfiguration().isSendPresence();
+    }
+
+    @SmackIntegrationTest(section = "2.4.1", quote = "Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server. Because a roster item is atomic, the item MUST be updated exactly as provided in the roster set. There are several reasons why a client might update a roster item: 1.  Adding a group [...]")
+    public void testRosterUpdateAddGroup() throws XmppStringprepException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, SmackException.NotLoggedInException
+    {
+        // Setup test fixture
+        final BareJid target = JidCreate.bareFrom( Localpart.from("romeo-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
+        Roster.getInstanceFor(conOne).createItem(target, "Romeo", new String[] { "Friends" });
+
+        // Execute system under test
+        try {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, "Romeo");
+            item.addGroupName("Friends");
+            item.addGroupName("Lovers");
+            request.addRosterItem(item);
+            conOne.sendIqRequestAndWaitForResponse(request);
+
+            // Verify result
+            final Roster roster = Roster.getInstanceFor(conOne);
+            roster.reloadAndWait();
+
+            final RosterEntry rosterItem = roster.getEntry(target);
+            assertEquals("Romeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to add a group to a preexisting roster item (but it was not).");
+            assertEquals(2, rosterItem.getGroups().size(), "Unexpected amount of groups for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to amount to be equal to the amount of groups used in the Roster Update that intended to add a group to a preexisting roster item (but it was not).");
+            assertTrue(rosterItem.getGroups().stream().map(RosterGroup::getName).collect(Collectors.toSet()).contains("Friends"), "Expected the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "' to have the group named 'Friends' (but it did not).");
+            assertTrue(rosterItem.getGroups().stream().map(RosterGroup::getName).collect(Collectors.toSet()).contains("Lovers"), "Expected the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "' to have the group named 'Lovers' (but it did not).");
+        } catch (XMPPException.XMPPErrorException e) {
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+        } finally {
+            // Tear down test fixture
+            final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+            if (entry != null) {
+                Roster.getInstanceFor(conOne).removeEntry(entry);
+            }
+        }
+    }
+
+    @SmackIntegrationTest(section = "2.4.1", quote = "Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server. Because a roster item is atomic, the item MUST be updated exactly as provided in the roster set. There are several reasons why a client might update a roster item: [...] 2.  Deleting a group [...]")
+    public void testRosterUpdateDeleteGroup() throws XmppStringprepException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, SmackException.NotLoggedInException
+    {
+        // Setup test fixture
+        final BareJid target = JidCreate.bareFrom( Localpart.from("romeo-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
+        Roster.getInstanceFor(conOne).createItem(target, "Romeo", new String[] { "Friends", "Lovers" });
+
+        // Execute system under test
+        try {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, "Romeo");
+            item.addGroupName("Friends");
+            request.addRosterItem(item);
+            conOne.sendIqRequestAndWaitForResponse(request);
+
+            // Verify result
+            final Roster roster = Roster.getInstanceFor(conOne);
+            roster.reloadAndWait();
+
+            final RosterEntry rosterItem = roster.getEntry(target);
+            assertEquals("Romeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to delete a group from a preexisting roster item (but it was not).");
+            assertEquals(1, rosterItem.getGroups().size(), "Unexpected amount of groups for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to amount to be equal to the amount of groups used in the Roster Update that intended to delete a group from a preexisting roster item (but it was not).");
+            assertTrue(rosterItem.getGroups().stream().map(RosterGroup::getName).collect(Collectors.toSet()).contains("Friends"), "Expected the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "' to have the group named 'Friends' (but it did not).");
+        } catch (XMPPException.XMPPErrorException e) {
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+        } finally {
+            // Tear down test fixture
+            final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+            if (entry != null) {
+                Roster.getInstanceFor(conOne).removeEntry(entry);
+            }
+        }
+    }
+
+    @SmackIntegrationTest(section = "2.4.1", quote = "Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server. Because a roster item is atomic, the item MUST be updated exactly as provided in the roster set. There are several reasons why a client might update a roster item: [...] 2.  Deleting a group [...]")
+    public void testRosterUpdateDeleteAllGroups() throws XmppStringprepException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, SmackException.NotLoggedInException
+    {
+        // Setup test fixture
+        final BareJid target = JidCreate.bareFrom( Localpart.from("romeo-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
+        Roster.getInstanceFor(conOne).createItem(target, "Romeo", new String[] { "Friends" });
+
+        // Execute system under test
+        try {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, "Romeo");
+            request.addRosterItem(item);
+            conOne.sendIqRequestAndWaitForResponse(request);
+
+            // Verify result
+            final Roster roster = Roster.getInstanceFor(conOne);
+            roster.reloadAndWait();
+
+            final RosterEntry rosterItem = roster.getEntry(target);
+            assertEquals("Romeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to add a group to a preexisting roster item (but it was not).");
+            assertEquals(0, rosterItem.getGroups().size(), "Unexpected amount of groups for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to find no groups after removing all groups from a preexisting roster item (but the group list is not empty).");
+        } catch (XMPPException.XMPPErrorException e) {
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+        } finally {
+            // Tear down test fixture
+            final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+            if (entry != null) {
+                Roster.getInstanceFor(conOne).removeEntry(entry);
+            }
+        }
+    }
+
+    @SmackIntegrationTest(section = "2.4.1", quote = "Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server. Because a roster item is atomic, the item MUST be updated exactly as provided in the roster set. There are several reasons why a client might update a roster item: [...] 3.  Changing the handle [...]")
+    public void testRosterUpdateChangeHandle() throws XmppStringprepException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, SmackException.NotLoggedInException
+    {
+        // Setup test fixture
+        final BareJid target = JidCreate.bareFrom( Localpart.from("romeo-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
+        Roster.getInstanceFor(conOne).createItem(target, "Romeo", new String[0]);
+
+        // Execute system under test
+        try {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, "MyRomeo");
+            request.addRosterItem(item);
+            conOne.sendIqRequestAndWaitForResponse(request);
+
+            // Verify result
+            final Roster roster = Roster.getInstanceFor(conOne);
+            roster.reloadAndWait();
+
+            final RosterEntry rosterItem = roster.getEntry(target);
+            assertEquals("MyRomeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to update the handle of a preexisting roster item (but it was not).");
+        } catch (XMPPException.XMPPErrorException e) {
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+        } finally {
+            // Tear down test fixture
+            final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+            if (entry != null) {
+                Roster.getInstanceFor(conOne).removeEntry(entry);
+            }
+        }
+    }
+
+    @SmackIntegrationTest(section = "2.4.1", quote = "Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server. Because a roster item is atomic, the item MUST be updated exactly as provided in the roster set. There are several reasons why a client might update a roster item: [...] 3.  Deleting the handle [...]")
+    public void testRosterUpdateDeleteHandle() throws XmppStringprepException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, SmackException.NotLoggedInException
+    {
+        // Setup test fixture
+        final BareJid target = JidCreate.bareFrom( Localpart.from("romeo-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
+        Roster.getInstanceFor(conOne).createItem(target, "Romeo", new String[0]);
+
+        // Execute system under test
+        try {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, null);
+            request.addRosterItem(item);
+            conOne.sendIqRequestAndWaitForResponse(request);
+
+            // Verify result
+            final Roster roster = Roster.getInstanceFor(conOne);
+            roster.reloadAndWait();
+
+            final String updatedHandle = roster.getEntry(target).getName();
+            assertTrue(updatedHandle == null || updatedHandle.isEmpty(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be absent or empty after a Roster Update that intended to remove the handle of a preexisting roster item (but the handle was '" + updatedHandle + "').");
+        } catch (XMPPException.XMPPErrorException e) {
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+        } finally {
+            // Tear down test fixture
+            final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+            if (entry != null) {
+                Roster.getInstanceFor(conOne).removeEntry(entry);
+            }
+        }
     }
 
     @SmackIntegrationTest(section = "2.4.2", quote = "if the roster item can be successfully processed then the server MUST [...] send an IQ result to the initiating resource")
