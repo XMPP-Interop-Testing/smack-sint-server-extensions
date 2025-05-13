@@ -83,7 +83,7 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                 final String title = (entry.getKey().isEmpty() ? "(noname)" : entry.getKey());
                 final Map<String, Long> reasonCount = entry.getValue().stream().collect(Collectors.groupingBy(t -> t.testNotPossibleException.getMessage(), Collectors.counting()));
                 for (final Map.Entry<String, Long> reasonEntry : reasonCount.entrySet()) {
-                    System.out.println("• " + title + ": could not run " + entry.getValue().size() + " test(s) because: " + reasonEntry.getKey());
+                    System.out.println("• " + title + ": could not run " + reasonEntry.getValue() + " test(s) because: " + reasonEntry.getKey());
                 }
             }
             for (final Map.Entry<String, Collection<Class<? extends AbstractSmackIntTest>>> entry : impossibleTestClassesBySpec.entrySet()) {
