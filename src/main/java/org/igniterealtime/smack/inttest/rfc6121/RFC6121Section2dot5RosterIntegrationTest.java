@@ -120,6 +120,7 @@ public class RFC6121Section2dot5RosterIntegrationTest extends AbstractSmackInteg
             @Override
             public void entriesDeleted(Collection<Jid> collection)
             {
+                // org.jivesoftware.smack.roster.Roster.RosterPushListener triggers this event listener if an item in a roster push has a 'remove' attribute.
                 if (collection.contains(target)) {
                     receivedDelete.signal();
                 }
