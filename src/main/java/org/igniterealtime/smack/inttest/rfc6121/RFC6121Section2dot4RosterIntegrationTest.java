@@ -154,7 +154,7 @@ public class RFC6121Section2dot4RosterIntegrationTest extends AbstractSmackInteg
             roster.reloadAndWait();
 
             final RosterEntry rosterItem = roster.getEntry(target);
-            assertEquals("Romeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to add a group to a preexisting roster item (but it was not).");
+            assertEquals("Romeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to remove all groups from a preexisting roster item (but it was not).");
             assertEquals(0, rosterItem.getGroups().size(), "Unexpected amount of groups for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to find no groups after removing all groups from a preexisting roster item (but the group list is not empty).");
         } catch (XMPPException.XMPPErrorException e) {
             fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to remove the last group from a preexisting roster item.");
