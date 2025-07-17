@@ -189,7 +189,7 @@ public class RFC6121Section2dot4RosterIntegrationTest extends AbstractSmackInteg
             final RosterEntry rosterItem = roster.getEntry(target);
             assertEquals("MyRomeo", rosterItem.getName(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be equal to that what was used in a Roster Update that intended to update the handle of a preexisting roster item (but it was not).");
         } catch (XMPPException.XMPPErrorException e) {
-            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to update the handle a preexisting roster item.");
         } finally {
             // Tear down test fixture
             final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
