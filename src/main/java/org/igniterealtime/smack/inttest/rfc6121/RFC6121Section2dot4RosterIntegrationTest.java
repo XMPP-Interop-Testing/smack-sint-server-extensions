@@ -221,7 +221,7 @@ public class RFC6121Section2dot4RosterIntegrationTest extends AbstractSmackInteg
             final String updatedHandle = roster.getEntry(target).getName();
             assertTrue(updatedHandle == null || updatedHandle.isEmpty(), "Unexpected name for the roster item of '" + target + "' on the roster of '" + conOne.getUser() + "': Expected to name to be absent or empty after a Roster Update that intended to remove the handle of a preexisting roster item (but the handle was '" + updatedHandle + "').");
         } catch (XMPPException.XMPPErrorException e) {
-            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to add a group to a preexisting roster item.");
+            fail("Unexpected error response received by '" + conOne.getUser() + "' after it sent a a Roster Update that intended to remove the handle of a preexisting roster item.");
         } finally {
             // Tear down test fixture
             final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
