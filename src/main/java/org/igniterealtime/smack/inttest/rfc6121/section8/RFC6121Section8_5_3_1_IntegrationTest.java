@@ -217,7 +217,7 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         doTestPresence(Presence.Type.available);
     }
 
-    @SmackIntegrationTest(section = "8.5.2.1.3", quote = "If the domainpart of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured domains of the server itself and the JID contained in the 'to' attribute is of the form <localpart@domainpart/resourcepart>, then the server MUST adhere to the following rules. [...] If an available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type. [...] For a presence stanza with [...] a 'type' attribute of \"unavailable\", the server MUST deliver the stanza to the resource.")
+    @SmackIntegrationTest(section = "8.5.3.1", quote = "If the domainpart of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured domains of the server itself and the JID contained in the 'to' attribute is of the form <localpart@domainpart/resourcepart>, then the server MUST adhere to the following rules. [...] If an available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type. [...] For a presence stanza with [...] a 'type' attribute of \"unavailable\", the server MUST deliver the stanza to the resource.")
     public void testPresenceUnavailable() throws Exception
     {
         doTestPresence(Presence.Type.unavailable);
