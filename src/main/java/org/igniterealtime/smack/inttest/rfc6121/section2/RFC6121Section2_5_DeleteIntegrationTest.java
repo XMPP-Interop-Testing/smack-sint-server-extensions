@@ -1,4 +1,4 @@
-package org.igniterealtime.smack.inttest.rfc6121;
+package org.igniterealtime.smack.inttest.rfc6121.section2;
 
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
@@ -9,18 +9,15 @@ import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.PresenceTypeFilter;
-import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.roster.*;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jxmpp.jid.BareJid;
-import org.jxmpp.jid.FullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
@@ -28,7 +25,6 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,13 +35,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 @SpecificationReference(document = "RFC6121")
-public class RFC6121Section2dot5RosterIntegrationTest extends AbstractSmackIntegrationTest
+public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegrationTest
 {
     private final boolean isSendPresence;
 
     private final SmackIntegrationTestEnvironment environment;
 
-    public RFC6121Section2dot5RosterIntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    public RFC6121Section2_5_DeleteIntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
         super(environment);
 

@@ -1,4 +1,4 @@
-package org.igniterealtime.smack.inttest.rfc6121;
+package org.igniterealtime.smack.inttest.rfc6121.section2;
 
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.jivesoftware.smack.XMPPConnection;

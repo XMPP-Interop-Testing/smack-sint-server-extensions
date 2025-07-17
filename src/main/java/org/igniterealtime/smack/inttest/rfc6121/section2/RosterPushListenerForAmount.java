@@ -1,11 +1,10 @@
-package org.igniterealtime.smack.inttest.rfc6121;
+package org.igniterealtime.smack.inttest.rfc6121.section2;
 
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
 import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
-import org.jxmpp.jid.Jid;
 
 import java.util.ArrayList;
 import java.util.List;

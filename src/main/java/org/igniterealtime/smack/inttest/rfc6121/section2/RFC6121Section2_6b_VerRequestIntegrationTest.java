@@ -1,4 +1,4 @@
-package org.igniterealtime.smack.inttest.rfc6121;
+package org.igniterealtime.smack.inttest.rfc6121.section2;
 
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
@@ -31,9 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 @SpecificationReference(document = "RFC6121")
-public class RFC6121Section2dot6bRosterIntegrationTest extends AbstractSmackIntegrationTest
+public class RFC6121Section2_6b_VerRequestIntegrationTest extends AbstractSmackIntegrationTest
 {
-    public RFC6121Section2dot6bRosterIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    public RFC6121Section2_6b_VerRequestIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
         super(environment);
 

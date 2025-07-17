@@ -1,10 +1,8 @@
-package org.igniterealtime.smack.inttest.rfc6121;
+package org.igniterealtime.smack.inttest.rfc6121.section2;
 
-import com.sun.jdi.connect.TransportTimeoutException;
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
-import org.igniterealtime.smack.inttest.XmppConnectionManager;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
@@ -20,10 +18,6 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,9 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 @SpecificationReference(document = "RFC6121")
-public class RFC6121Section2dot1RosterIntegrationTest extends AbstractSmackIntegrationTest
+public class RFC6121Section2_1_SyntaxIntegrationTest extends AbstractSmackIntegrationTest
 {
-    public RFC6121Section2dot1RosterIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    public RFC6121Section2_1_SyntaxIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
         super(environment);
 
