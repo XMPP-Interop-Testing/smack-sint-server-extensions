@@ -215,7 +215,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
      * represent this) or the 'unavailable' type to the bare JID of conTwo. conTwo has a number of resources online that
      * matches the amount of entries in the provided list.
      *
-     * Verifies that a presence stanza is delivered at _all_ resources (available) resources.
+     * Verifies that a presence stanza is delivered to _all_ (available) resources.
      *
      * This method manages (sets up, executes and tears down) a test fixture in which conOne sends a presence stanza (of
      * a type determined by a parameter) to the bare JID of conTwo, after having logged in a number of resources for conTwo.
