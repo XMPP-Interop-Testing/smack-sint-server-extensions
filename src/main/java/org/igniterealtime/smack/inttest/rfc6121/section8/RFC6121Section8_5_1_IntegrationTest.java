@@ -212,7 +212,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribed);
     }
 
-    @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a bare JID <localpart@domainpart> [...] where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza with [...] a 'type' attribute of \"unsubscribe\" the server MUST silently ignore the stanza.")
+    @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a bare JID <localpart@domainpart> [...] where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"unsubscribe\" [...] the server MUST silently ignore the stanza.")
     public void testLocalDomainNoSuchUserPresenceUnsubscribeTypeBareJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException
     {
         // Setup test fixture.
