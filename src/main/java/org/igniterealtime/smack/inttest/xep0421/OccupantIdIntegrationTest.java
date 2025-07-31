@@ -878,7 +878,20 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final Resourcepart nickname = Resourcepart.from("test-user");
 
         try {
-            room.join(nickname);
+            final Presence reflectedJoinPresence = room.join(nickname);
+
+            // Check what default role the server has given the user, and correct it to be 'visitor' if it's not already.
+            if (!MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.visitor)) {
+                final ResultSyncPoint<Presence, Exception> becomesVisitor = new ResultSyncPoint<>();
+                room.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(room.getMyRoomJid()) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.visitor)) {
+                        becomesVisitor.signal(presence);
+                    }
+                });
+                ownerRoom.revokeVoice(nickname);
+                becomesVisitor.waitForResult(timeout);
+            }
+
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
             room.addParticipantListener(presence -> {
@@ -936,7 +949,19 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
         try {
             roomTwo.join(recipientNickname);
-            roomOne.join(joinerNickname);
+            final Presence reflectedJoinPresence = roomOne.join(joinerNickname);
+
+            // Check what default role the server has given the user, and correct it to be 'visitor' if it's not already.
+            if (!MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.visitor)) {
+                final ResultSyncPoint<Presence, Exception> becomesVisitor = new ResultSyncPoint<>();
+                roomTwo.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(joinerRoomAddress) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.visitor)) {
+                        becomesVisitor.signal(presence);
+                    }
+                });
+                ownerRoom.revokeVoice(joinerNickname);
+                becomesVisitor.waitForResult(timeout);
+            }
 
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
@@ -987,16 +1012,19 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final Resourcepart nickname = Resourcepart.from("test-user");
 
         try {
-            room.join(nickname);
+            final Presence reflectedJoinPresence = room.join(nickname);
 
-            final ResultSyncPoint<Presence, Exception> becomesParticipant = new ResultSyncPoint<>();
-            room.addParticipantListener(presence -> {
-                if (presence.getFrom().equals(room.getMyRoomJid()) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.participant)) {
-                    becomesParticipant.signal(presence);
-                }
-            });
-            ownerRoom.grantVoice(nickname);
-            becomesParticipant.waitForResult(timeout);
+            // Check what default role the server has given the user, and correct it to be 'participant' if it's not already.
+            if (!MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.participant)) {
+                final ResultSyncPoint<Presence, Exception> becomesParticipant = new ResultSyncPoint<>();
+                room.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(room.getMyRoomJid()) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.participant)) {
+                        becomesParticipant.signal(presence);
+                    }
+                });
+                ownerRoom.grantVoice(nickname);
+                becomesParticipant.waitForResult(timeout);
+            }
 
             final ResultSyncPoint<Presence, Exception> becomesVisitor = new ResultSyncPoint<>();
             room.addParticipantListener(presence -> {
@@ -1054,17 +1082,20 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
         try {
             roomTwo.join(recipientNickname);
-            roomOne.join(joinerNickname);
+            final Presence reflectedJoinPresence = roomOne.join(joinerNickname);
 
-            final ResultSyncPoint<Presence, Exception> becomesParticipant = new ResultSyncPoint<>();
+            // Check what default role the server has given the user, and correct it to be 'participant' if it's not already.
+            if (!MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.participant)) {
+                final ResultSyncPoint<Presence, Exception> becomesParticipant = new ResultSyncPoint<>();
 
-            roomTwo.addParticipantListener(presence -> {
-                if (presence.getFrom().equals(joinerRoomAddress) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.participant)) {
-                    becomesParticipant.signal(presence);
-                }
-            });
-            ownerRoom.grantVoice(joinerNickname);
-            becomesParticipant.waitForResult(timeout);
+                roomTwo.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(joinerRoomAddress) && MUCUser.from(presence).getItem().getRole().equals(MUCRole.participant)) {
+                        becomesParticipant.signal(presence);
+                    }
+                });
+                ownerRoom.grantVoice(joinerNickname);
+                becomesParticipant.waitForResult(timeout);
+            }
 
             final ResultSyncPoint<Presence, Exception> becomesVisitor = new ResultSyncPoint<>();
             roomTwo.addParticipantListener(presence -> {
@@ -1114,7 +1145,20 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
         final Resourcepart nickname = Resourcepart.from("test-user");
 
         try {
-            room.join(nickname);
+            final Presence reflectedJoinPresence = room.join(nickname);
+
+            // Check what default role the server has given the user, and correct it to not be 'moderator' if it already is.
+            if (MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.moderator)) {
+                final ResultSyncPoint<Presence, Exception> becomesNonModerator = new ResultSyncPoint<>();
+                room.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(room.getMyRoomJid()) && !MUCUser.from(presence).getItem().getRole().equals(MUCRole.moderator)) {
+                        becomesNonModerator.signal(presence);
+                    }
+                });
+                ownerRoom.revokeModerator(nickname);
+                becomesNonModerator.waitForResult(timeout);
+            }
+
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
             room.addParticipantListener(presence -> {
@@ -1170,7 +1214,20 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
         try {
             roomTwo.join(recipientNickname);
-            roomOne.join(joinerNickname);
+            final Presence reflectedJoinPresence = roomOne.join(joinerNickname);
+
+            // Check what default role the server has given the user, and correct it to not be 'moderator' if it already is.
+            if (MUCUser.from(reflectedJoinPresence).getItem().getRole().equals(MUCRole.moderator)) {
+                final ResultSyncPoint<Presence, Exception> becomesNonModerator = new ResultSyncPoint<>();
+                roomTwo.addParticipantListener(presence -> {
+                    if (presence.getFrom().equals(joinerRoomAddress) && !MUCUser.from(presence).getItem().getRole().equals(MUCRole.moderator)) {
+                        becomesNonModerator.signal(presence);
+                    }
+                });
+                ownerRoom.revokeModerator(joinerNickname);
+                becomesNonModerator.waitForResult(timeout);
+            }
+
 
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
