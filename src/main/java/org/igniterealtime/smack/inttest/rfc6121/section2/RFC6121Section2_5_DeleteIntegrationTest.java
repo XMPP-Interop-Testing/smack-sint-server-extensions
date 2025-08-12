@@ -375,7 +375,7 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
         IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
 
         final SimpleResultSyncPoint unsubscribeReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, new FromMatchesFilter(conOne.getUser(), true)));
+        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser())));
 
         final RosterPacket request = new RosterPacket();
         request.setType(IQ.Type.set);
@@ -404,7 +404,7 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
         IntegrationTestRosterUtil.ensureSubscribedTo(conOne, conTwo, timeout);
 
         final SimpleResultSyncPoint unsubscribedReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, new FromMatchesFilter(conOne.getUser(), true)));
+        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser())));
 
         final RosterPacket request = new RosterPacket();
         request.setType(IQ.Type.set);
@@ -434,8 +434,8 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
 
         final SimpleResultSyncPoint unsubscribeReceived = new SimpleResultSyncPoint();
         final SimpleResultSyncPoint unsubscribedReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, new FromMatchesFilter(conOne.getUser(), true)));
-        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, new FromMatchesFilter(conOne.getUser(), true)));
+        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser())));
+        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser())));
 
         final RosterPacket request = new RosterPacket();
         request.setType(IQ.Type.set);

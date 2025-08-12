@@ -274,7 +274,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
                 final int resourcePriority = resourcePriorities.get(i);
 
                 final Presence prioritySet = PresenceBuilder.buildPresence(StringUtils.randomString(9)).setPriority(resourcePriority).build();
-                try (final StanzaCollector presenceUpdateDetected = resourceConnection.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(prioritySet), new AndFilter(new FromMatchesFilter(resourceConnection.getUser(), false), (s -> s instanceof Presence && ((Presence) s).getPriority() == resourcePriority))), prioritySet)) {
+                try (final StanzaCollector presenceUpdateDetected = resourceConnection.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(prioritySet), new AndFilter(FromMatchesFilter.createFull(resourceConnection.getUser()), (s -> s instanceof Presence && ((Presence) s).getPriority() == resourcePriority))), prioritySet)) {
                     resourceConnection.sendStanza(prioritySet);
                     presenceUpdateDetected.nextResult(); // Wait for echo, to be sure that presence update was processed by the server.
                 }

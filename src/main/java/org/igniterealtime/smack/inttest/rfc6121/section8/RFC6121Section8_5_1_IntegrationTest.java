@@ -105,7 +105,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         final Message outboundStanza = MessageBuilder.buildMessage().setBody("Test message " + StringUtils.randomString(3)).to(localDomainNoSuchUser).build().asBuilder(StringUtils.randomString(9)).build();
 
         // Execute system under test.
-        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), new FromMatchesFilter(localDomainNoSuchUser, true)), outboundStanza);
+        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), FromMatchesFilter.createBare(localDomainNoSuchUser)), outboundStanza);
 
         // Verify result.
         final IQ request = new Ping();
@@ -133,7 +133,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         final Message outboundStanza = MessageBuilder.buildMessage().setBody("Test message " + StringUtils.randomString(3)).to(localDomainNoSuchUser).build().asBuilder(StringUtils.randomString(9)).build();
 
         // Execute system under test.
-        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), new FromMatchesFilter(localDomainNoSuchUser, true)), outboundStanza);
+        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), FromMatchesFilter.createBare(localDomainNoSuchUser)), outboundStanza);
 
         // Verify result.
         final IQ request = new Ping();
@@ -288,7 +288,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         final Presence outboundStanza = PresenceBuilder.buildPresence(StringUtils.randomString(9)).ofType(Presence.Type.probe).to(localDomainNoSuchUser).build();
 
         // Execute system under test.
-        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), new FromMatchesFilter(localDomainNoSuchUser, true)), outboundStanza);
+        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), FromMatchesFilter.createBare(localDomainNoSuchUser)), outboundStanza);
 
         // Verify result.
         final IQ request = new Ping();
@@ -314,7 +314,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         final Presence outboundStanza = PresenceBuilder.buildPresence(StringUtils.randomString(9)).ofType(Presence.Type.probe).to(localDomainNoSuchUser).build();
 
         // Execute system under test.
-        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), new FromMatchesFilter(localDomainNoSuchUser, true)), outboundStanza);
+        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), FromMatchesFilter.createBare(localDomainNoSuchUser)), outboundStanza);
 
         // Verify result.
         final IQ request = new Ping();
@@ -343,7 +343,7 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
         final Presence outboundStanza = presenceBuilder.build();
 
         // Execute system under test.
-        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), new FromMatchesFilter(localDomainNoSuchUser, true)), outboundStanza);
+        final StanzaCollector collector = conOne.createStanzaCollectorAndSend(new OrFilter(new StanzaIdFilter(outboundStanza), FromMatchesFilter.createBare(localDomainNoSuchUser)), outboundStanza);
 
         // Verify result.
         final IQ request = new Ping();

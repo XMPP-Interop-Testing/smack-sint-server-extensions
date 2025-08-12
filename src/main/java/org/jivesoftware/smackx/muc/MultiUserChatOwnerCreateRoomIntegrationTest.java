@@ -82,7 +82,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
                 .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
                 .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         // Execute system under test.
         try (final StanzaCollector collector = conOne.createStanzaCollectorAndSend(responseFilter, createMucStanza)) {
@@ -114,7 +114,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         // Execute system under test.
         try (final StanzaCollector collector = conOne.createStanzaCollectorAndSend(responseFilter, createMucStanza)) {
@@ -147,7 +147,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         // Execute system under test.
         try (final StanzaCollector collector = conOne.createStanzaCollectorAndSend(responseFilter, createMucStanza)) {
@@ -182,7 +182,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -219,7 +219,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -272,7 +272,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -364,7 +364,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -410,7 +410,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -468,7 +468,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);
@@ -525,7 +525,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
             .addExtension(new MUCInitialPresence(null, 0, 0, 0, null))
             .build();
 
-        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, new FromMatchesFilter(ownerMucAddress, true));
+        final StanzaFilter responseFilter = new AndFilter(StanzaTypeFilter.PRESENCE, FromMatchesFilter.createBare(ownerMucAddress));
 
         final MUCOwner requestConfigurationFormStanza = new MUCOwner();
         requestConfigurationFormStanza.setTo(mucAddress);

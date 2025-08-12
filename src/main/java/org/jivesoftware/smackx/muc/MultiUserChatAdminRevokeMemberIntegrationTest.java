@@ -338,7 +338,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
             adminSeesTarget.waitForResult(timeout);
 
             ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
-            final StanzaFilter leaveRoomFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), PresenceTypeFilter.UNAVAILABLE);
+            final StanzaFilter leaveRoomFilter = new AndFilter(FromMatchesFilter.createFull(targetMucAddress), PresenceTypeFilter.UNAVAILABLE);
             conThree.addAsyncStanzaListener(stanza -> targetSeesRemoval.signal((Presence) stanza), leaveRoomFilter);
 
             // Execute system under test.
@@ -378,7 +378,7 @@ public class MultiUserChatAdminRevokeMemberIntegrationTest extends AbstractMulti
 
         final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
         final ResultSyncPoint<Presence, Exception> adminSeesRemoval = new ResultSyncPoint<>();
-        final StanzaFilter leaveRoomFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), PresenceTypeFilter.UNAVAILABLE);
+        final StanzaFilter leaveRoomFilter = new AndFilter(FromMatchesFilter.createFull(targetMucAddress), PresenceTypeFilter.UNAVAILABLE);
         final StanzaListener ownerListener = stanza -> ownerSeesRemoval.signal((Presence) stanza);
         final StanzaListener adminListener = stanza -> adminSeesRemoval.signal((Presence) stanza);
 

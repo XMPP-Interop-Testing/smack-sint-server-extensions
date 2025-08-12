@@ -414,7 +414,7 @@ public class MultiUserChatAdminMemberListIntegrationTest extends AbstractMultiUs
 
             final ResultSyncPoint<Presence, Exception> ownerSeesRevoke = new ResultSyncPoint<>();
             final ResultSyncPoint<Presence, Exception> adminSeesRevoke = new ResultSyncPoint<>();
-            final StanzaFilter notificationFilter = new AndFilter(new FromMatchesFilter(targetMucAddress, false), StanzaTypeFilter.PRESENCE, new ExtensionElementFilter<>(MUCUser.class));
+            final StanzaFilter notificationFilter = new AndFilter(FromMatchesFilter.createFull(targetMucAddress), StanzaTypeFilter.PRESENCE, new ExtensionElementFilter<>(MUCUser.class));
             conOne.addAsyncStanzaListener(stanza -> ownerSeesRevoke.signal((Presence) stanza), notificationFilter);
             conTwo.addAsyncStanzaListener(stanza -> adminSeesRevoke.signal((Presence) stanza), notificationFilter);
 
