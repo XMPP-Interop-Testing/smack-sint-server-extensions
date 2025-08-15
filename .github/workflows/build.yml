@@ -94,8 +94,7 @@ jobs:
           -Dsinttest.dnsResolver=javax \
           -Dsinttest.enabledTests="VCardTempIntegrationTest" \
           -Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor \
-          -Dsinttest.debugger="org.igniterealtime.smack.inttest.util.FileLoggerFactory" \
-          -DlogDir=logs \
+          -Dsinttest.debugger=standard,dir=./logs,console=off \
           -jar $JARFILE
         shell: bash
       - name: Expose XMPP debug logs

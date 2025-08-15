@@ -41,7 +41,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -62,19 +61,9 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
 
     public JUnitXmlTestRunResultProcessor() throws IOException
     {
-        final String logDir = System.getProperty("logDir");
-        if (logDir != null) {
-            final Path logDirPath = Paths.get(logDir);
-            try {
-                Files.createDirectories(logDirPath);
-            } catch (IOException e) {
-                throw new IllegalStateException("Logging location does not exist or is not writable: " + logDirPath.toAbsolutePath(), e);
-            }
-            this.logFile = logDirPath.resolve("test-results.xml");
-            System.out.println("Saving JUnit-compatible XML file with results to " + logFile.toAbsolutePath());
-        } else {
-            throw new IllegalStateException("Unable to read 'logDir' system property.");
-        }
+        final Path logDirPath = StdOutTestRunResultProcessor.getLogFromSmackDebuggerConfig(System.getProperty("sinttest.debugger"));
+        this.logFile = logDirPath.resolve("test-results.xml");
+        System.out.println("Saving JUnit-compatible XML file with results to " + logFile.toAbsolutePath());
 
         specifications = new Properties();
         specifications.load(JUnitXmlTestRunResultProcessor.class.getResourceAsStream("/specifications.properties"));
@@ -165,7 +154,7 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
                     final Element testcaseElement = doc.createElement("testcase");
                     testcaseElement.setAttribute("name", testResult.concreteTest.toString());
                     testcaseElement.setAttribute("classname", testResult.concreteTest.getMethod().getDeclaringClass().getName());
-                    testcaseElement.setAttribute("time", String.valueOf(testResult.duration / 1000.0));
+                    testcaseElement.setAttribute("time", String.valueOf(testResult.duration.getSeconds()));
                     if (testResult instanceof TestNotPossible) {
                         final TestNotPossible testNotPossible = (TestNotPossible) testResult;
                         final Element skippedElement = doc.createElement("skipped");
@@ -242,10 +231,15 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
             }
 
             // write dom document to a file
-            try (final FileOutputStream output = new FileOutputStream(logFile.toFile())) {
-                writeXml(doc, output);
-            } catch (IOException | TransformerException e) {
-                throw new RuntimeException(e);
+            try {
+                Files.createDirectories(logFile.getParent()); // TODO move creation of this directory back to the constructor when possible. As a work-around, this code delays creating this directory, as its existence will cause StandardSinttestDebugger to fail (With Smack 4.5.0-beta6 it needs to be able to _create_ the directory, see https://github.com/igniterealtime/Smack/pull/656 )
+                try (final FileOutputStream output = new FileOutputStream(logFile.toFile())) {
+                    writeXml(doc, output);
+                } catch (IOException | TransformerException e) {
+                    throw new RuntimeException(e);
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException("Logging location does not exist or is not writable: " + logFile.toAbsolutePath(), e);
             }
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
@@ -363,7 +357,6 @@ public class JUnitXmlTestRunResultProcessor implements SmackIntegrationTestFrame
     }
 
     public static Duration getAggregatedTime(final Collection<? extends TestResult> tests) {
-        final long millis = tests.stream().mapToLong(test -> test.duration).sum();
-        return Duration.ofMillis(millis);
+        return tests.stream().map(test -> test.duration).reduce(Duration.ZERO, Duration::plus);
     }
 }

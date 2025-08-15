@@ -23,8 +23,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
@@ -116,18 +114,18 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                 for (final FailedTest failedTest : entry.getValue()) {
                     final String sectionReference = JUnitXmlTestRunResultProcessor.getSpecificationSection(failedTest.concreteTest.getMethod());
                     final String quote = JUnitXmlTestRunResultProcessor.getSpecificationQuote(failedTest.concreteTest.getMethod());
-                    final Path logPath = FileLogger.getLog(System.getProperty("logDir") == null ? null : Paths.get(System.getProperty("logDir")), failedTest.concreteTest);
+                    final Path logPath = getLog(getLogFromSmackDebuggerConfig(System.getProperty("sinttest.debugger")), failedTest.concreteTest);
                     final StringBuilder blob = new StringBuilder();
                     blob.append("• ").append(findTitle(specTitles, title, -1)).append(sectionReference != null ? ", Section " + sectionReference : "").append(System.lineSeparator());
                     blob.append("      \"" + quote + "\"").append(System.lineSeparator());
                     blob.append("  Failure reason  : " + failedTest.failureReason.getMessage()).append(System.lineSeparator());
                     blob.append("  Stanza log file : " + logPath).append(System.lineSeparator());
-                    blob.append("  Test class      : " + failedTest.concreteTest.getMethod().getDeclaringClass()).append(System.lineSeparator());
+                    blob.append("  Test class      : " + failedTest.concreteTest.getMethod().getDeclaringClass().getName()).append(System.lineSeparator());
                     blob.append("  Test method     : " + failedTest.concreteTest.getMethod().getName()).append(System.lineSeparator());
                     blob.append(System.lineSeparator());
 
                     // The key in this map is to force a repeatable order, but is not otherwise used in the output.
-                    sortedBlobs.put(sectionReference + '|' + failedTest.concreteTest.getMethod().getDeclaringClass() + '#' + failedTest.concreteTest.getMethod().getName(), blob.toString());
+                    sortedBlobs.put(sectionReference + '|' + failedTest.concreteTest.getMethod().getDeclaringClass().getName() + '#' + failedTest.concreteTest.getMethod().getName(), blob.toString());
                 }
 
                 sortedBlobs.values().forEach(System.out::print);
@@ -193,5 +191,38 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
             result = result.substring(0, maxLength-3) + "...";
         }
         return result;
+    }
+
+    /**
+     * Parses <tt>-Dsinttest.debugger=standard,dir=./logs,console=off</tt> into a path.
+     */
+    public static Path getLogFromSmackDebuggerConfig(final String smackDebuggerConfig) {
+        for (final String part : smackDebuggerConfig.split(",")) {
+            if (part.startsWith("dir=")) {
+                return Paths.get(part.substring("dir=".length()));
+            }
+        }
+
+        // This is the default logging directory of org.igniterealtime.smack.inttest.debugger.StandardSinttestDebugger
+        String tmpdir = System.getProperty("java.io.tmpdir");
+        if ("/tmp".equals(tmpdir)) {
+            tmpdir = "/var/tmp";
+        }
+        return Paths.get(tmpdir);
+    }
+
+    public static Path getLog(final Path logDir, final SmackIntegrationTestFramework.ConcreteTest testUnderExecution) {
+        Path filename;
+        if (testUnderExecution != null) {
+            filename = Path.of(testUnderExecution.getMethod().getDeclaringClass().getSimpleName(), testUnderExecution.getMethod().getName(), "log" );
+        } else {
+            filename = Path.of("test_suite_orchestration.log");
+        }
+
+        Path logPath;
+        if (logDir != null) {
+            return logDir.resolve(filename);
+        }
+        return filename;
     }
 }

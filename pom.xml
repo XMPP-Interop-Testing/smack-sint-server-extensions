@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <smack.version>4.5.0-beta5</smack.version>
+        <smack.version>4.5.0-beta6</smack.version>
     </properties>
 
     <licenses>
