@@ -66,12 +66,9 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
     }
 
     @AfterClass
-    public void tearDown() {
-        try {
-            AccountUtilities.removeNonConnectedLocalUser(environment, entityWithoutResources.getLocalpart().asUnescapedString(), "secret");
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+    public void tearDown() throws InvocationTargetException, InstantiationException, IllegalAccessException
+    {
+        AccountUtilities.removeNonConnectedLocalUser(environment, entityWithoutResources.getLocalpart().asUnescapedString(), "secret");
     }
 
     // 'normal' and 'chat' types have a specification that is defined as a SHOULD (as opposed to a MUST) and is therefor not tested by this implementation.

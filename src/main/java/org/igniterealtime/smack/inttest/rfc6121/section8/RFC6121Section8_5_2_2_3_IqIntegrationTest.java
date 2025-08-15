@@ -87,13 +87,9 @@ public class RFC6121Section8_5_2_2_3_IqIntegrationTest extends AbstractSmackInte
     }
 
     @AfterClass
-    public void tearDown()
+    public void tearDown() throws InvocationTargetException, InstantiationException, IllegalAccessException
     {
-        try {
-            AccountUtilities.removeNonConnectedLocalUser(environment, entityWithoutResources.getLocalpart().asUnescapedString(), "secret");
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        AccountUtilities.removeNonConnectedLocalUser(environment, entityWithoutResources.getLocalpart().asUnescapedString(), "secret");
     }
 
     @SmackIntegrationTest(section = "8.5.2.2.3", quote = "If the JID contained in the 'to' attribute is of the form <localpart@domainpart>, then the server MUST adhere to the following rules. [...] If there are no available resources or connected resources associated with the user, how the stanza is processed depends on the stanza type. [...] For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error. Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user [...] if not, then the server MUST reply with a <service-unavailable/> stanza error.")

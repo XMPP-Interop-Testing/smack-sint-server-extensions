@@ -242,7 +242,7 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
      * Asserts that the server does not re-use the stream management ID for subsequent sessions.
      */
     @SmackIntegrationTest(section = "5", quote = "The SM-ID MUST NOT be reused for [...] subsequent sessions")
-    public void testStreamManagementIdUniqueInSubsequentSessions() throws XMPPException, SmackException, InterruptedException, IOException, NoSuchFieldException
+    public void testStreamManagementIdUniqueInSubsequentSessions() throws XMPPException, SmackException, InterruptedException, IOException, NoSuchFieldException, TestNotPossibleException, IllegalAccessException
     {
         // Setup test fixture.
         final int distinctConnectionCount = 5;
@@ -273,8 +273,6 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
 
             // Verify result.
             assertEquals(distinctConnectionCount, uniqueIds.size(), "Expected the server to use distinct stream management IDs for subsequent sessions, but only " + uniqueIds.size() + " unique IDs were used between " + distinctConnectionCount + " connections.");
-        } catch (TestNotPossibleException | IllegalAccessException e) {
-            throw new RuntimeException(e);
         } finally {
             connections.forEach(this::recycle);
         }
@@ -284,7 +282,7 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
      * Asserts that the server does not re-use the stream management ID for simultaneous sessions.
      */
     @SmackIntegrationTest(section = "5", quote = "The SM-ID MUST NOT be reused for simultaneous [...] sessions")
-    public void testStreamManagementIdUniqueInSimultaneousSessions() throws XMPPException, SmackException, InterruptedException, IOException, NoSuchFieldException
+    public void testStreamManagementIdUniqueInSimultaneousSessions() throws XMPPException, SmackException, InterruptedException, IOException, NoSuchFieldException, IllegalAccessException, TestNotPossibleException
     {
         // Setup test fixture.
         final int distinctConnectionCount = 5;
@@ -306,8 +304,6 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
 
             // Verify result.
             assertEquals(distinctConnectionCount, uniqueIds.size(), "Expected the server to use distinct stream management IDs for simultaneous sessions, but only " + uniqueIds.size() + " unique IDs were used between " + distinctConnectionCount + " connections.");
-        } catch (TestNotPossibleException | IllegalAccessException e) {
-            throw new RuntimeException(e);
         } finally {
             connections.forEach(this::recycle);
         }

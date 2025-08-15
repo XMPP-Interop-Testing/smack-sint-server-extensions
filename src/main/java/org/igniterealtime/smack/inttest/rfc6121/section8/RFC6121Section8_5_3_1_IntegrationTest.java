@@ -223,7 +223,7 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         doTestPresence(Presence.Type.unavailable);
     }
 
-    private void doTestMessage(final Message.Type type) throws SmackException.NotConnectedException, InterruptedException
+    private void doTestMessage(final Message.Type type) throws SmackException.NotConnectedException, InterruptedException, TimeoutException
     {
         // Setup test fixture.
         final String needle = StringUtils.randomString(9);
@@ -243,15 +243,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the Message stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
         } finally {
             // Tear down test fixture.
             conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
-    private void doTestPresence(final Presence.Type type) throws SmackException.NotConnectedException, InterruptedException
+    private void doTestPresence(final Presence.Type type) throws SmackException.NotConnectedException, InterruptedException, TimeoutException
     {
         // Setup test fixture.
         final String needle = StringUtils.randomString(9);
@@ -271,8 +269,6 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the Presence stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
         } finally {
             // Tear down test fixture.
             conTwo.removeStanzaListener(stanzaListener);
