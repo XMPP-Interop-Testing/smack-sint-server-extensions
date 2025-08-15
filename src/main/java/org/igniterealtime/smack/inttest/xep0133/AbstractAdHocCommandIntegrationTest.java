@@ -18,6 +18,7 @@ package org.igniterealtime.smack.inttest.xep0133;
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -55,7 +56,7 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
         super(environment);
         this.environment = environment;
 
-        adminConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        adminConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         adminConnection.connect();
         adminConnection.login(sinttestConfiguration.adminAccountUsername,
             sinttestConfiguration.adminAccountPassword);

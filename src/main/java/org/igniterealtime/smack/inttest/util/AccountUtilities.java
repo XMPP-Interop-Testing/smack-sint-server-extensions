@@ -15,8 +15,8 @@
  */
 package org.igniterealtime.smack.inttest.util;
 
-import org.igniterealtime.smack.inttest.Configuration;
-import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
+import org.igniterealtime.smack.inttest.*;
+import org.igniterealtime.smack.inttest.debugger.SinttestDebugger;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smackx.admin.ServiceAdministrationManager;
 import org.jivesoftware.smackx.iqregister.AccountManager;
@@ -28,6 +28,8 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,5 +103,45 @@ public class AccountUtilities
                 LOGGER.log(Level.WARNING, "Could not delete the dynamically registered additional account named '" + username + "'", e);
             }
         }
+    }
+
+    /**
+     * Creates a new (unconnected) XMPP connection.
+     */
+    // FIXME A method like this aught to be provided by SINT's XmppConnectionManager class.
+    public static AbstractXMPPConnection spawnNewConnection(final SmackIntegrationTestEnvironment environment, final Configuration sinttestConfiguration) throws InvocationTargetException, InstantiationException, IllegalAccessException
+    {
+        List<ConnectionConfigurationBuilderApplier> connectionConfigurationAppliers = new ArrayList<>();
+
+        final XmppConnectionManager connectionManager = environment.connectionManager;
+
+        // Nasty reflection to get the configured debugger.
+        Field field;
+        try {
+            field = connectionManager.getClass().getDeclaredField("sinttestFramework");
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+        boolean wasAccessible = field.isAccessible();
+        field.setAccessible(true);
+        final SmackIntegrationTestFramework sinttestFramework = (SmackIntegrationTestFramework) field.get(connectionManager);
+        field.setAccessible(wasAccessible);
+
+        try {
+            field = sinttestFramework.getClass().getDeclaredField("sinttestDebugger");
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+        wasAccessible = field.isAccessible();
+        field.setAccessible(true);
+        final SinttestDebugger sinttestDebugger = (SinttestDebugger) field.get(sinttestFramework);
+        field.setAccessible(wasAccessible);
+
+        if (sinttestDebugger != null) {
+            var applier = sinttestDebugger.getConnectionConfigurationBuilderApplier();
+            connectionConfigurationAppliers.add(applier);
+        }
+
+        return connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration, connectionConfigurationAppliers);
     }
 }

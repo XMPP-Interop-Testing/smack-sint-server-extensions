@@ -5,6 +5,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
@@ -222,7 +223,7 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
     @SmackIntegrationTest(section = "2.5.2", quote = "As with adding a roster item, if the server can successfully process the roster set then it MUST [...] send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of \\\"remove\\\")\"")
     public void testRosterDeleteGeneratesPushToInterestedResourceOtherResourceWithInitialPresence() throws Exception
     {
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             conOneSecondary.connect();
@@ -299,7 +300,7 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
             throw new TestNotPossibleException("The test implementation requires the connection used for testing to not have sent initial presence (but current configuration causes initial presence to be sent automatically).");
         }
 
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             conOneSecondary.connect();

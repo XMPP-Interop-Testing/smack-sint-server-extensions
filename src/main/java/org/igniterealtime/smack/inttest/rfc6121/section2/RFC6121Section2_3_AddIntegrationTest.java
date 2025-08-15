@@ -5,6 +5,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
@@ -200,7 +201,7 @@ public class RFC6121Section2_3_AddIntegrationTest extends AbstractSmackIntegrati
     @SmackIntegrationTest(section = "2.3.2", quote = "After a connected resource sends initial presence [...] it is referred to as an \"available resource\". If a connected resource or available resource requests the roster, it is referred to as an \"interested resource\". [...] The server MUST also send a roster push containing the new roster item to all of the user's interested resources, including the resource that generated the roster set.")
     public void testRosterSetGeneratesPushToInterestedResourceOtherResourceWithInitialPresence() throws IOException, XMPPException, SmackException, InterruptedException, TimeoutException, InvocationTargetException, InstantiationException, IllegalAccessException
     {
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             final BareJid target = JidCreate.bareFrom(Localpart.from("test-target-" + StringUtils.randomString(5)), conOneSecondary.getXMPPServiceDomain());
@@ -273,7 +274,7 @@ public class RFC6121Section2_3_AddIntegrationTest extends AbstractSmackIntegrati
         final String rosterItemName = "Test User";
         final String rosterItemGroupName = "Test Group";
 
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             conOneSecondary.connect();

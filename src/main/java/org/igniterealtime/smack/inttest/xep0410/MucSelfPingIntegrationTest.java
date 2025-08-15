@@ -20,6 +20,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -164,7 +165,7 @@ public class MucSelfPingIntegrationTest extends AbstractSmackIntegrationTest
     @SmackIntegrationTest(section = "3.3", quote = "a MUC service supporting this protocol may directly respond to a occupant's Ping request to the occupant's own nickname, as opposed to routing it to any of the occupant's clients. [...] it MUST respond to a self-ping request as follows: [...] Successful IQ response: the client is joined to the MUC.")
     public void testPingHandledByServiceMultiSessionNick() throws IOException, XMPPException, SmackException, InterruptedException, TimeoutException, InvocationTargetException, InstantiationException, IllegalAccessException, TestNotPossibleException
     {
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         final Resourcepart nickA = Resourcepart.from("nickA");
         final Resourcepart nickB = Resourcepart.from("nickB");
 

@@ -19,6 +19,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
@@ -168,7 +169,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandCompletedSuccessfully(result, "Expected response to the " + ADD_A_USER + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
             try {
-                AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+                AbstractXMPPConnection userConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
                 userConnection.connect();
                 userConnection.login(addedUser.getLocalpartOrThrow().toString(), "password");
                 assertTrue(userConnection.isAuthenticated(), "Expected to be able to connect and login with user '" + addedUser + "', that was created by '" + adminConnection.getUser() + "' using the " + ADD_A_USER + " command. However, authentication failed.");
@@ -323,8 +324,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             createUser(disabledUser);
 
             // Login as the user to be able to see their sessions being ended
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
-            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
+            userConnectionTwo = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             userConnectionTwo.connect();
             userConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
@@ -391,7 +392,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             );
 
             // Verify results.
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             AbstractXMPPConnection finalUserConnectionOne = userConnectionOne;
             assertThrows(SASLErrorException.class, () -> finalUserConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5))), "Expected '" + disabledUser + "' to not be able to login after their account was disabled by '" + adminConnection.getUser() + "' using the '" + DISABLE_A_USER + "' command (but the user was able to login).");
@@ -415,7 +416,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         final Jid disabledUser = JidCreate.bareFrom(Localpart.from("disableusertest-" + StringUtils.randomString(5)), connection.getXMPPServiceDomain());
         try {
             createUser(disabledUser);
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             userConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
             final EntityBareJid contactJid = JidCreate.entityBareFrom("foo@bar.example.org");
@@ -491,7 +492,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             );
 
             // Verify results.
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             AbstractXMPPConnection finalUserConnectionOne = userConnectionOne;
             assertDoesNotThrow(() -> finalUserConnectionOne.login(disabledUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5))), "Expected '" + disabledUser + "' to be able to login after their account was disabled and re-enabled by '" + adminConnection.getUser() + "' using the '" + REENABLE_A_USER + "' command (but the user was not able to login).");
@@ -549,8 +550,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             createUser(testUser);
 
             // Login as the user to be able to end their session
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
-            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
+            userConnectionTwo = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             userConnectionTwo.connect();
             userConnectionOne.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
@@ -610,8 +611,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             createUser(testUser);
 
             // Login as the user to be able to end their session
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
-            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
+            userConnectionTwo = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             userConnectionTwo.connect();
             userConnectionOne.login(testUser.getLocalpartOrThrow().toString(), "password", Resourcepart.from("resource-one-" + StringUtils.randomString(5)));
@@ -676,8 +677,8 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             createUser(testUserTwo);
 
             // Login as the user to be able to end their session
-            userConnectionOne = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
-            userConnectionTwo = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnectionOne = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
+            userConnectionTwo = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnectionOne.connect();
             userConnectionTwo.connect();
             userConnectionOne.login(testUserOne.getLocalpartOrThrow().toString(), "password");
@@ -749,7 +750,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             // Verify results.
             assertCommandCompletedSuccessfully(result, "Expected response to the " + CHANGE_USER_PASSWORD + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
-            AbstractXMPPConnection userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            AbstractXMPPConnection userConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnection.connect();
 
             assertDoesNotThrow(() -> userConnection.login(userToChangePassword.getLocalpartOrThrow().toString(), "password2"), "Expected user '" + userToChangePassword + "' to be able to authenticate using the new credentials, after '" + adminConnection.getUser() + "' changed their password using the '" + CHANGE_USER_PASSWORD + "' command (but the user was not able to authenticate).");
@@ -1178,7 +1179,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         try {
             // Setup test fixture.
             createUser(testUser);
-            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
 
             executeCommandSimple(DELETE_MOTD, adminConnection.getUser().asEntityBareJid()); // Ensure that no MOTD pre-exists.
@@ -1244,7 +1245,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             );
 
             createUser(testUser);
-            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
 
             // Execute system under test: Now run the full thing
@@ -1350,7 +1351,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
             assertCommandCompletedSuccessfully(result, "Expected response to the " + SET_WELCOME_MESSAGE + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
             createUser(testUser); // Create user _after_ setting the welcome message!
-            userConnection = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+            userConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
             userConnection.addSyncStanzaListener(stanzaListener, StanzaTypeFilter.MESSAGE);
             assertResult(syncPoint, "Expected the newly created user '" + userConnection.getUser() + "' to receive the Welcome Message that was set by '" + adminConnection.getUser() + "' using the " + SET_WELCOME_MESSAGE + " command before the intended recipient was created (but they did not receive it).");
         } finally {

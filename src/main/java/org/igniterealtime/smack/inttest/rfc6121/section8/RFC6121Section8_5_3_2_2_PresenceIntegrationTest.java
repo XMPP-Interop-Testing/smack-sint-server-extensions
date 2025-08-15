@@ -19,6 +19,7 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.MarkerExtension;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
@@ -492,7 +493,7 @@ public class RFC6121Section8_5_3_2_2_PresenceIntegrationTest extends AbstractSma
                     // ConTwo should have more than one. We get one connection by default. Create the additional ones.
                     additionalConnections = new ArrayList<>(resourcePriorities.size() - 1);
                     for (int i = 0; i < resourcePriorities.size() - 1; i++) {
-                        additionalConnections.add(environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration));
+                        additionalConnections.add(AccountUtilities.spawnNewConnection(environment, sinttestConfiguration));
                     }
                     break;
             }

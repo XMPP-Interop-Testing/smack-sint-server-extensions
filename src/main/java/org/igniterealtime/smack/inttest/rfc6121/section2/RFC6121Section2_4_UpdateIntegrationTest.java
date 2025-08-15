@@ -5,6 +5,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
@@ -412,7 +413,7 @@ public class RFC6121Section2_4_UpdateIntegrationTest extends AbstractSmackIntegr
     @SmackIntegrationTest(section = "2.4.2", quote = "As with adding a roster item, if the roster item can be successfully processed then the server MUST [...] send a roster push to all of the user's interested resources")
     public void testRosterUpdateGeneratesPushToInterestedResourceOtherResourceWithInitialPresence() throws Exception
     {
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             conOneSecondary.connect();
@@ -500,7 +501,7 @@ public class RFC6121Section2_4_UpdateIntegrationTest extends AbstractSmackIntegr
             throw new TestNotPossibleException("The test implementation requires the connection used for testing to not have sent initial presence (but current configuration causes initial presence to be sent automatically).");
         }
 
-        final AbstractXMPPConnection conOneSecondary = environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration);
+        final AbstractXMPPConnection conOneSecondary = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         try {
             // Setup test fixture.
             conOneSecondary.connect();

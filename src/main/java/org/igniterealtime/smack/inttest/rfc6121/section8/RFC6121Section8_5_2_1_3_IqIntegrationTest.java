@@ -20,6 +20,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.*;
@@ -462,7 +463,7 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
         // Setup test fixture.
         final List<AbstractXMPPConnection> additionalConnections = new ArrayList<>(resourcePriorities.size()-1);
         for (int i = 0; i < resourcePriorities.size()-1; i++) {
-            additionalConnections.add(environment.connectionManager.getDefaultConnectionDescriptor().construct(sinttestConfiguration));
+            additionalConnections.add(AccountUtilities.spawnNewConnection(environment, sinttestConfiguration));
         }
 
         final Set<FullJid> allResources = new HashSet<>();
