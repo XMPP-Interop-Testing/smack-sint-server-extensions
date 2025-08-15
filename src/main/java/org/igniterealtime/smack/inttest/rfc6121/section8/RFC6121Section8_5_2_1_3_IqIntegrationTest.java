@@ -506,7 +506,7 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
                 }
             };
             final String stopNeedleRecipients = "STOP LISTENING, STANZAS HAVE BEEN PROCESSED " + StringUtils.randomString(7);
-            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && ((Message) s).getBody().equals(stopNeedleRecipients)));
+            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && stopNeedleRecipients.equals(((Message) s).getBody())));
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);

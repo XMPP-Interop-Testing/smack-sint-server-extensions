@@ -544,7 +544,7 @@ public class RFC6121Section8_5_3_2_2_PresenceIntegrationTest extends AbstractSma
                     }
                 };
                 final String stopNeedleRecipients = "STOP LISTENING, STANZAS HAVE BEEN PROCESSED " + StringUtils.randomString(7);
-                final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && ((Message) s).getBody().equals(stopNeedleRecipients)));
+                final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && stopNeedleRecipients.equals(((Message) s).getBody())));
 
                 for (int i = 0; i < resourcePriorities.size(); i++) {
                     final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
@@ -556,13 +556,13 @@ public class RFC6121Section8_5_3_2_2_PresenceIntegrationTest extends AbstractSma
 
                 // Setup test fixture: detect the message stanza that's sent to signal the sender need not wait any longer for any potential stanza delivery errors.
                 final String stopNeedleSender = "STOP LISTENING, ALL RECIPIENTS ARE DONE " + StringUtils.randomString(7);
-                final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conThree.getUser()), (s -> s instanceof Message && ((Message) s).getBody().equals(stopNeedleSender)));
+                final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conThree.getUser()), (s -> s instanceof Message && stopNeedleSender.equals(((Message) s).getBody())));
                 final SimpleResultSyncPoint stopListenerSenderSyncPoint = new SimpleResultSyncPoint();
                 stopListenerSender = (e) -> stopListenerSenderSyncPoint.signal();
                 conOne.addStanzaListener(stopListenerSender, stopDetectorSender);
 
                 // Setup test fixture: detect an error that is sent back to the sender.
-                final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && ((Message) s).getBody().equals(needle)));
+                final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
                 final Stanza[] errorReceived = {null};
                 errorListener = (stanza) -> errorReceived[0] = stanza;
                 conOne.addStanzaListener(errorListener, errorDetector);

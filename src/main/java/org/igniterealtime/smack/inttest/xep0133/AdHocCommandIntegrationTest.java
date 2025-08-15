@@ -1131,7 +1131,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         StanzaListener stanzaListener = stanza -> {
             Message message = (Message) stanza;
-            if (message.getBody().contains(announcement)) {
+            if (message.getBody() != null && message.getBody().contains(announcement)) {
                 syncPoint.signal();
             }
         };
@@ -1169,7 +1169,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         StanzaListener stanzaListener = stanza -> {
             Message message = (Message) stanza;
-            if (newMOTD.stream().allMatch(s -> message.getBody().contains(s))) {
+            if (newMOTD.stream().allMatch(s -> message.getBody() != null && message.getBody().contains(s))) {
                 syncPoint.signal();
             }
         };
@@ -1227,7 +1227,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
         StanzaListener stanzaListener = stanza -> {
             Message message = (Message) stanza;
-            if (newMOTD.stream().allMatch(s -> message.getBody().contains(s))) {
+            if (newMOTD.stream().allMatch(s -> message.getBody() != null && message.getBody().contains(s))) {
                 syncPoint.signal();
             }
         };
@@ -1329,7 +1329,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
         StanzaListener stanzaListener = stanza -> {
             if (stanza instanceof Message) {
                 Message message = (Message) stanza;
-                if (newWelcomeMessage.stream().allMatch(s -> message.getBody().contains(s))) {
+                if (newWelcomeMessage.stream().allMatch(s -> message.getBody() != null && message.getBody().contains(s))) {
                     syncPoint.signal();
                 }
             }
