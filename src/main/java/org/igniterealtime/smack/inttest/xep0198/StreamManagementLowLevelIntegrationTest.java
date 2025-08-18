@@ -258,8 +258,11 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
 
                 // Execute system under test
                 connection.connect().login();
-                if (!connection.isSmResumptionPossible()) {
+                if (!connection.isSmAvailable()) {
                     throw new TestNotPossibleException("Service does not allow streams to be resumed.");
+                }
+                if (!connection.isSmEnabled()) {
+                    throw new TestNotPossibleException("Unable to enable stream management with the service.");
                 }
 
                 final Field f = connection.getClass().getDeclaredField("smSessionId"); //NoSuchFieldException
@@ -298,9 +301,13 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
 
                 // Execute system under test
                 connection.connect().login();
-                if (!connection.isSmResumptionPossible()) {
+                if (!connection.isSmAvailable()) {
                     throw new TestNotPossibleException("Service does not allow streams to be resumed.");
                 }
+                if (!connection.isSmEnabled()) {
+                    throw new TestNotPossibleException("Unable to enable stream management with the service.");
+                }
+
 
                 uniqueIds.add((String) getDeclaredFieldValueThroughReflection(connection, "smSessionId"));
             }
@@ -324,9 +331,13 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
             connection.setUseStreamManagement(true);
             connection.setUseStreamManagementResumption(true);
             connection.connect().login();
-            if (!connection.isSmResumptionPossible()) {
+            if (!connection.isSmAvailable()) {
                 throw new TestNotPossibleException("Service does not allow streams to be resumed.");
             }
+            if (!connection.isSmEnabled()) {
+                throw new TestNotPossibleException("Unable to enable stream management with the service.");
+            }
+
             connection.instantShutdown(); // Leaves the connection in a resumable state
             if (!connection.isDisconnectedButSmResumptionPossible()) {
                 throw new TestNotPossibleException("Service does not allow streams to be resumed.");
@@ -355,6 +366,8 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
         try {
             connection.setUseStreamManagement(true);
             connection.setUseStreamManagementResumption(true);
+            connection.connect();
+            connection.instantShutdown(); // Smack's fix for SMACK-954 requires that a connection has been instantly shutdown, before SM resumption is even considered.
             setDeclaredFieldValueThroughReflection(connection, "smSessionId", "non-existing-previd-" + StringUtils.randomString(23));
 
             // Execute system under test.
