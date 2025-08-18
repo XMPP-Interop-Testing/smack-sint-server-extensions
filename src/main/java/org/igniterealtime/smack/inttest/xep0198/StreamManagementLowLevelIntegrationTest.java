@@ -150,8 +150,11 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
             connection.sendNonza(new StreamManagement.Enable(false, -1));
 
             // Verify result.
-            final XMPPException.FailedNonzaException failedNonzaException = assertThrows(XMPPException.FailedNonzaException.class, connection::login, "Expected the server to return a '<failed/>' element on the connection with stream-id '" + connection.getStreamId() + "' after it sent an '<enabled/>' element without/before authenticating (but the server did not send such an element).");
-            assertEquals("failed", failedNonzaException.getNonza().getElementName(), "Expected the server to return a '<failed/>' element on the connection with stream-id '" + connection.getStreamId() + "' after it sent an '<enabled/>' element without/before authenticating (but the server did not send such an element).");
+            final String assertionFailedMessage = "Expected the server to return a '<failed/>' element on the connection with stream-id '" + connection.getStreamId() + "' after it sent an '<enabled/>' element without/before authenticating (but the server did not send such an element).";
+            final SmackException.SmackWrappedException wrappedException = assertThrows(SmackException.SmackWrappedException.class, connection::login, assertionFailedMessage);
+            assertNotNull(wrappedException.getCause(), assertionFailedMessage);
+            assertEquals(XMPPException.FailedNonzaException.class, wrappedException.getCause().getClass(), assertionFailedMessage);
+            assertEquals("failed", ((XMPPException.FailedNonzaException) wrappedException.getCause()).getNonza().getElementName(), assertionFailedMessage);
         } finally {
             recycle(connection);
         }
