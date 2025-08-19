@@ -26,6 +26,8 @@ import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.OrFilter;
 import org.jivesoftware.smack.filter.StanzaIdFilter;
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.ping.packet.Ping;
 import org.jxmpp.jid.BareJid;
@@ -183,33 +185,69 @@ public class RFC6121Section8_5_1_IntegrationTest extends AbstractSmackIntegratio
     }
 
     @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a bare JID <localpart@domainpart> [...] where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"subscribe\" [...] the server MUST silently ignore the stanza.")
-    public void testLocalDomainNoSuchUserPresenceSubscribeTypeBareJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException
+    public void testLocalDomainNoSuchUserPresenceSubscribeTypeBareJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException
     {
         // Setup test fixture.
         final BareJid localDomainNoSuchUser = JidCreate.bareFrom(Localpart.from("nonexistingusername-" + StringUtils.randomString(5)), conOne.getXMPPServiceDomain());
-        doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribe);
+        try {
+            doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribe);
+        } finally {
+            // Tear down test fixture
+            final Roster roster = Roster.getInstanceFor(conOne);
+            final RosterEntry entry = roster.getEntry(localDomainNoSuchUser);
+            if (entry != null) {
+                roster.removeEntry(entry);
+            }
+        }
     }
 
     @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a [...] full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"subscribe\" [...] the server MUST silently ignore the stanza.")
-    public void testLocalDomainNoSuchUserPresenceSubscribeTypeFullJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException
+    public void testLocalDomainNoSuchUserPresenceSubscribeTypeFullJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException
     {
         final FullJid localDomainNoSuchUser = JidCreate.fullFrom(Localpart.from("nonexistingusername-" + StringUtils.randomString(5)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(5)));
-        doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribe);
+        try {
+            doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribe);
+        } finally {
+            // Tear down test fixture
+            final Roster roster = Roster.getInstanceFor(conOne);
+            final RosterEntry entry = roster.getEntry(localDomainNoSuchUser.asBareJid());
+            if (entry != null) {
+                roster.removeEntry(entry);
+            }
+        }
     }
 
     @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a bare JID <localpart@domainpart> [...] where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"subscribed\" [...] the server MUST silently ignore the stanza.")
-    public void testLocalDomainNoSuchUserPresenceSubscribedTypeBareJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException
+    public void testLocalDomainNoSuchUserPresenceSubscribedTypeBareJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException
     {
         // Setup test fixture.
         final BareJid localDomainNoSuchUser = JidCreate.bareFrom(Localpart.from("nonexistingusername-" + StringUtils.randomString(5)), conOne.getXMPPServiceDomain());
-        doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribed);
+        try {
+            doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribed);
+        } finally {
+            // Tear down test fixture
+            final Roster roster = Roster.getInstanceFor(conOne);
+            final RosterEntry entry = roster.getEntry(localDomainNoSuchUser);
+            if (entry != null) {
+                roster.removeEntry(entry);
+            }
+        }
     }
 
     @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a [...] full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"subscribed\" [...] the server MUST silently ignore the stanza.")
-    public void testLocalDomainNoSuchUserPresenceSubscribedTypeFullJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException
+    public void testLocalDomainNoSuchUserPresenceSubscribedTypeFullJid() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException
     {
         final FullJid localDomainNoSuchUser = JidCreate.fullFrom(Localpart.from("nonexistingusername-" + StringUtils.randomString(5)), conOne.getXMPPServiceDomain(), Resourcepart.from(StringUtils.randomString(5)));
-        doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribed);
+        try {
+            doTestLocalDomainNoSuchUserPresenceOfType(localDomainNoSuchUser, Presence.Type.subscribed);
+        } finally {
+            // Tear down test fixture
+            final Roster roster = Roster.getInstanceFor(conOne);
+            final RosterEntry entry = roster.getEntry(localDomainNoSuchUser.asBareJid());
+            if (entry != null) {
+                roster.removeEntry(entry);
+            }
+        }
     }
 
     @SmackIntegrationTest(section = "8.5.1", quote = "If the 'to' address specifies a bare JID <localpart@domainpart> [...] where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type. [...] For a presence stanza of type [...] \"unsubscribe\" [...] the server MUST silently ignore the stanza.")
