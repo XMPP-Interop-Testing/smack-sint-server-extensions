@@ -21,10 +21,13 @@ import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.filter.*;
+import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.MessageTypeFilter;
+import org.jivesoftware.smack.filter.StanzaIdFilter;
+import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.MessageBuilder;
 import org.jivesoftware.smack.packet.Stanza;
@@ -93,9 +96,6 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final ResultSyncPoint<Stanza, Exception> targetReceivedPrivateMessage = new ResultSyncPoint<>();
-        final StanzaListener pmListener = targetReceivedPrivateMessage::signal;
-
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             configureAllowPM(mucAsSeenByOwner);
@@ -113,23 +113,24 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
             mucAsSeenByTarget.join(nicknameTarget);
             ownerSeesTarget.waitForResult(timeout);
 
-            conTwo.addStanzaListener(pmListener, new AndFilter(StanzaTypeFilter.MESSAGE, new StanzaIdFilter(randomString)));
+            final ResultSyncPoint<Stanza, Exception> targetReceivedPrivateMessage = new ResultSyncPoint<>();
+            try (final ListenerHandle ignored = conTwo.addStanzaListener(targetReceivedPrivateMessage::signal, new AndFilter(StanzaTypeFilter.MESSAGE, new StanzaIdFilter(randomString))))
+            {
+                // Execute system under test.
+                final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
+                    .ofType(Message.Type.chat)
+                    .addExtension(new MUCUser())
+                    .to(targetMucAddress)
+                    .setBody("A private message sent as part of an integration test.");
 
-            // Execute system under test.
-            final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
-                .ofType(Message.Type.chat)
-                .addExtension(new MUCUser())
-                .to(targetMucAddress)
-                .setBody("A private message sent as part of an integration test.");
+                conOne.sendStanza(pmBuilder.build());
 
-            conOne.sendStanza(pmBuilder.build());
-
-            // Verify result.
-            final Stanza receivedMessage = assertResult(targetReceivedPrivateMessage, "Expected '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') to receive the private message that was sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') in '" + mucAddress + "' (but the message was not received).");
-            assertEquals(ownerMucAddress, receivedMessage.getFrom(), "Expected the 'from' address of the private message sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' to match the occupant JID of the sender (but it did not).");
+                // Verify result.
+                final Stanza receivedMessage = assertResult(targetReceivedPrivateMessage, "Expected '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') to receive the private message that was sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') in '" + mucAddress + "' (but the message was not received).");
+                assertEquals(ownerMucAddress, receivedMessage.getFrom(), "Expected the 'from' address of the private message sent by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' to match the occupant JID of the sender (but it did not).");
+            }
         } finally {
             // Tear down test fixture.
-            conTwo.removeStanzaListener(pmListener);
             tryDestroy(mucAsSeenByOwner);
         }
     }
@@ -150,10 +151,6 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
 
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
-        final StanzaListener errorListener = ownerSeesError::signal;
-        final StanzaFilter errorFilter = new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR);
-
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             configureAllowPM(mucAsSeenByOwner);
@@ -171,23 +168,24 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
             mucAsSeenByTarget.join(nicknameTarget);
             ownerSeesTarget.waitForResult(timeout);
 
-            conOne.addStanzaListener(errorListener, errorFilter);
+            final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
+            try (final ListenerHandle ignored = conOne.addStanzaListener(ownerSeesError::signal, new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR))) {
 
-            // Execute system under test.
-            final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
-                .ofType(Message.Type.groupchat)
-                .addExtension(new MUCUser())
-                .to(targetMucAddress)
-                .setBody("A private message sent as part of an integration test.");
+                // Execute system under test.
+                final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
+                    .ofType(Message.Type.groupchat)
+                    .addExtension(new MUCUser())
+                    .to(targetMucAddress)
+                    .setBody("A private message sent as part of an integration test.");
 
-            conOne.sendStanza(pmBuilder.build());
+                conOne.sendStanza(pmBuilder.build());
 
-            // Verify result.
-            final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to receive an error after it tried to send a private message of type 'groupchat' to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' (but no error was received).");
-            assertEquals(StanzaError.Condition.bad_request, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') after it tried to send a private message of type 'groupchat' to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "'.");
+                // Verify result.
+                final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to receive an error after it tried to send a private message of type 'groupchat' to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' (but no error was received).");
+                assertEquals(StanzaError.Condition.bad_request, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') after it tried to send a private message of type 'groupchat' to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "'.");
+            }
        } finally {
             // Tear down test fixture.
-            conOne.removeStanzaListener(errorListener);
             tryDestroy(mucAsSeenByOwner);
         }
     }
@@ -207,31 +205,28 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
 
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
-        final StanzaListener errorListener = ownerSeesError::signal;
-        final StanzaFilter errorFilter = new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR);
-
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             configureAllowPM(mucAsSeenByOwner);
 
-            conOne.addStanzaListener(errorListener, errorFilter);
+            final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
+            try (final ListenerHandle ignored = conOne.addStanzaListener(ownerSeesError::signal, new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR)))
+            {
+                // Execute system under test.
+                final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
+                    .ofType(Message.Type.chat)
+                    .addExtension(new MUCUser())
+                    .to(targetMucAddress)
+                    .setBody("A private message sent as part of an integration test.");
 
-            // Execute system under test.
-            final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
-                .ofType(Message.Type.chat)
-                .addExtension(new MUCUser())
-                .to(targetMucAddress)
-                .setBody("A private message sent as part of an integration test.");
+                conOne.sendStanza(pmBuilder.build());
 
-            conOne.sendStanza(pmBuilder.build());
-
-            // Verify result.
-            final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to receive an error after it tried to send a private message to '" + nicknameTarget + "' in '" + mucAddress + "' that is not an occupant (but no error was received).");
-            assertEquals(StanzaError.Condition.item_not_found, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') after it tried to send a private message to '" + nicknameTarget + "' in '" + mucAddress + "' that is not an occupant.");
+                // Verify result.
+                final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') to receive an error after it tried to send a private message to '" + nicknameTarget + "' in '" + mucAddress + "' that is not an occupant (but no error was received).");
+                assertEquals(StanzaError.Condition.item_not_found, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (using nickname '" + nicknameOwner + "') after it tried to send a private message to '" + nicknameTarget + "' in '" + mucAddress + "' that is not an occupant.");
+            }
         } finally {
             // Tear down test fixture.
-            conOne.removeStanzaListener(errorListener);
             tryDestroy(mucAsSeenByOwner);
         }
     }
@@ -252,10 +247,6 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
 
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
-        final StanzaListener errorListener = ownerSeesError::signal;
-        final StanzaFilter errorFilter = new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR);
-
         createMuc(mucAsSeenByOwner, nicknameOwner);
         try {
             configureAllowPM(mucAsSeenByOwner);
@@ -275,24 +266,25 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
 
             mucAsSeenByOwner.leave();
 
-            conOne.addStanzaListener(errorListener, errorFilter);
+            final ResultSyncPoint<Stanza, Exception> ownerSeesError = new ResultSyncPoint<>();
+            try (final ListenerHandle ignored = conOne.addStanzaListener(ownerSeesError::signal, new AndFilter(new StanzaIdFilter(randomString), MessageTypeFilter.ERROR)))
+            {
+                // Execute system under test.
+                final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
+                    .ofType(Message.Type.chat)
+                    .addExtension(new MUCUser())
+                    .to(targetMucAddress)
+                    .setBody("A private message sent as part of an integration test.");
 
-            // Execute system under test.
-            final MessageBuilder pmBuilder = MessageBuilder.buildMessage(randomString)
-                .ofType(Message.Type.chat)
-                .addExtension(new MUCUser())
-                .to(targetMucAddress)
-                .setBody("A private message sent as part of an integration test.");
+                conOne.sendStanza(pmBuilder.build());
 
-            conOne.sendStanza(pmBuilder.build());
-
-            // Verify result.
-            final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (that currently is not an occupant) to receive an error after it tried to send a private message to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' (but no error was received).");
-            assertEquals(StanzaError.Condition.not_acceptable, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (that currently is not an occupant) after it tried to send a private message to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "'.");
+                // Verify result.
+                final Stanza error = assertResult(ownerSeesError, "Expected '" + conOne.getUser() + "' (that currently is not an occupant) to receive an error after it tried to send a private message to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "' (but no error was received).");
+                assertEquals(StanzaError.Condition.not_acceptable, error.getError().getCondition(), "Unexpected error condition in the (expected) error that was received by '" + conOne.getUser() + "' (that currently is not an occupant) after it tried to send a private message to '" + conTwo.getUser() + "' (using nickname '" + nicknameTarget + "') in '" + mucAddress + "'.");
+            }
         } finally {
             // Tear down test fixture.
             mucAsSeenByOwner.join(nicknameOwner);
-            conOne.removeStanzaListener(errorListener);
             tryDestroy(mucAsSeenByOwner);
         }
     }

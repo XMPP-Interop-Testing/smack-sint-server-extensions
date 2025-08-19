@@ -22,10 +22,13 @@ import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.xep0421.provider.OccupantId;
+import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
-import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
@@ -1283,19 +1286,21 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
             roomJid = room.getMyRoomJid();
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
-            conOne.addStanzaListener(stanza -> { // No longer a participant, cannot use room.participantListener
+            final ListenerHandle listenerHandle = conOne.addStanzaListener(stanza -> { // No longer a participant, cannot use room.participantListener
                 final Presence presence = (Presence) stanza;
                 if (presence.getFrom().equals(roomJid) && MUCUser.from(presence).getItem().getAffiliation() == MUCAffiliation.outcast) {
                     presenceReceived.signal(presence);
                 }
             }, StanzaTypeFilter.PRESENCE);
 
-            // Execute system under test.
-            ownerRoom.banUser(conOne.getUser().asBareJid(), "banning for testing purposes");
-            final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
+            try (listenerHandle) {
+                // Execute system under test.
+                ownerRoom.banUser(conOne.getUser().asBareJid(), "banning for testing purposes");
+                final Presence reflectedPresence = presenceReceived.waitForResult(timeout);
 
-            // Verify result.
-            assertion.apply(reflectedPresence);
+                // Verify result.
+                assertion.apply(reflectedPresence);
+            }
         } finally {
             // Tear down test fixture.
             removeRoom();
@@ -1343,19 +1348,21 @@ public class OccupantIdIntegrationTest extends AbstractSmackIntegrationTest
 
             final ResultSyncPoint<Presence, Exception> presenceReceived = new ResultSyncPoint<>();
 
-            conTwo.addStanzaListener(stanza -> { // No longer a participant, cannot use room.participantListener
+            final ListenerHandle listenerHandle = conTwo.addStanzaListener(stanza -> { // No longer a participant, cannot use room.participantListener
                 final Presence presence = (Presence) stanza;
                 if (presence.getFrom().equals(joinerRoomAddress) && MUCUser.from(presence).getItem().getAffiliation() == MUCAffiliation.outcast) {
                     presenceReceived.signal(presence);
                 }
             }, StanzaTypeFilter.PRESENCE);
 
-            // Execute system under test.
-            ownerRoom.banUser(conOne.getUser().asBareJid(), "banning for testing purposes");
-            final Presence result = presenceReceived.waitForResult(timeout);
+            try (listenerHandle) {
+                // Execute system under test.
+                ownerRoom.banUser(conOne.getUser().asBareJid(), "banning for testing purposes");
+                final Presence result = presenceReceived.waitForResult(timeout);
 
-            // Verify result.
-            assertion.apply(result);
+                // Verify result.
+                assertion.apply(result);
+            }
         } finally {
             // Tear down test fixture.
             removeRoom();

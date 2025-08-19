@@ -586,10 +586,7 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
         final Set<FullJid> allResources = new HashSet<>();
         final Set<EntityFullJid> allNonNegativeResources = new HashSet<>();
-        StanzaListener stopListenerRecipients = null;
-        StanzaListener stopListenerSender = null;
-        final Collection<StanzaListener> receivedListeners = new HashSet<>();
-        StanzaListener errorListener = null;
+        final Collection<ListenerHandle> listenerHandles = new HashSet<>(); // keep track so that the associated listener can be deregistered after the test is done.
         try {
             // Setup test fixture: create connections for the additional resources (based on the user used for 'conTwo').
             for (final AbstractXMPPConnection additionalConnection : additionalConnections) {
@@ -621,7 +618,7 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
             // Setup test fixture: detect the message stanza that's sent to signal that the test stanza has been sent and processed
             final SimpleResultSyncPoint testStanzaProcessedSyncPoint = new SimpleResultSyncPoint();
-            stopListenerRecipients = new StanzaListener() {
+            final StanzaListener stopListenerRecipients = new StanzaListener() {
                 final Set<Jid> recipients = new HashSet<>(allResources);
 
                 @Override
@@ -637,24 +634,20 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                final StanzaListener stanzaListener = (stanza) -> receivedBy.put(resourceConnection.getUser(), stanza);
-                receivedListeners.add(stanzaListener); // keep track so that the listener can be removed again.
-                resourceConnection.addStanzaListener(stanzaListener, needleDetector);
-                resourceConnection.addStanzaListener(stopListenerRecipients, stopDetectorRecipients);
+                listenerHandles.add(resourceConnection.addStanzaListener((stanza) -> receivedBy.put(resourceConnection.getUser(), stanza), needleDetector));
+                listenerHandles.add(resourceConnection.addStanzaListener(stopListenerRecipients, stopDetectorRecipients));
             }
 
             // Setup test fixture: detect the message stanza that's sent to signal the sender need not wait any longer for any potential stanza delivery errors.
             final String stopNeedleSender = "STOP LISTENING, ALL RECIPIENTS ARE DONE " + StringUtils.randomString(7);
             final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conTwo.getUser()), (s -> s instanceof Message && stopNeedleSender.equals(((Message) s).getBody())));
             final SimpleResultSyncPoint stopListenerSenderSyncPoint = new SimpleResultSyncPoint();
-            stopListenerSender = (e) -> stopListenerSenderSyncPoint.signal();
-            conOne.addStanzaListener(stopListenerSender, stopDetectorSender);
+            listenerHandles.add(conOne.addStanzaListener((e) -> stopListenerSenderSyncPoint.signal(), stopDetectorSender));
 
             // Setup test fixture: detect an error that is sent back to the sender.
             final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
             final Stanza[] errorReceived = { null };
-            errorListener = (stanza) -> errorReceived[0] = stanza;
-            conOne.addStanzaListener(errorListener, errorDetector);
+            listenerHandles.add(conOne.addStanzaListener((stanza) -> errorReceived[0] = stanza, errorDetector));
 
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()
@@ -693,15 +686,9 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
             assertions.test(allResources, allNonNegativeResources, receivedBy, testStanza, Optional.ofNullable(errorReceived[0]));
         } finally {
             // Tear down test fixture.
-            if (errorListener != null) { conOne.removeStanzaListener(errorListener); }
-            for (int i = 0; i < resourcePriorities.size(); i++) {
-                final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                if (stopListenerRecipients != null) { resourceConnection.removeStanzaListener(stopListenerRecipients); }
-                receivedListeners.forEach(resourceConnection::removeStanzaListener); // Only one of these will match.
-            }
+            listenerHandles.forEach(ListenerHandle::close);
             additionalConnections.forEach(AbstractXMPPConnection::disconnect);
             conTwo.sendStanza(PresenceBuilder.buildPresence().ofType(Presence.Type.available).build()); // This intends to mimic the 'initial presence'.
-            if (stopListenerSender != null) { conOne.removeStanzaListener(stopListenerSender); }
         }
     }
 

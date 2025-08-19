@@ -21,8 +21,8 @@ import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.packet.IQ;
@@ -729,12 +729,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameMember = Resourcepart.from("member-" + randomString);
         final EntityFullJid targetMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameTarget);
 
-        final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
-        final ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
-        final ResultSyncPoint<Presence, Exception> memberSeesRemoval = new ResultSyncPoint<>();
-        final StanzaListener ownerListener = (stanza) -> ownerSeesRemoval.signal((Presence) stanza);
-        final StanzaListener targetListener = (stanza) -> targetSeesRemoval.signal((Presence) stanza);
-        final StanzaListener memberListener = (stanza) -> memberSeesRemoval.signal((Presence) stanza);
         try {
             mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
                 .setMembersOnly(false)
@@ -771,11 +765,13 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 FromMatchesFilter.create(mucAddress),
                 PresenceTypeFilter.UNAVAILABLE
             );
-            conOne.addStanzaListener(ownerListener, removalDetectionFilter);
-            conTwo.addStanzaListener(targetListener, removalDetectionFilter);
-            conThree.addStanzaListener(memberListener, removalDetectionFilter);
-
-            try {
+            final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
+            final ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
+            final ResultSyncPoint<Presence, Exception> memberSeesRemoval = new ResultSyncPoint<>();
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener((stanza) -> ownerSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener((stanza) -> targetSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
+                 final ListenerHandle ignored3 = conThree.addStanzaListener((stanza) -> memberSeesRemoval.signal((Presence) stanza), removalDetectionFilter))
+            {
                 // Execute system under test.
                 mucAsSeenByOwner.getConfigFormManager()
                     .setMembersOnly(true)
@@ -796,9 +792,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
-            conOne.removeStanzaListener(ownerListener);
-            conTwo.removeStanzaListener(targetListener);
-            conThree.removeStanzaListener(memberListener);
         }
     }
 
@@ -815,10 +808,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
 
-        final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
-        final StanzaListener ownerListener = stanza -> ownerSeesNotification.signal();
-        final StanzaListener participantListener = stanza -> participantSeesNotification.signal();
         final int statusCode = 170;
         try {
             mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
@@ -832,10 +821,12 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 StanzaTypeFilter.MESSAGE,
                 new MUCUserStatusCodeFilter(MUCUser.Status.create(statusCode))
             );
-            conOne.addStanzaListener(ownerListener, notificationDetectionFilter);
-            conTwo.addStanzaListener(participantListener, notificationDetectionFilter);
 
-            try {
+            final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener(stanza -> ownerSeesNotification.signal(), notificationDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> participantSeesNotification.signal(), notificationDetectionFilter))
+            {
                 // Execute system under test.
                 mucAsSeenByOwner.getConfigFormManager()
                     .enablePublicLogging()
@@ -852,8 +843,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
-            conOne.removeStanzaListener(ownerListener);
-            conTwo.removeStanzaListener(participantListener);
         }
     }
 
@@ -870,10 +859,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
 
-        final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
-        final StanzaListener ownerListener = stanza -> ownerSeesNotification.signal();
-        final StanzaListener participantListener = stanza -> participantSeesNotification.signal();
         final int statusCode = 171;
         try {
             mucAsSeenByOwner.create(nicknameOwner).getConfigFormManager()
@@ -887,10 +872,12 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 StanzaTypeFilter.MESSAGE,
                 new MUCUserStatusCodeFilter(MUCUser.Status.create(statusCode))
             );
-            conOne.addStanzaListener(ownerListener, notificationDetectionFilter);
-            conTwo.addStanzaListener(participantListener, notificationDetectionFilter);
 
-            try {
+            final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener(stanza -> ownerSeesNotification.signal(), notificationDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> participantSeesNotification.signal(), notificationDetectionFilter))
+            {
                 // Execute system under test.
                 mucAsSeenByOwner.getConfigFormManager()
                     .disablPublicLogging()
@@ -907,8 +894,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
-            conOne.removeStanzaListener(ownerListener);
-            conTwo.removeStanzaListener(participantListener);
         }
     }
 
@@ -925,10 +910,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
 
-        final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
-        final StanzaListener ownerListener = stanza -> ownerSeesNotification.signal();
-        final StanzaListener participantListener = stanza -> participantSeesNotification.signal();
         final int statusCode = 172;
         try {
             createSemiAnonymousMuc(mucAsSeenByOwner, nicknameOwner);
@@ -940,10 +921,12 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 StanzaTypeFilter.MESSAGE,
                 new MUCUserStatusCodeFilter(MUCUser.Status.create(statusCode))
             );
-            conOne.addStanzaListener(ownerListener, notificationDetectionFilter);
-            conTwo.addStanzaListener(participantListener, notificationDetectionFilter);
+            final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
 
-            try {
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener(stanza -> ownerSeesNotification.signal(), notificationDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> participantSeesNotification.signal(), notificationDetectionFilter))
+            {
                 // Execute system under test.
                 final Form configForm = mucAsSeenByOwner.getConfigurationForm();
                 final FillableForm answerForm = configForm.getFillableForm();
@@ -959,8 +942,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
-            conOne.removeStanzaListener(ownerListener);
-            conTwo.removeStanzaListener(participantListener);
         }
     }
 
@@ -977,10 +958,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final Resourcepart nicknameParticipant = Resourcepart.from("participant-" + randomString);
 
-        final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
-        final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
-        final StanzaListener ownerListener = stanza -> ownerSeesNotification.signal();
-        final StanzaListener participantListener = stanza -> participantSeesNotification.signal();
         final int statusCode = 173;
         try {
             createNonAnonymousMuc(mucAsSeenByOwner, nicknameOwner);
@@ -992,10 +969,11 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
                 StanzaTypeFilter.MESSAGE,
                 new MUCUserStatusCodeFilter(MUCUser.Status.create(statusCode))
             );
-            conOne.addStanzaListener(ownerListener, notificationDetectionFilter);
-            conTwo.addStanzaListener(participantListener, notificationDetectionFilter);
-
-            try {
+            final SimpleResultSyncPoint ownerSeesNotification = new SimpleResultSyncPoint();
+            final SimpleResultSyncPoint participantSeesNotification = new SimpleResultSyncPoint();
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener(stanza -> ownerSeesNotification.signal(), notificationDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> participantSeesNotification.signal(), notificationDetectionFilter))
+            {
                 // Execute system under test.
                 final Form configForm = mucAsSeenByOwner.getConfigurationForm();
                 final FillableForm answerForm = configForm.getFillableForm();
@@ -1011,8 +989,6 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
         } finally {
             // Tear down test fixture.
             tryDestroy(mucAsSeenByOwner);
-            conOne.removeStanzaListener(ownerListener);
-            conTwo.removeStanzaListener(participantListener);
         }
     }
 

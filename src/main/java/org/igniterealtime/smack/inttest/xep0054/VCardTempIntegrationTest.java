@@ -20,9 +20,9 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaCollector;
-import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.packet.IQ;
@@ -166,9 +166,8 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
         request.setTo(conThree.getUser().asBareJid());
 
         final AtomicBoolean conThreeGotRequest = new AtomicBoolean(false);
-        final StanzaListener stanzaListener = stanza -> conThreeGotRequest.set(true);
-        conThree.addStanzaListener(stanzaListener, new AndFilter(IQTypeFilter.GET, FromMatchesFilter.createBare(conOne.getUser()), new StanzaExtensionFilter(VCard.ELEMENT, VCard.NAMESPACE)));
-        try {
+        try (final ListenerHandle ignored = conThree.addStanzaListener(stanza -> conThreeGotRequest.set(true), new AndFilter(IQTypeFilter.GET, FromMatchesFilter.createBare(conOne.getUser()), new StanzaExtensionFilter(VCard.ELEMENT, VCard.NAMESPACE))))
+        {
             // Execute system-under-test.
             try {
                 conOne.sendIqRequestAndWaitForResponse(request);
@@ -178,10 +177,6 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
 
             // Verify result
             assertFalse(conThreeGotRequest.get(), "Did NOT expect '" + conThree.getUser() + "' to receive the request made by '" + conOne.getUser() + "' to the bare JID of '" + conThree.getUser() + "' (but the request was unexpectedly received anyway).");
-        }
-        finally {
-            // Tear down test fixture.
-            conThree.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -202,17 +197,13 @@ public class VCardTempIntegrationTest extends AbstractSmackIntegrationTest
         request.setTo(conOne.getUser().asBareJid());
 
         final AtomicBoolean conOneGotRequest = new AtomicBoolean(false);
-        final StanzaListener stanzaListener = stanza -> conOneGotRequest.set(true);
-        conOne.addStanzaListener(stanzaListener, new AndFilter(IQTypeFilter.GET, FromMatchesFilter.createBare(conTwo.getUser()), new StanzaExtensionFilter(VCard.ELEMENT, VCard.NAMESPACE)));
-        try {
+        try (final ListenerHandle ignored = conOne.addStanzaListener(stanza -> conOneGotRequest.set(true), new AndFilter(IQTypeFilter.GET, FromMatchesFilter.createBare(conTwo.getUser()), new StanzaExtensionFilter(VCard.ELEMENT, VCard.NAMESPACE))))
+        {
             // Execute system-under-test.
             conTwo.sendIqRequestAndWaitForResponse(request);
 
             // Verify result.
             assertFalse(conOneGotRequest.get(), "Did NOT expect '" + conOne.getUser() + "' to receive the request made by '" + conTwo.getUser() + "' to the bare JID of '" + conOne.getUser() + "' (but the request was unexpectedly received anyway).");
-        } finally {
-            // Tear down test fixture.
-            conOne.removeStanzaListener(stanzaListener);
         }
     }
 

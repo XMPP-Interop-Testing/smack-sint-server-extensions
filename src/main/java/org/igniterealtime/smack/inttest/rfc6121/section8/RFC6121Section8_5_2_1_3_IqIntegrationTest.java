@@ -30,7 +30,6 @@ import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
-import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.StringUtils;
@@ -467,7 +466,7 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
         }
 
         final Set<FullJid> allResources = new HashSet<>();
-        StanzaListener stopListenerRecipients = null;
+        final Collection<ListenerHandle> listenerHandles = new HashSet<>(); // keep track so that the associated listener can be deregistered after the test is done.
         final Collection<IQRequestHandler> receivedHandlers = new HashSet<>();
         try {
             // Setup test fixture: create connections for the additional resources (based on the user used for 'conTwo').
@@ -495,7 +494,7 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
 
             // Setup test fixture: detect the message stanza that's sent to signal that the test stanza has been sent and processed
             final SimpleResultSyncPoint testStanzaProcessedSyncPoint = new SimpleResultSyncPoint();
-            stopListenerRecipients = new StanzaListener() {
+            final StanzaListener stopListenerRecipients = new StanzaListener() {
                 final Set<Jid> recipients = new HashSet<>(allResources);
 
                 @Override
@@ -519,8 +518,8 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
                         return iq.isRequestIQ() ? IQ.createErrorResponse(iq, StanzaError.Condition.undefined_condition) : null;
                     }
                 };
+                listenerHandles.add(resourceConnection.addStanzaListener(stopListenerRecipients, stopDetectorRecipients));
                 receivedHandlers.add(needleDetector); // keep track so that the handler can be removed again.
-                resourceConnection.addStanzaListener(stopListenerRecipients, stopDetectorRecipients);
                 resourceConnection.registerIQRequestHandler(needleDetector);
             }
 
@@ -550,9 +549,9 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
             assertions.test(receivedBy, testStanza, testResponse);
         } finally {
             // Tear down test fixture.
+            listenerHandles.forEach(ListenerHandle::close);
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                if (stopListenerRecipients != null) { resourceConnection.removeStanzaListener(stopListenerRecipients); }
                 receivedHandlers.forEach(resourceConnection::unregisterIQRequestHandler); // Only one of these will match.
             }
             additionalConnections.forEach(AbstractXMPPConnection::disconnect);

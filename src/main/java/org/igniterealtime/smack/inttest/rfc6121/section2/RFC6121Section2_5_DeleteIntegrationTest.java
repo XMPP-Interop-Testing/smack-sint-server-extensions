@@ -9,13 +9,18 @@ import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.AbstractXMPPConnection;
+import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.PresenceTypeFilter;
-import org.jivesoftware.smack.packet.*;
-import org.jivesoftware.smack.roster.*;
+import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.PresenceBuilder;
+import org.jivesoftware.smack.packet.StanzaError;
+import org.jivesoftware.smack.roster.AbstractRosterListener;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jxmpp.jid.BareJid;
@@ -376,23 +381,24 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
         IntegrationTestRosterUtil.ensureSubscribedTo(conTwo, conOne, timeout);
 
         final SimpleResultSyncPoint unsubscribeReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser())));
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser()))))
+        {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, null);
+            item.setItemType(RosterPacket.ItemType.remove);
+            request.addRosterItem(item);
 
-        final RosterPacket request = new RosterPacket();
-        request.setType(IQ.Type.set);
-        final RosterPacket.Item item = new RosterPacket.Item(target, null);
-        item.setItemType(RosterPacket.ItemType.remove);
-        request.addRosterItem(item);
+            // Execute system under test
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
 
-        // Execute system under test
-        try {
-            conOne.sendIqRequestAndWaitForResponse(request);
-
-            // Verify result
-            assertResult(unsubscribeReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribe' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
-        } finally {
-            // Tear down test fixture
-            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+                // Verify result
+                assertResult(unsubscribeReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribe' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
+            } finally {
+                // Tear down test fixture
+                IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+            }
         }
     }
 
@@ -405,23 +411,24 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
         IntegrationTestRosterUtil.ensureSubscribedTo(conOne, conTwo, timeout);
 
         final SimpleResultSyncPoint unsubscribedReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser())));
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser()))))
+        {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, null);
+            item.setItemType(RosterPacket.ItemType.remove);
+            request.addRosterItem(item);
 
-        final RosterPacket request = new RosterPacket();
-        request.setType(IQ.Type.set);
-        final RosterPacket.Item item = new RosterPacket.Item(target, null);
-        item.setItemType(RosterPacket.ItemType.remove);
-        request.addRosterItem(item);
+            // Execute system under test
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
 
-        // Execute system under test
-        try {
-            conOne.sendIqRequestAndWaitForResponse(request);
-
-            // Verify result
-            assertResult(unsubscribedReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribed' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
-        } finally {
-            // Tear down test fixture
-            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+                // Verify result
+                assertResult(unsubscribedReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribed' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
+            } finally {
+                // Tear down test fixture
+                IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+            }
         }
     }
 
@@ -435,25 +442,26 @@ public class RFC6121Section2_5_DeleteIntegrationTest extends AbstractSmackIntegr
 
         final SimpleResultSyncPoint unsubscribeReceived = new SimpleResultSyncPoint();
         final SimpleResultSyncPoint unsubscribedReceived = new SimpleResultSyncPoint();
-        conTwo.addStanzaListener(packet -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser())));
-        conTwo.addStanzaListener(packet -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser())));
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> unsubscribeReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBE, FromMatchesFilter.createBare(conOne.getUser())));
+             final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> unsubscribedReceived.signal(), new AndFilter(PresenceTypeFilter.UNSUBSCRIBED, FromMatchesFilter.createBare(conOne.getUser()))) )
+        {
+            final RosterPacket request = new RosterPacket();
+            request.setType(IQ.Type.set);
+            final RosterPacket.Item item = new RosterPacket.Item(target, null);
+            item.setItemType(RosterPacket.ItemType.remove);
+            request.addRosterItem(item);
 
-        final RosterPacket request = new RosterPacket();
-        request.setType(IQ.Type.set);
-        final RosterPacket.Item item = new RosterPacket.Item(target, null);
-        item.setItemType(RosterPacket.ItemType.remove);
-        request.addRosterItem(item);
+            // Execute system under test
+            try {
+                conOne.sendIqRequestAndWaitForResponse(request);
 
-        // Execute system under test
-        try {
-            conOne.sendIqRequestAndWaitForResponse(request);
-
-            // Verify result
-            assertResult(unsubscribeReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribe' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
-            assertResult(unsubscribedReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribed' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
-        } finally {
-            // Tear down test fixture
-            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+                // Verify result
+                assertResult(unsubscribeReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribe' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
+                assertResult(unsubscribedReceived, "Expected contact '" + conTwo.getUser() + "' to receive a presence stanza of type 'unsubscribed' from '" + conOne.getUser() + "' after the latter removed the former from their roster (but no such presence stanza was received).");
+            } finally {
+                // Tear down test fixture
+                IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
+            }
         }
     }
 

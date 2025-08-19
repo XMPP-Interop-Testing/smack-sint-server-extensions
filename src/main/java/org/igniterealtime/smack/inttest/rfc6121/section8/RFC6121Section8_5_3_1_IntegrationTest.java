@@ -21,10 +21,13 @@ import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
-import org.jivesoftware.smack.iqrequest.IQRequestHandler;
+import org.jivesoftware.smack.ListenerHandle;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.IQTypeFilter;
+import org.jivesoftware.smack.filter.StanzaIdFilter;
+import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.IqProvider;
@@ -35,18 +38,10 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
-import org.jxmpp.jid.EntityFullJid;
-import org.jxmpp.jid.FullJid;
 import org.jxmpp.jid.Jid;
-import org.jxmpp.jid.parts.Resourcepart;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests that verify that behavior defined in section 8.5.3.1 "Local User / localpart@domainpart/resourcepart / Resource Matches" of section 8 "Server Rules for Processing XML Stanzas" of RFC6121.
@@ -78,18 +73,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         stanzaToSend.setTo(conTwo.getUser().asFullJidOrThrow());
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.ERROR, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.ERROR, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the IQ stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -105,18 +95,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         stanzaToSend.setTo(conTwo.getUser().asFullJidOrThrow());
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.RESULT, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.RESULT, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the IQ stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -136,18 +121,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         stanzaToSend.setTo(conTwo.getUser().asFullJidOrThrow());
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.ERROR, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.ERROR, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the IQ stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -166,18 +146,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
         stanzaToSend.setTo(conTwo.getUser().asFullJidOrThrow());
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.RESULT, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.IQ, IQTypeFilter.RESULT, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the IQ stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -234,18 +209,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
             .build();
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.MESSAGE, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle listenerHandle = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.MESSAGE, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the Message stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 
@@ -260,18 +230,13 @@ public class RFC6121Section8_5_3_1_IntegrationTest extends AbstractSmackIntegrat
             .build();
 
         final SimpleResultSyncPoint stanzaReceived = new SimpleResultSyncPoint();
-        final StanzaListener stanzaListener = packet -> stanzaReceived.signal();
-        conTwo.addStanzaListener(stanzaListener, new AndFilter(StanzaTypeFilter.PRESENCE, new StanzaIdFilter(stanzaToSend.getStanzaId())));
-        try
+        try (final ListenerHandle ignored = conTwo.addStanzaListener(stanza -> stanzaReceived.signal(), new AndFilter(StanzaTypeFilter.PRESENCE, new StanzaIdFilter(stanzaToSend.getStanzaId()))))
         {
             // Execute System Under Test.
             conOne.sendStanza(stanzaToSend);
 
             // Verify result.
             assertResult(stanzaReceived, "Expected '" + conTwo.getUser() + "' to receive the Presence stanza of type '" + stanzaToSend.getType() + "' with stanza ID '" + stanzaToSend.getStanzaId() + "' that was sent to its full JID by '" + conOne.getUser() + "' (but the stanza was not received).");
-        } finally {
-            // Tear down test fixture.
-            conTwo.removeStanzaListener(stanzaListener);
         }
     }
 

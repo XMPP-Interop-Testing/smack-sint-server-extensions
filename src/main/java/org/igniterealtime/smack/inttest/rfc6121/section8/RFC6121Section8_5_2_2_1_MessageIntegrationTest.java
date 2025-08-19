@@ -15,24 +15,29 @@
  */
 package org.igniterealtime.smack.inttest.rfc6121.section8;
 
-import org.igniterealtime.smack.inttest.*;
+import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
+import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
+import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.AfterClass;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.ListenerHandle;
+import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.StanzaFilter;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.StanzaBuilder;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.ping.PingManager;
-import org.jxmpp.jid.*;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Integration tests that verify that behavior defined in section 8.5.2.2.1 "Local User / localpart@domainpart / No Available or Connected Resources / Message" of section 8 "Server Rules for Processing XML Stanzas" of RFC6121.
@@ -77,15 +82,12 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
     public void testGroupchat() throws Exception
     {
         // Setup test fixture: detect an error that is sent back to the sender.
-        StanzaListener errorListener = null;
-        try {
-            final String needle = StringUtils.randomString(9);
+        final String needle = StringUtils.randomString(9);
 
             final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
-            final SimpleResultSyncPoint errorReceivedBySender = new SimpleResultSyncPoint();
-            errorListener = (stanza) -> errorReceivedBySender.signal();
-            conOne.addStanzaListener(errorListener, errorDetector);
-
+        final SimpleResultSyncPoint errorReceivedBySender = new SimpleResultSyncPoint();
+        try (final ListenerHandle ignored = conOne.addStanzaListener((stanza) -> errorReceivedBySender.signal(), errorDetector))
+        {
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()
                 .ofType(Message.Type.groupchat)
@@ -97,9 +99,6 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
 
             // Verify result
             assertResult(errorReceivedBySender, "Expected '" + conOne.getUser() + "' to receive an error after trying to send a message stanza of type '" + testStanza.getType() + "' to the bare JID of '" + entityWithoutResources + "' that is known to not have any available or connected resources (but no error was received)." );
-        } finally {
-            // Tear down test fixture.
-            if (errorListener != null) { conOne.removeStanzaListener(errorListener); }
         }
     }
 
@@ -118,16 +117,13 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
     public void doTestExpectingSilentIgnore(final Message.Type messageType) throws Exception
     {
         // Setup test fixture: detect an error that is sent back to the sender.
-        StanzaListener errorListener = null;
-        try {
-            final String needle = StringUtils.randomString(9);
+        final String needle = StringUtils.randomString(9);
 
-            // Setup test fixture: detect an error that is sent back to the sender.
+        // Setup test fixture: detect an error that is sent back to the sender.
             final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
-            final Stanza[] errorReceivedBySender = {null};
-            errorListener = (stanza) -> errorReceivedBySender[0] = stanza;
-            conOne.addStanzaListener(errorListener, errorDetector);
-
+        final Stanza[] errorReceivedBySender = {null};
+        try (final ListenerHandle ignored = conOne.addStanzaListener((stanza) -> errorReceivedBySender[0] = stanza, errorDetector))
+        {
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()
                 .ofType(messageType)
@@ -141,11 +137,6 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
 
             // Verify result
             assertNull(errorReceivedBySender[0], "Expected the stanza that was sent by '" + conOne.getUser() + "',a message stanza of type '" + testStanza.getType() + "' sent to the bare JID of '" + entityWithoutResources + "' that is known to not have any available or connected resources, to be silently ignored. However the sender received an error.");
-        } finally {
-            // Tear down test fixture.
-            if (errorListener != null) {
-                conOne.removeStanzaListener(errorListener);
-            }
         }
     }
 }

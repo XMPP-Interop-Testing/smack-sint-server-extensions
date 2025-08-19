@@ -22,13 +22,12 @@ import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.MarkerExtension;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
-import org.igniterealtime.smack.inttest.xep0421.provider.OccupantId;
-import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.StanzaCollector;
-import org.jivesoftware.smack.StanzaListener;
-import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.*;
-import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.PresenceBuilder;
+import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.StanzaBuilder;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jxmpp.jid.EntityFullJid;
@@ -41,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests that verify that behavior defined in section 8.5.2.1.2 "Local User / localpart@domainpart / Available or Connected Resources / Presence" of section 8 "Server Rules for Processing XML Stanzas" of RFC6121.
@@ -261,7 +260,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
         }
 
         final Set<EntityFullJid> allResources = new HashSet<>();
-        final Collection<StanzaListener> receivedListeners = new HashSet<>();
+        final Collection<ListenerHandle> listenerHandles = new HashSet<>(); // keep track so that the associated listener can be deregistered after the test is done.
         try {
             // Setup test fixture: create connections for the additional resources (based on the user used for 'conTwo').
             for (final AbstractXMPPConnection additionalConnection : additionalConnections) {
@@ -297,8 +296,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
                         receivedOnAllResources.signal();
                     }
                 };
-                receivedListeners.add(stanzaListener); // keep track so that the listener can be removed again.
-                resourceConnection.addStanzaListener(stanzaListener, needleDetector);
+                listenerHandles.add(resourceConnection.addStanzaListener(stanzaListener, needleDetector));
             }
 
             // Execute system under test.
@@ -329,10 +327,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
             assertTrue(invalidAddressees.isEmpty(), "Expected the 'to' attribute of the presence stanza sent by '" + conOne.getUser() + "' to remain unchanged ('" + testStanza.getTo() + "'). Instead, these resources received attribute values that were modified: " + errorMessage + ".");
         } finally {
             // Tear down test fixture.
-            for (int i = 0; i < resourcePriorities.size(); i++) {
-                final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                receivedListeners.forEach(resourceConnection::removeStanzaListener); // Only one of these will match.
-            }
+            listenerHandles.forEach(ListenerHandle::close);
             additionalConnections.forEach(AbstractXMPPConnection::disconnect);
             conTwo.sendStanza(PresenceBuilder.buildPresence().ofType(Presence.Type.available).build()); // This intends to mimic the 'initial presence'.
             conOne.sendStanza(PresenceBuilder.buildPresence().ofType(Presence.Type.available).build()); // As this test sends out presence stanzas from conOne, let's also 'reset' that.
