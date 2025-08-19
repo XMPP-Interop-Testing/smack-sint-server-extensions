@@ -5,18 +5,25 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.parsing.ParsingExceptionCallback;
+import org.jivesoftware.smack.roster.AbstractRosterListener;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
+
+import java.util.Collection;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,7 +50,7 @@ public class RFC6121Section2_1_SyntaxIntegrationTest extends AbstractSmackIntegr
     }
 
     @SmackIntegrationTest(section = "2.1.5", quote = "The following rules apply to roster sets: [...] The server MUST ignore any value of the 'subscription' attribute other than \"remove\"")
-    public void testRosterSetWithInvalidSubscriptionAttribute() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException
+    public void testRosterSetWithInvalidSubscriptionAttribute() throws XmppStringprepException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NotLoggedInException, TimeoutException
     {
         // Setup test fixture
         final BareJid target = JidCreate.bareFrom( Localpart.from("test-target-" + StringUtils.randomString(5) ), conOne.getXMPPServiceDomain() );
@@ -61,22 +68,33 @@ public class RFC6121Section2_1_SyntaxIntegrationTest extends AbstractSmackIntegr
             }
         };
         request.setType(IQ.Type.set);
+
         final Roster rosterOne = Roster.getInstanceFor(conOne);
+        final ResultSyncPoint<RosterEntry, Exception> targetFoundOnRoster = new ResultSyncPoint<>();
+        final RosterListener rosterListener = new AbstractRosterListener() {
+            @Override
+            public void entriesAdded(Collection<Jid> addresses) {
+                if (addresses.contains(target)) {
+                    targetFoundOnRoster.signal(rosterOne.getEntry(target));
+                }
+            }
+        };
+        rosterOne.addRosterListener(rosterListener);
 
         // Execute system under test
         try {
-            final IQ result = conOne.sendIqRequestAndWaitForResponse(request);
+            final IQ result = conOne.sendIqRequestAndWaitForResponse(request); // After receiving the result, the expected roster push can still be being processed by Smack (possibly even if it was received earlier)! Don't expect roster.getEntry() to reliably result the entry that was added. Use a roster event listener instead.
 
             // Verify result
             assertEquals(IQ.Type.result, result.getType(), "Unexpected response type received by '" + conOne.getUser() + "' after it sent a Roster Set that included a subscription attribute with a value of 'both'. It was expected that the server would ignore this value.");
-
-            final RosterEntry entry = rosterOne.getEntry(target);
+            final RosterEntry entry = assertResult(targetFoundOnRoster, "Expected the roster of '" + conOne.getUser() + "' to have received a push for '" + target + "', even if it was added with an invalid subscription attribute. The expectation is for the server to ignore this value. However, the roster entry was not found.");
             assertNotNull(entry, "Expected the roster of '" + conOne.getUser() + "' to contain an entry for '" + target + "', even if it was added with an invalid subscription attribute. The expectation is for the server to ignore this value. However, the roster entry was not found.");
             assertNotEquals(RosterPacket.ItemType.both, entry.getType(), "Expected the roster of '" + conOne.getUser() + "' to contain an entry for '" + target + "' that doesn't have the value used while setting the roster item. The expectation is for the server to ignore this value. However, the roster entry uses to value that was expected to be ignored.");
         } catch (XMPPException.XMPPErrorException e) {
             fail("Unexpected response type received by '" + conOne.getUser() + "' after it sent a Roster Set that included a subscription attribute with a value of 'both'. It was expected that the server would ignore this value (instead, an error was received): " + e.getStanzaError());
         } finally {
             // Tear down test fixture
+            rosterOne.removeRosterListener(rosterListener);
             final Roster roster = Roster.getInstanceFor(conOne);
             final RosterEntry entry = roster.getEntry(target);
             if (entry != null) {
@@ -118,6 +136,18 @@ public class RFC6121Section2_1_SyntaxIntegrationTest extends AbstractSmackIntegr
             syncPoint.signal();
         });
 
+        final Roster rosterOne = Roster.getInstanceFor(conOne);
+        final ResultSyncPoint<RosterEntry, Exception> targetFoundOnRoster = new ResultSyncPoint<>();
+        final RosterListener rosterListener = new AbstractRosterListener() {
+            @Override
+            public void entriesAdded(Collection<Jid> addresses) {
+                if (addresses.contains(target)) {
+                    targetFoundOnRoster.signal(rosterOne.getEntry(target));
+                }
+            }
+        };
+        rosterOne.addRosterListener(rosterListener);
+
         // Execute system under test
         try {
             final SmackFuture<IQ, Exception> iqExceptionSmackFuture = conOne.sendIqRequestAsync(request);
@@ -136,17 +166,18 @@ public class RFC6121Section2_1_SyntaxIntegrationTest extends AbstractSmackIntegr
                 fail("Unexpected response type received by '" + conOne.getUser() + "' after it sent a Roster Set that included a subscription attribute with a value of 'both'. It was expected that the server would ignore this value (instead, an error was received): " + exception[0]);
             } else {
                 assertEquals(IQ.Type.result, result[0].getType(), "Unexpected response type received by '" + conOne.getUser() + "' after it sent a Roster Set that included a subscription attribute with a value of 'foobar'. It was expected that the server would ignore this value.");
-                final RosterEntry entry = Roster.getInstanceFor(conOne).getEntry(target);
+                // After receiving the IQ result, the expected roster push can still be being processed by Smack (possibly even if it was received earlier)! Don't expect roster.getEntry() to reliably result the entry that was added. Use a roster event listener instead.
+                final RosterEntry entry = assertResult(targetFoundOnRoster, "Expected the roster of '" + conOne.getUser() + "' to have received a push for '" + target + "', even if it was added with an invalid subscription attribute. The expectation is for the server to ignore this value. However, the roster entry was not found.");
                 assertNotNull(entry, "Expected the roster of '" + conOne.getUser() + "' to contain an entry for '" + target + "', even if it was added with an invalid subscription attribute. The expectation is for the server to ignore this value. However, the roster entry was not found.");
             }
         } finally {
             // Tear down test fixture
             ((AbstractXMPPConnection) conOne).setParsingExceptionCallback(oldParsingExceptionCallback);
 
-            final Roster roster = Roster.getInstanceFor(conOne);
-            final RosterEntry entry = roster.getEntry(target);
+            rosterOne.removeRosterListener(rosterListener);
+            final RosterEntry entry = rosterOne.getEntry(target);
             if (entry != null) {
-                roster.removeEntry(entry);
+                rosterOne.removeEntry(entry);
             }
         }
     }
