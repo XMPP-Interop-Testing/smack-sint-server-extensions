@@ -56,7 +56,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void testGrantMembership() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-grant");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-grant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("target-user-" + randomString + "@example.org");
@@ -95,7 +95,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void testGrantMembershipWithNick() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-grant-nick");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-grant-nick");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("member-user-" + randomString + "@example.org");
@@ -135,7 +135,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void testGrantMembershipWithReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-grant-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-grant-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("member-user-" + randomString + "@example.org");
@@ -174,7 +174,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void testParticipantNotAllowedToGrantMembership() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-grant-notallowed");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-grant-notallowed");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("member-user-" + randomString + "@example.org");
@@ -210,7 +210,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void testMemberOnMemberList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-on-memberlist");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-on-memberlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("member-user-" + randomString + "@example.org");
@@ -250,7 +250,7 @@ public class MultiUserChatAdminGrantMemberIntegrationTest extends AbstractMultiU
     public void mucTestOccupantsInformed() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-member-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("admin-member-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);

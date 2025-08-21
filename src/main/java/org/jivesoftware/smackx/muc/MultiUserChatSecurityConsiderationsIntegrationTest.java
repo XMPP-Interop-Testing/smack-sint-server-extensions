@@ -47,7 +47,7 @@ public class MultiUserChatSecurityConsiderationsIntegrationTest extends Abstract
     {
         super(environment);
 
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-security-setup");
+        final EntityBareJid mucAddress = getRandomRoom("security-setup");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -68,7 +68,7 @@ public class MultiUserChatSecurityConsiderationsIntegrationTest extends Abstract
     public void testPublicLoggingStatusOnInitialPresence() throws XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-security-initial-170");
+        final EntityBareJid mucAddress = getRandomRoom("security-initial-170");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -100,7 +100,7 @@ public class MultiUserChatSecurityConsiderationsIntegrationTest extends Abstract
     public void testPublicLoggingStatusOnConfigChange() throws XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, TestNotPossibleException, TimeoutException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-security-reconfig-170");
+        final EntityBareJid mucAddress = getRandomRoom("security-reconfig-170");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -145,7 +145,7 @@ public class MultiUserChatSecurityConsiderationsIntegrationTest extends Abstract
     public void testAnonymityStatusOnInitialPresence() throws XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-security-initial-100");
+        final EntityBareJid mucAddress = getRandomRoom("security-initial-100");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -173,7 +173,7 @@ public class MultiUserChatSecurityConsiderationsIntegrationTest extends Abstract
     public void testAnonymityStatusOnConfigChange() throws XmppStringprepException, MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, TestNotPossibleException, TimeoutException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-security-reconfig-172");
+        final EntityBareJid mucAddress = getRandomRoom("security-reconfig-172");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);

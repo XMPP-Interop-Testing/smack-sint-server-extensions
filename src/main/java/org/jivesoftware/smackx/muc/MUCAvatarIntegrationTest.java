@@ -50,7 +50,7 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
     {
         super(environment);
 
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mucavatar-support");
+        final EntityBareJid mucAddress = getRandomRoom("mucavatar-support");
         final MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
         createMuc(muc, Resourcepart.from("owner-" + randomString));
         try {
@@ -69,7 +69,7 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
     public void testPublishAvatar() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mucavatar-publish");
+        final EntityBareJid mucAddress = getRandomRoom("mucavatar-publish");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -122,7 +122,7 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
     public void testUnpublishAvatar() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mucavatar-unpublish");
+        final EntityBareJid mucAddress = getRandomRoom("mucavatar-unpublish");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -156,7 +156,7 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
     public void testRetrieveAvatar() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mucavatar-unpublish");
+        final EntityBareJid mucAddress = getRandomRoom("mucavatar-unpublish");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -186,7 +186,7 @@ public class MUCAvatarIntegrationTest extends AbstractMultiUserChatIntegrationTe
     public void testPNGSupport() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mucavatar-pngsupport");
+        final EntityBareJid mucAddress = getRandomRoom("mucavatar-png");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 

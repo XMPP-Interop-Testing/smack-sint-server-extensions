@@ -58,7 +58,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminRequestsModeratorList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-requests-moderatorlist");
+        final EntityBareJid mucAddress = getRandomRoom("admin-requests-moderatorlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -93,7 +93,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminModeratorListItemCheck() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-not-on-moderator-list");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-not-on-moderator-list");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -158,7 +158,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminModeratorListMultipleItems() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-multiple");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-multiple");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget1 = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget2 = mucManagerThree.getMultiUserChat(mucAddress);
@@ -237,7 +237,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminModeratorListMultipleItemsRevoke() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-revoke");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-revoke");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget1 = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget2 = mucManagerThree.getMultiUserChat(mucAddress);
@@ -323,7 +323,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminModeratorListIsDelta() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-delta");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-delta");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget1 = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget2 = mucManagerThree.getMultiUserChat(mucAddress);
@@ -402,7 +402,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void mucTestAdminModeratorListBroadcast() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -512,7 +512,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void testAdminNotAllowedToRevokeModeratorFromAdmin() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-revoke-admin-rejected");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-revoke-admin-rejected");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTargetAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerThree.getMultiUserChat(mucAddress);
@@ -584,7 +584,7 @@ public class MultiUserChatAdminModeratorListIntegrationTest extends AbstractMult
     public void testAdminNotAllowedToRevokeModeratorFromOwner() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderatorlist-revoke-owner-rejected");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderatorlist-revoke-owner-rejected");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerThree.getMultiUserChat(mucAddress);

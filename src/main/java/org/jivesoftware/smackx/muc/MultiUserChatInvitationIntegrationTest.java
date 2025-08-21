@@ -58,7 +58,7 @@ public class MultiUserChatInvitationIntegrationTest extends AbstractMultiUserCha
         "The <room@service> itself MUST [...] send the invitation to the invitee specified in the 'to' address;")
     public void mucTestMediatedInviteGetDelivered() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mediated-invite-delivery");
+        final EntityBareJid mucAddress = getRandomRoom("mediated-invite-delivery");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOne = Resourcepart.from("one-" + randomString);
@@ -90,7 +90,7 @@ public class MultiUserChatInvitationIntegrationTest extends AbstractMultiUserCha
         "full JID, or occupant JID of the inviter [...]")
     public void mucTestMediatedInviteFrom() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-mediated-invite-from");
+        final EntityBareJid mucAddress = getRandomRoom("mediated-invite-from");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOne = Resourcepart.from("one-" + randomString);

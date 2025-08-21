@@ -56,7 +56,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     public void testGrantModerator() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-grant");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-grant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -109,7 +109,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     public void testGrantModeratorOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-grant-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-grant-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -163,7 +163,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     public void testParticipantNotAllowedToGrantModeratorStatus() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-notallowed");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-notallowed");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -214,7 +214,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     public void testModeratorOnModeratorList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-on-moderatorlist");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-on-moderatorlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -268,7 +268,7 @@ public class MultiUserChatAdminGrantModeratorIntegrationTest extends AbstractMul
     @SmackIntegrationTest(section = "9.6", quote = "The service MUST then send updated presence from this individual to all occupants, indicating the addition of moderator status by including an <x/> element qualified by the 'http://jabber.org/protocol/muc#user' namespace and containing an <item/> child with the 'role' attribute set to a value of \"moderator\".")
     public void mucTestOccupantsInformed() throws Exception {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-moderator-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("admin-moderator-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);

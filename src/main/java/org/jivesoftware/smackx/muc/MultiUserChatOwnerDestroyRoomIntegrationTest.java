@@ -60,7 +60,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testDestroyPersistentRoom() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-prst");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-prst");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -106,7 +106,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testDestroyTemporaryRoom() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-temporary");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-temporary");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -151,7 +151,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAlternateVenue() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenue");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-alternatevenue");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -184,7 +184,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAlternateVenuePassword() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-alternatevenuepassword");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-alternatevenuepassword");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -217,7 +217,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testReason() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-reason");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         try {
@@ -250,7 +250,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testPresence() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TimeoutException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-presence");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-presence");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -306,7 +306,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testPresenceOptional() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TimeoutException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-presenceext");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-presenceext");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -371,7 +371,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAuthorizationAdmin() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-admin");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-auth-admin");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -413,7 +413,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAuthorizationMember() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException, MultiUserChatException.MucConfigurationNotSupportedException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-member");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-auth-member");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByMember = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -455,7 +455,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAuthorizationOutcast() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-outcast");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-auth-outcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -493,7 +493,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAuthorizationParticipant() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-participant");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-auth-participant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -529,7 +529,7 @@ public class MultiUserChatOwnerDestroyRoomIntegrationTest extends AbstractMultiU
     public void testAuthorizationNonParticipant() throws MultiUserChatException.MucAlreadyJoinedException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, SmackException.NoResponseException, InterruptedException, MultiUserChatException.NotAMucServiceException, XmppStringprepException, TestNotPossibleException
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-destroy-auth-nonparticipant");
+        final EntityBareJid mucAddress = getRandomRoom("owner-destroy-auth-nonparticipant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);

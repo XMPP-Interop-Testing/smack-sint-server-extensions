@@ -61,7 +61,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanNonOccupantWithoutOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-nonoccupant-without-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-nonoccupant-without-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("banned-user-" + randomString + "@example.org");
@@ -96,7 +96,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanOccupantWithoutOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-occupant-without-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-occupant-without-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -148,7 +148,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanNonOccupantWithOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-nonoccupant-with-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-nonoccupant-with-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("banned-user-" + randomString + "@example.org");
@@ -183,7 +183,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanOccupantWithOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-occupant-with-reason");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-occupant-with-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -234,7 +234,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testParticipantNotAllowedToBan() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-notallowed");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-notallowed");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("banned-user-" + randomString + "@example.org");
@@ -264,7 +264,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanNonOccupantJidOnBanList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-nonoccupant-banned-jid-on-banlist");
+        final EntityBareJid mucAddress = getRandomRoom("admin-nonoccupant-banned-jid-on-banlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = JidCreate.entityBareFrom("banned-user-" + randomString + "@example.org");
@@ -295,7 +295,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanOccupantJidOnBanList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-occupant-banned-jid-on-banlist");
+        final EntityBareJid mucAddress = getRandomRoom("admin-occupant-banned-jid-on-banlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -343,7 +343,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBanOccupantRemovesRegisteredNickname() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-removes-registered-nickname");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-removes-registered-nickname");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -413,7 +413,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void testBannedOccupantReceivesRemoval() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-notification");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-notification");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -469,7 +469,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void mucTestRemainingOccupantsInformedOfBan() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-ban-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("admin-ban-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -537,7 +537,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void mucTestAdminCannotBanSelf() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-cannot-ban-self");
+        final EntityBareJid mucAddress = getRandomRoom("admin-cannot-ban-self");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = conTwo.getUser().asEntityBareJid();
@@ -568,7 +568,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void mucTestAdminCannotBanOwner() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-admin-cannot-ban-owner");
+        final EntityBareJid mucAddress = getRandomRoom("admin-cannot-ban-owner");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = conOne.getUser().asEntityBareJid();
@@ -599,7 +599,7 @@ public class MultiUserChatAdminBanIntegrationTest extends AbstractMultiUserChatI
     public void mucTestOwnerCannotBanSelf() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-cannot-ban-self");
+        final EntityBareJid mucAddress = getRandomRoom("owner-cannot-ban-self");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final EntityBareJid targetAddress = conOne.getUser().asEntityBareJid();
 

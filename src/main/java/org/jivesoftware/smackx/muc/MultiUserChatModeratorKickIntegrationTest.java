@@ -56,7 +56,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "kicked occupant, including status code 307 in the extended presence information")
     public void mucTestOccupantInformedOfKick() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-occupant-informed-of-kick");
+        final EntityBareJid mucAddress = getRandomRoom("occupant-informed-of-kick");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -101,7 +101,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "After removing the kicked occupant(s), the service MUST then inform the moderator of success")
     public void mucTestModeratorInformedOfKickSuccess() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-informed-of-kick-success");
+        final EntityBareJid mucAddress = getRandomRoom("moderator-informed-of-kick-success");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -147,7 +147,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "(<room@service/nick>) to all the remaining occupants [...] including the status code [...]")
     public void mucTestRemainingOccupantsInformedOfKick() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-remaining-occupants-informed-of-kick-success");
+        final EntityBareJid mucAddress = getRandomRoom("remaining-occupants-informed-of-kick-success");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByThree = mucManagerThree.getMultiUserChat(mucAddress);
@@ -214,7 +214,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "attempts to kick an admin, [...] the service MUST deny the request and return a <not-allowed/> error to the sender")
     public void mucTestModeratorMemberCannotKickAdmin() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-member-cannot-kick-admin");
+        final EntityBareJid mucAddress = getRandomRoom("moderator-member-cannot-kick-admin");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByThree = mucManagerThree.getMultiUserChat(mucAddress);
@@ -291,7 +291,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "member [...] attempts to kick an owner [...], the service MUST deny the request and return a <not-allowed/> error to the sender")
     public void mucTestModeratorMemberCannotKickOwner() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-member-cannot-kick-owner");
+        final EntityBareJid mucAddress = getRandomRoom("moderator-member-cannot-kick-owner");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -347,7 +347,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "[...] admin attempts to kick an owner [...], the service MUST deny the request and return a <not-allowed/> error to the sender")
     public void mucTestModeratorAdminCannotKickOwner() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-admin-cannot-kick-admin");
+        final EntityBareJid mucAddress = getRandomRoom("moderator-admin-cannot-kick-admin");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -404,7 +404,7 @@ public class MultiUserChatModeratorKickIntegrationTest extends AbstractMultiUser
         "a <forbidden/> error.")
     public void mucTestParticipantNotAllowedToKick() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-participant-kick");
+        final EntityBareJid mucAddress = getRandomRoom("participant-kick");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByThree = mucManagerThree.getMultiUserChat(mucAddress);

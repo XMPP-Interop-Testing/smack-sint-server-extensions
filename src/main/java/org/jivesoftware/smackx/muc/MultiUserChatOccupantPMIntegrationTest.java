@@ -83,7 +83,7 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
     public void testSendPM() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-occupant-pm");
+        final EntityBareJid mucAddress = getRandomRoom("occupant-pm");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -141,7 +141,7 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
     public void testSendGroupchatPM() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-occupant-pm-groupchat");
+        final EntityBareJid mucAddress = getRandomRoom("occupant-pm-groupchat");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -199,7 +199,7 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
     public void testSendNonOccupantTargetPM() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-occupant-pm-nonoccupant-target");
+        final EntityBareJid mucAddress = getRandomRoom("occupant-pm-nonoccupant-target");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -243,7 +243,7 @@ public class MultiUserChatOccupantPMIntegrationTest extends AbstractMultiUserCha
     public void testSendNonOccupantSenderPM() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-occupant-pm-nonoccupant-sender");
+        final EntityBareJid mucAddress = getRandomRoom("occupant-pm-nonoccupant-sender");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 

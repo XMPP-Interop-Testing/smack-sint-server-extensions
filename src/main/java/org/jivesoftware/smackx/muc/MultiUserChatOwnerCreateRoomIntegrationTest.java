@@ -68,7 +68,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomLockedWhenCreated() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-locked-when-created");
+        final EntityBareJid mucAddress = getRandomRoom("owner-locked-when-created");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -104,7 +104,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomResponseIndicatesAcknowledgement() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-response-indicates-acknowledgement");
+        final EntityBareJid mucAddress = getRandomRoom("owner-response-indicates-acknowledgement");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
@@ -137,7 +137,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomResponseIndicatesCreatorIsOwner() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-response-indicates-creator-is-owner");
+        final EntityBareJid mucAddress = getRandomRoom("owner-response-indicates-creator-is-owner");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
@@ -172,7 +172,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomConfigurationFormRequest() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-request-conf-form");
+        final EntityBareJid mucAddress = getRandomRoom("owner-request-conf-form");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
@@ -209,7 +209,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomConfigurationFormResponse() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-request-conf-form-response");
+        final EntityBareJid mucAddress = getRandomRoom("owner-request-conf-form-response");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
@@ -258,7 +258,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomConfigurationUnlocksRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-config-unlocks");
+        final EntityBareJid mucAddress = getRandomRoom("owner-config-unlocks");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -352,7 +352,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomRequestInstantRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-request-instant");
+        final EntityBareJid mucAddress = getRandomRoom("owner-request-instant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -400,7 +400,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomConfigCancelDestroysRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-cancel-destroys");
+        final EntityBareJid mucAddress = getRandomRoom("owner-cancel-destroys");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         final EntityFullJid ownerMucAddress = JidCreate.entityFullFrom(mucAddress, nicknameOwner);
@@ -454,7 +454,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomRequestInstantUnlocksRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-instant-unlocks");
+        final EntityBareJid mucAddress = getRandomRoom("owner-instant-unlocks");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -513,7 +513,7 @@ public class MultiUserChatOwnerCreateRoomIntegrationTest extends AbstractMultiUs
     public void testRoomRequestInitialConfigForm() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-get-config");
+        final EntityBareJid mucAddress = getRandomRoom("owner-get-config");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);

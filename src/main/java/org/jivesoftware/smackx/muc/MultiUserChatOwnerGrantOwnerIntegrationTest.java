@@ -52,7 +52,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
         // which suggests that this is optional functionality. The specification does not explicitly say how to test for
         // support. This implementation will use any XMPP error in response to a change request as an indication that
         // the feature is not supported by the server under test.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-support");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-support");
         final MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
         createMuc(muc, Resourcepart.from("owner-" + randomString));
         try {
@@ -71,7 +71,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testGrantOwner() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
         
@@ -102,7 +102,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testGrantOwnerWhileInRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-inroom");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-inroom");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -150,7 +150,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testGrantOwnerOptionalReason() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-reason");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-reason");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -181,7 +181,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testGrantOwnerOptionalReasonWhileInRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-reason-inroom");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-reason-inroom");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -229,7 +229,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testUserNotAllowedToGrantOwnerStatus() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-user-notallowed");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-user-notallowed");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -260,7 +260,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testUserNotAllowedToGrantOwnerStatusInRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-user-notallowed-inroom");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-user-notallowed-inroom");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
 
@@ -295,7 +295,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testParticipantNotAllowedToGrantOwnerStatus() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-participant-notallowed");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-participant-notallowed");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -330,7 +330,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testParticipantNotAllowedToGrantOwnerStatusInRoom() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-grant-participant-notallowed-inroom");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-grant-participant-notallowed-inroom");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);
@@ -381,7 +381,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testOwnerOnOwnerList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-on-ownerlist");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-on-ownerlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -410,7 +410,7 @@ public class MultiUserChatOwnerGrantOwnerIntegrationTest extends AbstractMultiUs
     public void testOccupantsInformed() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerThree.getMultiUserChat(mucAddress);

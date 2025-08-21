@@ -54,7 +54,7 @@ public class MultiUserChatOwnerIntegrationTest extends AbstractMultiUserChatInte
     public void testRoomHasOwnerAfterOriginalOwnerLeaves() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-after-leave");
+        final EntityBareJid mucAddress = getRandomRoom("owner-after-leave");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 

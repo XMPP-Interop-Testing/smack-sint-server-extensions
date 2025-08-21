@@ -59,7 +59,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         "moderators are stipulated to have privileges to [...] modify the subject")
     public void mucTestModeratorAllowedToChangeSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-moderator-change-subject");
+        final EntityBareJid mucAddress = getRandomRoom("moderator-change-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -98,7 +98,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         "message of type \"error\" specifying a <forbidden/> error condition")
     public void mucTestParticipantNotAllowedToChangeSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-participant-change-subject");
+        final EntityBareJid mucAddress = getRandomRoom("participant-change-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -131,7 +131,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         "The MUC service MUST reflect the [subject change] to all other occupants with a 'from' address equal to the room JID or to the occupant JID that corresponds to the sender of the subject change")
     public void mucTestChangeSubjectIsReflected() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-change-subject-reflection");
+        final EntityBareJid mucAddress = getRandomRoom("change-subject-reflection");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -182,7 +182,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         "In order to remove the existing subject but not provide a new subject (i.e., set the subject to be empty), the client shall send an empty <subject/> element")
     public void mucTestModeratorAllowedToRemoveSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-remove-subject");
+        final EntityBareJid mucAddress = getRandomRoom("remove-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -234,7 +234,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
             "message of type \"error\" specifying a <forbidden/> error condition")
     public void mucTestParticipantNotAllowedToRemoveSubject() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-participant-change-subject");
+        final EntityBareJid mucAddress = getRandomRoom("participant-change-subject");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -268,7 +268,7 @@ public class MultiUserChatModeratorSubjectModIntegrationTest extends AbstractMul
         "The MUC service MUST reflect the [subject removal] to all other occupants with a 'from' address equal to the room JID or to the occupant JID that corresponds to the sender of the subject change")
     public void mucTestRemoveSubjectIsReflected() throws Exception
     {
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-remove-subject-reflection");
+        final EntityBareJid mucAddress = getRandomRoom("remove-subject-reflection");
         final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 

@@ -55,7 +55,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
         // which suggests that this is optional functionality. The specification does not explicitly say how to test for
         // support. This implementation will use any XMPP error in response to a change request as an indication that
         // the feature is not supported by the server under test.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-list-support");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-list-support");
         final MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
         createMuc(muc, Resourcepart.from("owner-" + randomString));
         try {
@@ -75,7 +75,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerRequestsOwnerList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-requests-ownerlist");
+        final EntityBareJid mucAddress = getRandomRoom("owner-requests-ownerlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -107,7 +107,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testUserRequestsOwnerList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-user-requests-ownerlist");
+        final EntityBareJid mucAddress = getRandomRoom("owner-user-requests-ownerlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -139,7 +139,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testParticipantRequestsOwnerList() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-user-requests-ownerlist");
+        final EntityBareJid mucAddress = getRandomRoom("owner-user-requests-ownerlist");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -173,7 +173,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListItemCheck() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-owner-list-itemcheck");
+        final EntityBareJid mucAddress = getRandomRoom("owner-owner-list-itemcheck");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget = mucManagerTwo.getMultiUserChat(mucAddress);
 
@@ -209,7 +209,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListMultipleItems() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-multiple");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-multiple");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -244,7 +244,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testAdminOwnerListMultipleItemsRevoke() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-revoke");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-revoke");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
 
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -287,7 +287,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerOwnerListIsDelta() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-delta");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-delta");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -330,7 +330,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListRejectAdmin() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-reject-admin");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-reject-admin");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByAdmin = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -367,7 +367,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListRejectMember() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-reject-member");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-reject-member");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByMember = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -404,7 +404,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListRejectOutcast() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-reject-member");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-reject-member");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -438,7 +438,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListRejectNoneAffiliation() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-reject-nonaff");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-reject-nonaff");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
@@ -470,7 +470,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testOwnerListRejectRemovalLastOwner() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-remove-last");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-remove-last");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final Resourcepart nicknameOwner = Resourcepart.from("owner-" + randomString);
 
@@ -498,7 +498,7 @@ public class MultiUserChatOwnerOwnerListIntegrationTest extends AbstractMultiUse
     public void testAdminOwnerListBroadcast() throws Exception
     {
         // Setup test fixture.
-        final EntityBareJid mucAddress = getRandomRoom("smack-inttest-owner-ownerlist-broadcast");
+        final EntityBareJid mucAddress = getRandomRoom("owner-ownerlist-broadcast");
         final MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget1 = mucManagerTwo.getMultiUserChat(mucAddress);
         final MultiUserChat mucAsSeenByTarget2 = mucManagerThree.getMultiUserChat(mucAddress);
