@@ -490,7 +490,7 @@ public class RFC6121Section8_5_3_2_3_IqIntegrationTest extends AbstractSmackInte
                     // keep track so that the handler can be removed again.
                     final Map<IQRequestHandler, IQRequestHandler> receivedHandler = new HashMap<>();
                     if (receivedHandler.put(needleDetector, oldHandler) != null) {
-                        throw new IllegalStateException("Bug in code: unexpectedly have more than one IQ handler the same detector for the same connection.");
+                        throw new IllegalStateException("Bug in code: unexpectedly have more than one IQ handler with the same detector for the same connection.");
                     }
                     receivedHandlers.put(resourceConnection.getUser(), receivedHandler);
                 }
