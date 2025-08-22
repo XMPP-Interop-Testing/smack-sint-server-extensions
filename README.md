@@ -78,7 +78,11 @@ A Smack Debugger implementation is included, that, once configured, will store d
 To enable this logging, this system property is to be added to the invocation of these tests:
 
 ```bash
--Dsinttest.debugger="-Dsinttest.debugger=standard,dir=./logs,console=off"
+-Dsinttest.debugger=org.igniterealtime.smack.inttest.util.ModifiedStandardSinttestDebuggerMetaFactory
 ```
 
-Note that an argement in this property's value can be used to identify the directory in which the logs are to be stored. This directory will be created.
+An additional system property is to be used to identify the directory in which the logs are to be stored. This directory will be created, if it doesn't already exist.
+
+```bash
+-DlogDir=target/logs
+```

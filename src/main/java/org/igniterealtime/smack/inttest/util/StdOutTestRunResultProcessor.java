@@ -114,7 +114,9 @@ public class StdOutTestRunResultProcessor implements SmackIntegrationTestFramewo
                 for (final FailedTest failedTest : entry.getValue()) {
                     final String sectionReference = JUnitXmlTestRunResultProcessor.getSpecificationSection(failedTest.concreteTest.getMethod());
                     final String quote = JUnitXmlTestRunResultProcessor.getSpecificationQuote(failedTest.concreteTest.getMethod());
-                    final Path logPath = getLog(getLogFromSmackDebuggerConfig(System.getProperty("sinttest.debugger")), failedTest.concreteTest);
+//                    final Path logPath = getLog(getLogFromSmackDebuggerConfig(System.getProperty("sinttest.debugger")), failedTest.concreteTest);
+                    final Path logPath = getLog(Paths.get(System.getProperty("logDir")), failedTest.concreteTest);
+
                     final StringBuilder blob = new StringBuilder();
                     blob.append("• ").append(findTitle(specTitles, title, -1)).append(sectionReference != null ? ", Section " + sectionReference : "").append(System.lineSeparator());
                     blob.append("      \"" + quote + "\"").append(System.lineSeparator());
