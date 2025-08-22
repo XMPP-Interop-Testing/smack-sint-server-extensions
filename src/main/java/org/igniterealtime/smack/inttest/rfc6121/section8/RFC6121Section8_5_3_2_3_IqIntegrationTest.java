@@ -453,7 +453,7 @@ public class RFC6121Section8_5_3_2_3_IqIntegrationTest extends AbstractSmackInte
                     break;
             }
 
-            final Map<IQRequestHandler, IQRequestHandler> receivedHandlers = new HashMap<>();
+            final Map<EntityFullJid, Map<IQRequestHandler, IQRequestHandler>> receivedHandlers = new HashMap<>();
             try {
                 // Setup test fixture: create connections for the additional resources (based on the user used for 'conTwo').
                 for (final AbstractXMPPConnection additionalConnection : additionalConnections) {
@@ -486,7 +486,13 @@ public class RFC6121Section8_5_3_2_3_IqIntegrationTest extends AbstractSmackInte
                         }
                     };
                     final IQRequestHandler oldHandler = resourceConnection.registerIQRequestHandler(needleDetector);
-                    receivedHandlers.put(needleDetector, oldHandler); // keep track so that the handler can be removed again.
+
+                    // keep track so that the handler can be removed again.
+                    final Map<IQRequestHandler, IQRequestHandler> receivedHandler = new HashMap<>();
+                    if (receivedHandler.put(needleDetector, oldHandler) != null) {
+                        throw new IllegalStateException("Bug in code: unexpectedly have more than one IQ handler the same detector for the same connection.");
+                    }
+                    receivedHandlers.put(resourceConnection.getUser(), receivedHandler);
                 }
 
                 // Setup test fixture: construct the address of the user (that does exist) for a resource that is not online.
@@ -511,10 +517,13 @@ public class RFC6121Section8_5_3_2_3_IqIntegrationTest extends AbstractSmackInte
                 // Tear down test fixture.
                 for (int i = 0; i < resourcePriorities.size(); i++) {
                     final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                    for (final Map.Entry<IQRequestHandler, IQRequestHandler> handlerNewAndOld : receivedHandlers.entrySet()) {
-                        resourceConnection.unregisterIQRequestHandler(handlerNewAndOld.getKey());
-                        if (handlerNewAndOld.getValue() != null) { // Restore the old handler, if there was one.
-                            resourceConnection.registerIQRequestHandler(handlerNewAndOld.getValue());
+                    final Map<IQRequestHandler, IQRequestHandler> handlersNewAndOld = receivedHandlers.remove(resourceConnection.getUser());
+                    if (handlersNewAndOld != null) {
+                        for (final Map.Entry<IQRequestHandler, IQRequestHandler> handlerNewAndOld : handlersNewAndOld.entrySet()) {
+                            resourceConnection.unregisterIQRequestHandler(handlerNewAndOld.getKey());
+                            if (handlerNewAndOld.getValue() != null) { // Restore the old handler, if there was one.
+                                resourceConnection.registerIQRequestHandler(handlerNewAndOld.getValue());
+                            }
                         }
                     }
                 }
