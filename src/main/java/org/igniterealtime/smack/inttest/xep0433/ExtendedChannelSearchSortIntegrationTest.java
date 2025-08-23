@@ -28,6 +28,7 @@ import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
@@ -40,8 +41,11 @@ import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,6 +63,11 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
     protected static final String ROOM_NAME_PREFIX = "smack-inttest-xep0433-sort";
 
     final DomainBareJid searchService;
+
+    // Used while tearing down the tests.
+    final Set<EntityBareJid> roomsJoinedByOne = new HashSet<>();
+    final Set<EntityBareJid> roomsJoinedByTwo = new HashSet<>();
+    final Set<EntityBareJid> roomsJoinedByThree = new HashSet<>();
 
     public ExtendedChannelSearchSortIntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
@@ -97,11 +106,14 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
                 String roomNameLocal = String.join("-", ROOM_NAME_PREFIX, testRunId, Integer.toString(i));
                 EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from(roomNameLocal), mucDomain);
                 mucManagerOne.getMultiUserChat(mucAddress).create(Resourcepart.from("test-user-one")).getConfigFormManager().setRoomName("Test Room " + i).submitConfigurationForm();
+                roomsJoinedByOne.add(mucAddress);
                 if (i % 2 == 0) {
                     mucManagerTwo.getMultiUserChat(mucAddress).join(Resourcepart.from("test-user-two"));
+                    roomsJoinedByTwo.add(mucAddress);
                 }
                 if (i % 3 == 0) {
                     mucManagerThree.getMultiUserChat(mucAddress).join(Resourcepart.from("test-user-three"));
+                    roomsJoinedByThree.add(mucAddress);
                 }
             }
         } catch (Exception e) {
@@ -112,13 +124,47 @@ public class ExtendedChannelSearchSortIntegrationTest extends AbstractSmackInteg
     @AfterClass
     public void tearDown() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, XmppStringprepException
     {
+        // Leave any rooms that the users have been put in during #setup()
+        final MultiUserChatManager mucManOne = MultiUserChatManager.getInstanceFor(conOne);
+        roomsJoinedByOne.forEach(address -> {
+            final MultiUserChat muc = mucManOne.getMultiUserChat(address);
+            if (muc.isJoined()) {
+                try {
+                    muc.leave();
+                } catch (Throwable e) {
+                    LOGGER.log(Level.WARNING, "User " + conOne.getUser() + " unable to leave room " + address, e);
+                }
+            }
+        });
+        final MultiUserChatManager mucManTwo = MultiUserChatManager.getInstanceFor(conTwo);
+        roomsJoinedByTwo.forEach(address -> {
+            final MultiUserChat muc = mucManTwo.getMultiUserChat(address);
+            if (muc.isJoined()) {
+                try {
+                    muc.leave();
+                } catch (Throwable e) {
+                    LOGGER.log(Level.WARNING, "User " + conOne.getUser() + " unable to leave room " + address, e);
+                }
+            }
+        });
+        final MultiUserChatManager mucManThree = MultiUserChatManager.getInstanceFor(conThree);
+        roomsJoinedByThree.forEach(address -> {
+            final MultiUserChat muc = mucManThree.getMultiUserChat(address);
+            if (muc.isJoined()) {
+                try {
+                    muc.leave();
+                } catch (Throwable e) {
+                    LOGGER.log(Level.WARNING, "User " + conOne.getUser() + " unable to leave room " + address, e);
+                }
+            }
+        });
+
         // Destroy the rooms that were used as search results.
-        final MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(conOne);
-        final DomainBareJid mucDomain = mucManager.getMucServiceDomains().stream().findFirst().orElseThrow(() -> new IllegalStateException("Unable to find a MUC service domain"));
+        final DomainBareJid mucDomain = mucManOne.getMucServiceDomains().stream().findFirst().orElseThrow(() -> new IllegalStateException("Unable to find a MUC service domain"));
         for (int i = 1; i <= ROOMS_AMOUNT; i++) {
             String roomNameLocal = String.join("-", ROOM_NAME_PREFIX, testRunId, Integer.toString(i));
             EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from(roomNameLocal), mucDomain);
-            mucManager.getMultiUserChat(mucAddress).destroy();
+            mucManOne.getMultiUserChat(mucAddress).destroy();
         }
     }
 
