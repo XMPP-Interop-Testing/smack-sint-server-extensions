@@ -1,0 +1,39 @@
+name: release-artifact.yml
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+
+jobs:
+  build-java:
+    name: Build & Add to Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 11
+          distribution: temurin
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn --update-snapshots package
+
+      - name: Stash the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smack-tests
+          path: target/smack-sint-server-extensions-*-jar-with-dependencies.jar
+          retention-days: 1
+
+      - name: Add the artifact to the Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/smack-sint-server-extensions-*-jar-with-dependencies.jar
