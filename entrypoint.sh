@@ -110,4 +110,6 @@ JAVACMD+=("-DlogDir=./logs")
 JAVACMD+=("-jar")
 JAVACMD+=("/usr/local/sintse/sintse.jar")
 
+echo "Running: ${JAVACMD[@]}"
+
 "${JAVACMD[@]}"
