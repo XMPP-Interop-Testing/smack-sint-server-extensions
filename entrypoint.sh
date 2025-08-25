@@ -11,7 +11,7 @@ Usage:
     --host=HOST                           IP address or DNS name of the XMPP service to run the tests on. (default: $HOST)
     --timeout=TIMEOUT                     Timeout in milliseconds for any XMPP action (default: $TIMEOUT)
     --adminAccountUsername=ADMINUSERNAME  Admin username for the service, to create test users (if not using IBR / XEP-0077)
-    --adminAccountUsername=ADMINPASSWORD  Admin password for the service, as above
+    --adminAccountPassword=ADMINPASSWORD  Admin password for the service, as above
     --disabledTests=DISABLEDTESTS         Comma-separated list of tests to skip, e.g. EntityCapsTest,SoftwareInfoIntegrationTest
     --disabledSpecifications=DISABLEDSPECIFICATIONS
                                           Comma-separated list of specifications to skip, e.g. XEP-0030,XEP-0199
