@@ -106,7 +106,7 @@ fi
 JAVACMD+=("-Dsinttest.testRunResultProcessors=org.igniterealtime.smack.inttest.util.StdOutTestRunResultProcessor,org.igniterealtime.smack.inttest.util.JUnitXmlTestRunResultProcessor")
 # JAVACMD+=("-Dsinttest.debugger=standard,dir=./logs,console=off")
 JAVACMD+=("-Dsinttest.debugger=org.igniterealtime.smack.inttest.util.ModifiedStandardSinttestDebuggerMetaFactory")
-JAVACMD+=("-DlogDir=./target/logs")
+JAVACMD+=("-DlogDir=./logs")
 JAVACMD+=("-jar")
 JAVACMD+=("/usr/local/sintse/sintse.jar")
 
