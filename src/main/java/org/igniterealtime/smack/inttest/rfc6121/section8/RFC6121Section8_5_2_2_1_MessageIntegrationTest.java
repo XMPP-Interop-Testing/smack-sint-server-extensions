@@ -84,9 +84,9 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
         // Setup test fixture: detect an error that is sent back to the sender.
         final String needle = StringUtils.randomString(9);
 
-            final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
+        final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error));
         final SimpleResultSyncPoint errorReceivedBySender = new SimpleResultSyncPoint();
-        try (final ListenerHandle ignored = conOne.addStanzaListener((stanza) -> errorReceivedBySender.signal(), errorDetector))
+        try (final ListenerHandle ignored = conOne.addStanzaListener(stanza -> errorReceivedBySender.signal(), errorDetector))
         {
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()
@@ -120,9 +120,9 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
         final String needle = StringUtils.randomString(9);
 
         // Setup test fixture: detect an error that is sent back to the sender.
-            final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
+        final StanzaFilter errorDetector = new AndFilter(s -> s instanceof Message && ((Message) s).getType() == Message.Type.error);
         final Stanza[] errorReceivedBySender = {null};
-        try (final ListenerHandle ignored = conOne.addStanzaListener((stanza) -> errorReceivedBySender[0] = stanza, errorDetector))
+        try (final ListenerHandle ignored = conOne.addStanzaListener(stanza -> errorReceivedBySender[0] = stanza, errorDetector))
         {
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()

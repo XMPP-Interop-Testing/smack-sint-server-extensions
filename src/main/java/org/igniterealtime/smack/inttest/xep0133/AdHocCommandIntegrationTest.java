@@ -572,7 +572,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
 
             final String needle = "wait for me " + StringUtils.randomString(13);
             final SimpleResultSyncPoint receivedMessage = new SimpleResultSyncPoint();
-            userConnectionTwo.addSyncStanzaListener((stanza) -> receivedMessage.signal(), new FlexibleStanzaTypeFilter<Message>() {
+            userConnectionTwo.addSyncStanzaListener(stanza -> receivedMessage.signal(), new FlexibleStanzaTypeFilter<Message>() {
                 protected boolean acceptSpecific(Message message) {
                     return message.getFrom().equals(adminConnection.getUser()) && needle.equals(message.getBody());
             }});

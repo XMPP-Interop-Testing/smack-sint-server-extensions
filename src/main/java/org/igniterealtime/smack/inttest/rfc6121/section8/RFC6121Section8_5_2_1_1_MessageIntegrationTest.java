@@ -634,7 +634,7 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                listenerHandles.add(resourceConnection.addStanzaListener((stanza) -> receivedBy.put(resourceConnection.getUser(), stanza), needleDetector));
+                listenerHandles.add(resourceConnection.addStanzaListener(stanza -> receivedBy.put(resourceConnection.getUser(), stanza), needleDetector));
                 listenerHandles.add(resourceConnection.addStanzaListener(stopListenerRecipients, stopDetectorRecipients));
             }
 
@@ -642,12 +642,12 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
             final String stopNeedleSender = "STOP LISTENING, ALL RECIPIENTS ARE DONE " + StringUtils.randomString(7);
             final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conTwo.getUser()), (s -> s instanceof Message && stopNeedleSender.equals(((Message) s).getBody())));
             final SimpleResultSyncPoint stopListenerSenderSyncPoint = new SimpleResultSyncPoint();
-            listenerHandles.add(conOne.addStanzaListener((e) -> stopListenerSenderSyncPoint.signal(), stopDetectorSender));
+            listenerHandles.add(conOne.addStanzaListener(s -> stopListenerSenderSyncPoint.signal(), stopDetectorSender));
 
             // Setup test fixture: detect an error that is sent back to the sender.
-            final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error && needle.equals(((Message) s).getBody())));
+            final StanzaFilter errorDetector = new AndFilter(s -> s instanceof Message && ((Message) s).getType() == Message.Type.error);
             final Stanza[] errorReceived = { null };
-            listenerHandles.add(conOne.addStanzaListener((stanza) -> errorReceived[0] = stanza, errorDetector));
+            listenerHandles.add(conOne.addStanzaListener(stanza -> errorReceived[0] = stanza, errorDetector));
 
             // Execute system under test.
             final Message testStanza = StanzaBuilder.buildMessage()

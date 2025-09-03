@@ -290,7 +290,7 @@ public class RFC6121Section8_5_2_1_2_PresenceIntegrationTest extends AbstractSma
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
-                final StanzaListener stanzaListener = (stanza) -> {
+                final StanzaListener stanzaListener = stanza -> {
                     receivedBy.put(resourceConnection.getUser(), stanza);
                     if (receivedBy.keySet().containsAll(allResources)) {
                         receivedOnAllResources.signal();

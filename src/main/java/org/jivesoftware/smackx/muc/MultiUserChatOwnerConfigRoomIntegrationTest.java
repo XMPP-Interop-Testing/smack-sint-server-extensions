@@ -768,9 +768,9 @@ public class MultiUserChatOwnerConfigRoomIntegrationTest extends AbstractMultiUs
             final ResultSyncPoint<Presence, Exception> ownerSeesRemoval = new ResultSyncPoint<>();
             final ResultSyncPoint<Presence, Exception> targetSeesRemoval = new ResultSyncPoint<>();
             final ResultSyncPoint<Presence, Exception> memberSeesRemoval = new ResultSyncPoint<>();
-            try (final ListenerHandle ignored1 = conOne.addStanzaListener((stanza) -> ownerSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
-                 final ListenerHandle ignored2 = conTwo.addStanzaListener((stanza) -> targetSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
-                 final ListenerHandle ignored3 = conThree.addStanzaListener((stanza) -> memberSeesRemoval.signal((Presence) stanza), removalDetectionFilter))
+            try (final ListenerHandle ignored1 = conOne.addStanzaListener(stanza -> ownerSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
+                 final ListenerHandle ignored2 = conTwo.addStanzaListener(stanza -> targetSeesRemoval.signal((Presence) stanza), removalDetectionFilter);
+                 final ListenerHandle ignored3 = conThree.addStanzaListener(stanza -> memberSeesRemoval.signal((Presence) stanza), removalDetectionFilter))
             {
                 // Execute system under test.
                 mucAsSeenByOwner.getConfigFormManager()

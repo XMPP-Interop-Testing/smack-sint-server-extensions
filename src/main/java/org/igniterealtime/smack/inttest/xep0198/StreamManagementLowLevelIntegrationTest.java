@@ -192,7 +192,7 @@ public class StreamManagementLowLevelIntegrationTest extends AbstractSmackSpecif
         // Setup test fixture.
         final XMPPTCPConnection connection = getSpecificUnconnectedConnection();
         final SimpleResultSyncPoint anyAckReceived = new SimpleResultSyncPoint();
-        final StanzaListener ackListener = (s) -> anyAckReceived.signal();
+        final StanzaListener ackListener = s -> anyAckReceived.signal();
         try {
             connection.setUseStreamManagement(true);
             connection.addRequestAckPredicate(stanza -> false); // Never send request by default.
