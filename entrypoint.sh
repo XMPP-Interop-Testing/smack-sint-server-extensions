@@ -7,7 +7,7 @@ TIMEOUT=5000
 usage() {
   cat <<EOF
 Usage:
-    --domain=DOMAIN                       XMPP domain name of server under test. (default: DOMAIN)
+    --domain=DOMAIN                       XMPP domain name of server under test. (default: $DOMAIN)
     --host=HOST                           IP address or DNS name of the XMPP service to run the tests on. (default: $HOST)
     --timeout=TIMEOUT                     Timeout in milliseconds for any XMPP action (default: $TIMEOUT)
     --adminAccountUsername=ADMINUSERNAME  Admin username for the service, to create test users (if not using IBR / XEP-0077)
