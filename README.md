@@ -44,18 +44,20 @@ To run the tests directly from the source code, edit the pom.xml to match your s
 
 ### From a container
 
-Assuming you've built the Docker image locally, using `docker build . -t xmpp_interop_tests`, you can run the tests using the following command:
+If you're using a published container from [the registry](https://github.com/XMPP-Interop-Testing/smack-sint-server-extensions/pkgs/container/xmpp_interop_tests), you can run the tests using the following command:
 
 ```bash
 docker run \
        --network=host \
        -v "$(pwd)"/logs:/logs \
-       xmpp_interop_tests \
+       ghcr.io/xmpp-interop-testing/xmpp_interop_tests:<version> \
        --domain=example.org \
        --host 127.0.0.1 \
        --adminAccountUsername=admin \
        --adminAccountPassword=admin
 ```
+
+You can build the Docker image locally, using `docker build . -t xmpp_interop_tests`.
 
 The test execution logs (as described in 'Log XMPP traffic in files' below) will be saved in the `/logs/` directory in the container. To make it easy to access these logs, the example above uses a bind mount to store them on the host machine.
 
