@@ -23,8 +23,7 @@ import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.filter.FlexibleStanzaTypeFilter;
-import org.jivesoftware.smack.filter.StanzaTypeFilter;
+import org.jivesoftware.smack.filter.*;
 import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
@@ -570,24 +569,23 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
                 }
             });
 
-            final String needle = "wait for me " + StringUtils.randomString(13);
+            final String needle = StringUtils.randomString(13);
+            final StanzaFilter needleFilter = new AndFilter(FromMatchesFilter.createFull(adminConnection.getUser()), StanzaTypeFilter.MESSAGE, new StanzaIdFilter(needle));
             final SimpleResultSyncPoint receivedMessage = new SimpleResultSyncPoint();
-            userConnectionTwo.addSyncStanzaListener(stanza -> receivedMessage.signal(), new FlexibleStanzaTypeFilter<Message>() {
-                protected boolean acceptSpecific(Message message) {
-                    return message.getFrom().equals(adminConnection.getUser()) && needle.equals(message.getBody());
-            }});
+            try (final ListenerHandle ignored = userConnectionTwo.addSyncStanzaListener(stanza -> receivedMessage.signal(), needleFilter))
+            {
+                // End the user's session
+                AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
+                    "accountjids", userConnectionOne.getUser().toString() // _full_ JID. Should close only this session.
+                );
 
-            // End the user's session
-            AdHocCommandData result = executeCommandWithArgs(END_USER_SESSION, adminConnection.getUser().asEntityBareJid(),
-                "accountjids",  userConnectionOne.getUser().toString() // _full_ JID. Should close only this session.
-            );
+                assertCommandCompletedSuccessfully(result, "Expected response to the " + END_USER_SESSION + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
 
-            assertCommandCompletedSuccessfully(result, "Expected response to the " + END_USER_SESSION + " command that was executed by '" + adminConnection.getUser() + "' to represent success (but it does not).");
-
-            // Send a message to the _other_ resource. As the server must process the stanzas sent by admin in order, the message would likely not be received when that other resource also got disconnected.
-            adminConnection.sendStanza(MessageBuilder.buildMessage().setBody(needle).to(userConnectionTwo.getUser()).build());
-            receivedMessage.waitForResult(timeout);
-            assertTrue(userConnectionTwo.isConnected(), "Did not expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the full JID of a different resource of that user ('" + userConnectionOne.getUser() + "').");
+                // Send a message to the _other_ resource. As the server must process the stanzas sent by admin in order, the message would likely not be received when that other resource also got disconnected.
+                adminConnection.sendStanza(MessageBuilder.buildMessage(needle).setBody("Wait for me " + needle).to(userConnectionTwo.getUser()).build());
+                receivedMessage.waitForResult(timeout);
+                assertTrue(userConnectionTwo.isConnected(), "Did not expected the connection of '" + userConnectionTwo.getUser() + "' to be disconnected after '" + adminConnection.getUser() + "' invoked the " + END_USER_SESSION + " ad-hoc command using the full JID of a different resource of that user ('" + userConnectionOne.getUser() + "').");
+            }
         } finally {
             if (userConnectionOne != null && userConnectionOne.isConnected()) {
                 userConnectionOne.disconnect();

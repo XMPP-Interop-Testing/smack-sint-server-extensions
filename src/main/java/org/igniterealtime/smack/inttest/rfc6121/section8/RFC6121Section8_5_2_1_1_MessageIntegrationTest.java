@@ -613,7 +613,7 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
             // Setup test fixture: prepare for the message stanza that is sent to the bare JID to be sent, and collected while being received by the various resources.
             final String needle = StringUtils.randomString(9);
-            final StanzaFilter needleDetector = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && ((Message) s).getType() == messageType && needle.equals(((Message) s).getBody())));
+            final StanzaFilter needleDetector = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && ((Message) s).getType() == messageType), new StanzaIdFilter(needle));
             final Map<EntityFullJid, Stanza> receivedBy = new ConcurrentHashMap<>(); // This is what will be evaluated by this test's assertions.
 
             // Setup test fixture: detect the message stanza that's sent to signal that the test stanza has been sent and processed
@@ -629,8 +629,8 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
                     }
                 }
             };
-            final String stopNeedleRecipients = "STOP LISTENING, STANZAS HAVE BEEN PROCESSED " + StringUtils.randomString(7);
-            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && stopNeedleRecipients.equals(((Message) s).getBody())));
+            final String stopNeedleRecipients = StringUtils.randomString(7);
+            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), StanzaTypeFilter.MESSAGE, new StanzaIdFilter(stopNeedleRecipients));
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
@@ -639,28 +639,28 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
             }
 
             // Setup test fixture: detect the message stanza that's sent to signal the sender need not wait any longer for any potential stanza delivery errors.
-            final String stopNeedleSender = "STOP LISTENING, ALL RECIPIENTS ARE DONE " + StringUtils.randomString(7);
-            final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conTwo.getUser()), (s -> s instanceof Message && stopNeedleSender.equals(((Message) s).getBody())));
+            final String stopNeedleSender = StringUtils.randomString(7);
+            final StanzaFilter stopDetectorSender = new AndFilter(FromMatchesFilter.createBare(conTwo.getUser()), StanzaTypeFilter.MESSAGE, new StanzaIdFilter(stopNeedleSender));
             final SimpleResultSyncPoint stopListenerSenderSyncPoint = new SimpleResultSyncPoint();
             listenerHandles.add(conOne.addStanzaListener(s -> stopListenerSenderSyncPoint.signal(), stopDetectorSender));
 
             // Setup test fixture: detect an error that is sent back to the sender.
-            final StanzaFilter errorDetector = new AndFilter(s -> s instanceof Message && ((Message) s).getType() == Message.Type.error);
+            final StanzaFilter errorDetector = new AndFilter(MessageTypeFilter.ERROR, new StanzaIdFilter(needle));
             final Stanza[] errorReceived = { null };
             listenerHandles.add(conOne.addStanzaListener(stanza -> errorReceived[0] = stanza, errorDetector));
 
             // Execute system under test.
-            final Message testStanza = StanzaBuilder.buildMessage()
+            final Message testStanza = StanzaBuilder.buildMessage(needle)
                 .ofType(messageType)
                 .to(conTwo.getUser().asBareJid())
-                .setBody(needle)
+                .setBody("Test Message " + needle)
                 .build();
 
             conOne.sendStanza(testStanza);
 
             // Informs intended recipients that the test is over.
             for (final FullJid recipient : allResources) {
-                conOne.sendStanza(StanzaBuilder.buildMessage().setBody(stopNeedleRecipients).to(recipient).build());
+                conOne.sendStanza(StanzaBuilder.buildMessage(stopNeedleRecipients).setBody("You can stop listening now, stanzas for '" + stopNeedleRecipients + "' are guaranteed to have been processed.").to(recipient).build());
             }
 
             try {
@@ -673,7 +673,7 @@ public class RFC6121Section8_5_2_1_1_MessageIntegrationTest extends AbstractSmac
 
             try {
                 // Send a message stanza to the sender, saying that the 'test is over' too.
-                conTwo.sendStanza(StanzaBuilder.buildMessage().setBody(stopNeedleSender).to(conOne.getUser()).build());
+                conTwo.sendStanza(StanzaBuilder.buildMessage(stopNeedleSender).setBody("You can stop listening now, all recipients are done ('" + stopNeedleSender + "').").to(conOne.getUser()).build());
 
                 // Wait for the sender to have received the 'test is over' stanza.
                 stopListenerSenderSyncPoint.waitForResult(timeout);

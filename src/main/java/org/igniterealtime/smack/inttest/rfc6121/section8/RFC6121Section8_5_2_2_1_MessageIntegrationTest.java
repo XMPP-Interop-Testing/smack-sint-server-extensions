@@ -25,7 +25,9 @@ import org.igniterealtime.smack.inttest.util.AccountUtilities;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.ListenerHandle;
 import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.StanzaFilter;
+import org.jivesoftware.smack.filter.StanzaIdFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaBuilder;
@@ -84,15 +86,15 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
         // Setup test fixture: detect an error that is sent back to the sender.
         final String needle = StringUtils.randomString(9);
 
-        final StanzaFilter errorDetector = new AndFilter((s -> s instanceof Message && ((Message) s).getType() == Message.Type.error));
+        final StanzaFilter errorDetector = new AndFilter(MessageTypeFilter.ERROR, new StanzaIdFilter(needle));
         final SimpleResultSyncPoint errorReceivedBySender = new SimpleResultSyncPoint();
         try (final ListenerHandle ignored = conOne.addStanzaListener(stanza -> errorReceivedBySender.signal(), errorDetector))
         {
             // Execute system under test.
-            final Message testStanza = StanzaBuilder.buildMessage()
+            final Message testStanza = StanzaBuilder.buildMessage(needle)
                 .ofType(Message.Type.groupchat)
                 .to(entityWithoutResources)
-                .setBody(needle)
+                .setBody("A test message that is expected to generate an error.")
                 .build();
 
             conOne.sendStanza(testStanza);
@@ -120,15 +122,15 @@ public class RFC6121Section8_5_2_2_1_MessageIntegrationTest extends AbstractSmac
         final String needle = StringUtils.randomString(9);
 
         // Setup test fixture: detect an error that is sent back to the sender.
-        final StanzaFilter errorDetector = new AndFilter(s -> s instanceof Message && ((Message) s).getType() == Message.Type.error);
+        final StanzaFilter errorDetector = new AndFilter(MessageTypeFilter.ERROR, new StanzaIdFilter(needle));
         final Stanza[] errorReceivedBySender = {null};
         try (final ListenerHandle ignored = conOne.addStanzaListener(stanza -> errorReceivedBySender[0] = stanza, errorDetector))
         {
             // Execute system under test.
-            final Message testStanza = StanzaBuilder.buildMessage()
+            final Message testStanza = StanzaBuilder.buildMessage(needle)
                 .ofType(messageType)
                 .to(entityWithoutResources)
-                .setBody(needle)
+                .setBody("A test message that is expected to not generate an error " + needle)
                 .build();
 
             conOne.sendStanza(testStanza);
