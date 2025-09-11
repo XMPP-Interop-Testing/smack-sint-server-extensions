@@ -52,10 +52,14 @@ public class AbstractAdHocCommandIntegrationTest extends AbstractSmackIntegratio
     public final AbstractXMPPConnection adminConnection;
     SmackIntegrationTestEnvironment environment;
 
-    public AbstractAdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException, IOException, XMPPException, InterruptedException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public AbstractAdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment) throws SmackException, IOException, XMPPException, InterruptedException, InvocationTargetException, InstantiationException, IllegalAccessException, TestNotPossibleException
+    {
         super(environment);
         this.environment = environment;
 
+        if (sinttestConfiguration.adminAccountUsername == null) {
+            throw new TestNotPossibleException("This test requires an admin account to be configured.");
+        }
         adminConnection = AccountUtilities.spawnNewConnection(environment, sinttestConfiguration);
         adminConnection.connect();
         adminConnection.login(sinttestConfiguration.adminAccountUsername,

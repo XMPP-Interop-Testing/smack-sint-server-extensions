@@ -92,7 +92,7 @@ public class AdHocCommandIntegrationTest extends AbstractAdHocCommandIntegration
     private static final String SHUTDOWN_SERVICE = "http://jabber.org/protocol/admin#shutdown"; //4.31
 
     public AdHocCommandIntegrationTest(SmackIntegrationTestEnvironment environment)
-        throws InvocationTargetException, InstantiationException, IllegalAccessException, SmackException, IOException, XMPPException, InterruptedException {
+        throws InvocationTargetException, InstantiationException, IllegalAccessException, SmackException, IOException, XMPPException, InterruptedException, TestNotPossibleException {
         super(environment);
     }
 
