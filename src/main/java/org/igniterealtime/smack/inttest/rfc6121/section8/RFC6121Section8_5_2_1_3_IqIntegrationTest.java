@@ -505,8 +505,8 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
                     }
                 }
             };
-            final String stopNeedleRecipients = "STOP LISTENING, STANZAS HAVE BEEN PROCESSED " + StringUtils.randomString(7);
-            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), (s -> s instanceof Message && stopNeedleRecipients.equals(((Message) s).getBody())));
+            final String stopNeedleRecipients = StringUtils.randomString(7);
+            final StanzaFilter stopDetectorRecipients = new AndFilter(FromMatchesFilter.createFull(conOne.getUser()), StanzaTypeFilter.MESSAGE, new StanzaIdFilter(stopNeedleRecipients));
 
             for (int i = 0; i < resourcePriorities.size(); i++) {
                 final XMPPConnection resourceConnection = i == 0 ? conTwo : additionalConnections.get(i - 1);
@@ -534,7 +534,7 @@ public class RFC6121Section8_5_2_1_3_IqIntegrationTest extends AbstractSmackInte
 
             // Informs intended recipients that the test is over.
             for (final FullJid recipient : allResources) {
-                conOne.sendStanza(StanzaBuilder.buildMessage().setBody(stopNeedleRecipients).to(recipient).build());
+                conOne.sendStanza(StanzaBuilder.buildMessage(stopNeedleRecipients).setBody("You can stop listening now, stanzas for '" + stopNeedleRecipients + "' are guaranteed to have been processed.").to(recipient).build());
             }
 
             try {
