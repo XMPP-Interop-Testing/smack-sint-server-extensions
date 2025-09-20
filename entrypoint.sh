@@ -112,7 +112,17 @@ if [ ! -v $ACCOUNTTWOUSERNAME ] && [ -v $ACCOUNTTWOPASSWORD ]; then echo "Test a
 if [ ! -v $ACCOUNTTWOPASSWORD ] && [ -v $ACCOUNTTWOUSERNAME ]; then echo "Test account 'two' password is not set, but username is. Credentials must be specified as a pair"; exit 1; fi
 if [ ! -v $ACCOUNTTHREEUSERNAME ] && [ -v $ACCOUNTTHREEPASSWORD ]; then echo "Test account 'three' username is not set, but password is. Credentials must be specified as a pair"; exit 1; fi
 if [ ! -v $ACCOUNTTHREEPASSWORD ] && [ -v $ACCOUNTTHREEUSERNAME ]; then echo "Test account 'three' password is not set, but username is. Credentials must be specified as a pair"; exit 1; fi
-# TODO check if _all three_ accounts are provisioned (or none at all).
+
+# Check if _all three_ accounts are provisioned (or none at all).
+ACCOUNT_COUNT=0
+if [[ -n "$ACCOUNTONEUSERNAME" ]]; then ((ACCOUNT_COUNT++)); fi
+if [[ -n "$ACCOUNTTWOUSERNAME" ]]; then ((ACCOUNT_COUNT++)); fi
+if [[ -n "$ACCOUNTTHREEUSERNAME" ]]; then ((ACCOUNT_COUNT++)); fi
+
+if [[ $ACCOUNT_COUNT -ne 0 ]] && [[ $ACCOUNT_COUNT -ne 3 ]]; then
+    echo "You must specify three test accounts, or none at all"
+    exit 1
+fi
 
 JAVACMD=()
 JAVACMD+=("java")
