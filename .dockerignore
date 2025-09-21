@@ -8,6 +8,7 @@ Dockerfile
 .editorconfig
 .settings
 .vscode
+test
 
 # Any already built stuff.
 target
