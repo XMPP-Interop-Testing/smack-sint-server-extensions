@@ -54,3 +54,16 @@ jobs:
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 https://api.github.com/repos/XMPP-Interop-Testing/xmpp-interop-tests-circleci-orb/dispatches \
                 -d '{"event_type":"trigger-workflow","client_payload":{"version":"${{ needs.prepare.outputs.version }}"}}'
+
+  gitlab-component:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: Trigger GitLab pipeline
+        run: |
+          curl --request POST \
+               --form "token=${{ secrets.TOKEN_FOR_GITLAB_COMPONENT_REPO }}" \
+               --form "ref=main" \
+               --form "variables[VERSION]=${{ needs.prepare.outputs.version }}" \
+               --form "variables[TRIGGER_SOURCE]=github" \
+               --url "https://gitlab.com/api/v4/projects/56599920/trigger/pipeline"
