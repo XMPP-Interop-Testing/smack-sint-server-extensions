@@ -124,6 +124,12 @@ if [[ $ACCOUNT_COUNT -ne 0 ]] && [[ $ACCOUNT_COUNT -ne 3 ]]; then
     exit 1
 fi
 
+if [[ $ACCOUNT_COUNT -eq 3 ]] && [[ -n "$ADMINACCOUNTUSERNAME" ]]; then
+    echo "You can specify either 3 individual test accounts or an admin account, or neither, but not both."
+    exit 1
+fi
+
+
 JAVACMD=()
 JAVACMD+=("java")
 JAVACMD+=("-Dsinttest.service=$DOMAIN")
