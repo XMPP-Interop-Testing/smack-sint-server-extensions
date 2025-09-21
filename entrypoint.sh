@@ -183,4 +183,9 @@ JAVACMD+=("/usr/local/sintse/sintse.jar")
 
 echo "Running: ${JAVACMD[@]}"
 
+if [ "$BATS_TEST_MODE" == "true" ]; then
+  # In BATS test mode, don't execute - we've already printed what we would've done just above.
+  exit 0
+fi
+
 "${JAVACMD[@]}"

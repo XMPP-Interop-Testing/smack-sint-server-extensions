@@ -1,0 +1,18 @@
+name: Test Entrypoint Script
+
+on: [pull_request]
+
+jobs:
+  entrypoint-bats:
+    name: Test Entrypoint with BATS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bats
+        run: |
+          sudo apt update
+          sudo apt install -y bats bats-assert bats-support
+      - name: Run entrypoint.bats
+        run: |
+          export BATS_TEST_MODE=true  # Disable java execution in the entrypoint script
+          bats ./test/entrypoint.bats
