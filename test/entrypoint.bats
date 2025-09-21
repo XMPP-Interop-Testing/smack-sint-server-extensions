@@ -32,6 +32,12 @@ setup() {
   assert_output --partial "You can specify either 3 individual test accounts or an admin account, or neither, but not both."
 }
 
+@test "fails if admin username is specified without a password" {
+  run "$SCRIPT" --adminAccountUsername=foo
+  assert_failure
+  assert_output --partial "Admin password is not set, but username is. Credentials must be specified as a pair"
+}
+
 @test "succeeds with three accounts only" {
   run "$SCRIPT" --accountOneUsername=foo --accountOnePassword=bar --accountTwoUsername=foo2 --accountTwoPassword=bar2 --accountThreeUsername=foo3 --accountThreePassword=bar3
   assert_success
@@ -50,4 +56,18 @@ setup() {
   run "$SCRIPT"
   assert_success
   assert_output --partial "Running: java -Dsinttest"
+}
+
+@test "succeeds when parameters are provided with spaces" {
+  run "$SCRIPT" --domain test.example
+  assert_success
+  assert_output --partial "Running: java -Dsinttest"
+  assert_output --partial "-Dsinttest.service=test.example"
+}
+
+@test "succeeds when parameters are provided with equals" {
+  run "$SCRIPT" --domain=test.example
+  assert_success
+  assert_output --partial "Running: java -Dsinttest"
+  assert_output --partial "-Dsinttest.service=test.example"
 }
