@@ -53,7 +53,7 @@ jobs:
                 -H "Authorization: Bearer ${{ secrets.TOKEN_FOR_ORB_REPO }}" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 https://api.github.com/repos/XMPP-Interop-Testing/xmpp-interop-tests-circleci-orb/dispatches \
-                -d '{"event_type":"trigger-workflow","client_payload":{"version":"${{ needs.prepare.outputs.version }}"}}'
+                -d '{"event_type":"trigger-workflow","client_payload":{"version":"'"${{ needs.prepare.outputs.version }}"'"}}'
 
   gitlab-component:
     runs-on: ubuntu-latest
@@ -67,3 +67,27 @@ jobs:
                --form "variables[VERSION]=${{ needs.prepare.outputs.version }}" \
                --form "variables[TRIGGER_SOURCE]=github" \
                --url "https://gitlab.com/api/v4/projects/56599920/trigger/pipeline"
+
+  forgejo-action:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: Trigger Codeberg workflow
+        run: |
+          VERSION='${{ needs.prepare.outputs.version }}'
+          
+          INPUTS='{
+            "version": "'"${VERSION}"'"
+          }'
+        
+          DATA='{
+            "ref": "main",
+            "inputs": '"${INPUTS}"'
+          }'
+        
+          curl --request POST \
+               --url https://codeberg.org/api/v1/repos/XMPP-Interop-Testing/xmpp-interop-tests-forgejo-action/actions/workflows/upstream_release.yml/dispatches \
+               --header 'accept: application/json' \
+               --header 'content-type: application/json' \
+               --header 'authorization: token ${{ secrets.TOKEN_FOR_CODEBERG_FORGEJO_REPO }}' \
+               --data "${DATA}"
