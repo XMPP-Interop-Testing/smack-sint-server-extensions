@@ -163,10 +163,6 @@ public class RFC6121Section8_5_2_2_3_IqIntegrationTest extends AbstractSmackInte
      */
     public void doTestSupportedIQ(final IQ.Type iqType) throws Exception
     {
-        if (!ServiceDiscoveryManager.getInstanceFor(conOne).supportsFeature(conOne.getXMPPServiceDomain(), "jabber:iq:roster")) {
-            throw new TestNotPossibleException("The 'jabber:iq:roster' feature is not advertised by the server");
-        }
-
         // Setup test fixture.
         final RosterPacket testStanza = new RosterPacket();
         testStanza.setType(iqType); // Neither a 'set' nor 'get' roster request to another person's JID is expected to change state of their roster (so it can be considered quite safe to use for testing purposes).
