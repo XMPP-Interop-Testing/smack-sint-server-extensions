@@ -74,7 +74,7 @@ public class PubSubExtIntegrationTest extends AbstractSmackIntegrationTest {
         }
         pubSubManagerOne = PubSubManager.getInstanceFor(conOne, pubSubService);
         if (!pubSubManagerOne.canCreateNodesAndPublishItems()) {
-            throw new TestNotPossibleException("PubSub service does not allow node creation");
+            throw new TestNotPossibleException("PubSub service does not allow test user to create nodes and publish items.");
         }
         pubSubManagerTwo = PubSubManager.getInstanceFor(conTwo, pubSubService);
     }

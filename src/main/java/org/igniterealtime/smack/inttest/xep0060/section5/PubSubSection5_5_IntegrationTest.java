@@ -43,8 +43,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  * @see <a href="https://xmpp.org/extensions/xep-0060.html#entity-discoveritems">XEP-0060: Publish-Subscribe</a>
  */
-// TODO: Some of this (around 'Collection Nodes' and hierarchy) should be part for XEP-0248, not XEP-0060, although as of version 1.26.0 of XEP-0060 it is in that specification. Monitor later versions of the specification for changes (as suggested in https://mail.jabber.org/hyperkitty/list/standards@xmpp.org/thread/COEJQNNCEHHT2WFF46CWYYYVCL2NIOE4/ )
-@SpecificationReference(document = "XEP-0060", version = "1.26.0")
+@SpecificationReference(document = "XEP-0060", version = "1.28.0")
 public class PubSubSection5_5_IntegrationTest extends AbstractSmackIntegrationTest
 {
     protected final DomainBareJid pubsubServiceAddress;
@@ -75,7 +74,7 @@ public class PubSubSection5_5_IntegrationTest extends AbstractSmackIntegrationTe
             config.setNodeType(NodeType.leaf);
             node = (LeafNode) pubSubManagerOne.createNode(nodeId, config);
         } catch (Exception e) {
-            throw new TestNotPossibleException("Unable to create a Leaf Node.", e);
+            throw new TestNotPossibleException("PubSub service does not allow test user to create leaf nodes.", e);
         }
         try {
             node.publish(new PayloadItem<>(itemId, GeoLocation.builder().setDescription(StringUtils.randomString(5)).build()));
@@ -85,7 +84,7 @@ public class PubSubSection5_5_IntegrationTest extends AbstractSmackIntegrationTe
             } catch (XMPPException.XMPPErrorException e1) {
                 LOGGER.log(Level.WARNING, "Unable to delete node that was created in the test fixture. Node ID: " + nodeId, e1);
             }
-            throw new TestNotPossibleException("Unable to publish an Item to a Leaf Node.", e);
+            throw new TestNotPossibleException("PubSub service does not allow test user to publish an item to a leaf node.", e);
         }
         final ServiceDiscoveryManager serviceDiscoveryManager = ServiceDiscoveryManager.getInstanceFor(conOne);
 
@@ -109,82 +108,6 @@ public class PubSubSection5_5_IntegrationTest extends AbstractSmackIntegrationTe
                 pubSubManagerOne.deleteNode(nodeId);
             } catch (XMPPException.XMPPErrorException e) {
                 LOGGER.log(Level.WARNING, "Unable to delete leaf node that was created in the test fixture. Node ID: " + nodeId, e);
-            }
-        }
-    }
-
-    /**
-     * Asserts that the pub/sub service responds to a disco#item request made against a leaf node (that exists in a
-     * hierarchy) with items published to it.
-     */
-    @SmackIntegrationTest(section = "5.5", quote = "To discover the published items which exist on the service for a specific node, an entity MAY send a \"disco#items\" request to the node itself, and the service MAY return each item as a Service Discovery <item/> element. The 'name' attribute of each Service Discovery item MUST contain its ItemID and the item MUST NOT possess a 'node' attribute.")
-    public void testDiscoItemsNestedLeafNode() throws TestNotPossibleException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException
-    {
-        // Setup test fixture.
-        final String nodeIdParent = "testparent-" + StringUtils.randomString(5);
-        final String nodeIdChild = "testchild-" + StringUtils.randomString(5);
-        final String itemId = "testitem-" + StringUtils.randomString(5);
-        final PubSubManager pubSubManagerOne = PubSubManager.getInstanceFor(conOne);
-        final LeafNode node;
-        try {
-            final FillableConfigureForm configParent = pubSubManagerOne.getDefaultConfiguration().getFillableForm();
-            configParent.setNodeType(NodeType.collection);
-            pubSubManagerOne.createNode(nodeIdParent, configParent);
-        } catch (Exception e) {
-            throw new TestNotPossibleException("Unable to create a node hierarchy.", e);
-        }
-
-        try {
-            final FillableConfigureForm configChild = pubSubManagerOne.getDefaultConfiguration().getFillableForm();
-            configChild.setNodeType(NodeType.leaf);
-            configChild.setCollection(nodeIdParent);
-            node = (LeafNode) pubSubManagerOne.createNode(nodeIdChild, configChild);
-        } catch (Exception e) {
-            try {
-                pubSubManagerOne.deleteNode(nodeIdParent);
-            } catch (XMPPException.XMPPErrorException e1) {
-                LOGGER.log(Level.WARNING, "Unable to delete collection node that was created in the test fixture. Node ID: " + nodeIdParent, e1);
-            }
-            throw new TestNotPossibleException("Unable to create a node hierarchy.", e);
-        }
-
-        try {
-            node.publish(new PayloadItem<>(itemId, GeoLocation.builder().setDescription(StringUtils.randomString(5)).build()));
-        } catch (XMPPException.XMPPErrorException e) {
-            try {
-                pubSubManagerOne.deleteNode(nodeIdChild);
-            } catch (XMPPException.XMPPErrorException e1) {
-                LOGGER.log(Level.WARNING, "Unable to delete node that was created in the test fixture. Node ID: " + nodeIdChild, e1);
-            }
-            throw new TestNotPossibleException("Unable to publish an Item to a Leaf Node.", e);
-        }
-        final ServiceDiscoveryManager serviceDiscoveryManager = ServiceDiscoveryManager.getInstanceFor(conOne);
-
-        try {
-            // Execute system under test.
-            final List<DiscoverItems.Item> items = serviceDiscoveryManager.discoverItems(pubsubServiceAddress, nodeIdChild).getItems();
-            if (items.isEmpty()) {
-                throw new TestNotPossibleException("PubSub service does not support Discover Items for a Node");
-            }
-
-            // Verify results.
-            assertTrue(items.stream().anyMatch(item -> itemId.equals(item.getName())),
-                "Expected the response to the service discovery items request that was made by '" + conOne.getUser() + "' to leaf node '" + nodeIdChild + "' of service '" + pubsubServiceAddress + "' to contain an item with name '" + itemId+ "' which matches the itemID of an item that is known to have been published to the node (but no such item was returned).");
-            assertTrue(items.stream().noneMatch(item -> item.getNode() != null),
-                "Expected the response to the service discovery items request that was made by '" + conOne.getUser() + "' to leaf node '" + nodeIdChild + "' of service '" + pubsubServiceAddress + "' to contain no items with a 'node' attribute (but at least one item with a node attribute was returned).");
-        } catch (XMPPException.XMPPErrorException e) {
-            throw new TestNotPossibleException("PubSub service does not support Discover Items for a Node", e);
-        } finally {
-            // Tear down test fixture.
-            try {
-                pubSubManagerOne.deleteNode(nodeIdChild);
-            } catch (XMPPException.XMPPErrorException e) {
-                LOGGER.log(Level.WARNING, "Unable to delete leaf node that was created in the test fixture. Node ID: " + nodeIdChild, e);
-            }
-            try {
-                pubSubManagerOne.deleteNode(nodeIdParent);
-            } catch (XMPPException.XMPPErrorException e) {
-                LOGGER.log(Level.WARNING, "Unable to delete collection node that was created in the test fixture. Node ID: " + nodeIdParent, e);
             }
         }
     }

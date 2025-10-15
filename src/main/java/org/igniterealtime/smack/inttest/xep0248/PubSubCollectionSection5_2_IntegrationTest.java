@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.igniterealtime.smack.inttest.xep0060.section5;
+package org.igniterealtime.smack.inttest.xep0248;
 
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
@@ -37,18 +37,17 @@ import static org.igniterealtime.smack.inttest.xep0060.PubSubUtils.assertContain
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Tests as defined in paragraph 5.2 "Discover Nodes" of section 5 "Entity Use Cases" of XEP-0060 "Publish-Subscribe".
+ * Tests as defined in paragraph 5.2 "Discover Nodes" of section 5 "Entity Use Cases" of XEP-0248 "PubSub Collection Nodes".
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
- * @see <a href="https://xmpp.org/extensions/xep-0060.html#entity-nodes">XEP-0060: Publish-Subscribe</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0248.html#disco-nodes">XEP-0248: PubSub Collection Nodes</a>
  */
-// TODO: Much of this should be part for XEP-0248, not XEP-0060, although as of version 1.26.0 of XEP-0060 it is in that specification. 1.26.0 does not require discovery of leaf nodes, which hopefully changes in future versions. Monitor later versions of the specification for changes (as suggested in https://mail.jabber.org/hyperkitty/list/standards@xmpp.org/thread/COEJQNNCEHHT2WFF46CWYYYVCL2NIOE4/ )
-@SpecificationReference(document = "XEP-0060", version = "1.26.0")
-public class PubSubSection5_2_IntegrationTest extends AbstractSmackIntegrationTest
+@SpecificationReference(document = "XEP-0248", version = "0.5.0")
+public class PubSubCollectionSection5_2_IntegrationTest extends AbstractSmackIntegrationTest
 {
     protected final DomainBareJid pubsubServiceAddress;
 
-    public PubSubSection5_2_IntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
+    public PubSubCollectionSection5_2_IntegrationTest(SmackIntegrationTestEnvironment environment) throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException, InterruptedException, TestNotPossibleException
     {
         super(environment);
         pubsubServiceAddress = PubSubManager.getPubSubService(conOne);
@@ -72,7 +71,7 @@ public class PubSubSection5_2_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service responds to a disco#item request.
      */
-    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes (by means of Collection Nodes), it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
+    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes, it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
     public void testDiscoItemNonErrorResponse() throws SmackException.NotConnectedException, InterruptedException
     {
         // Setup test fixture.
@@ -93,7 +92,7 @@ public class PubSubSection5_2_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service shows a collection node in its disco#item response.
      */
-    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes (by means of Collection Nodes), it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
+    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes, it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
     public void testDiscoItemContainsCollectionNode() throws SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException, TestNotPossibleException
     {
         // Setup test fixture.
@@ -132,7 +131,7 @@ public class PubSubSection5_2_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service shows a collection node in its disco#item response.
      */
-    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes (by means of Collection Nodes), it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
+    @SmackIntegrationTest(section = "5.2", quote = "If a service implements a hierarchy of nodes, it MUST also enable entities to discover the nodes in that hierarchy by means of the Service Discovery protocol [...]")
     public void testDiscoItemContainsNestedCollectionNode() throws SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException, TestNotPossibleException
     {
         // Setup test fixture.
