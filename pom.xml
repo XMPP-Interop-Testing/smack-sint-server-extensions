@@ -14,6 +14,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <smack.version>4.5.0-rc2-SNAPSHOT</smack.version>
+        <!-- Defaults for 'mvn exec:java'. Override on the command line, e.g. -Dsinttest.securityMode=required -->
+        <sinttest.securityMode>disabled</sinttest.securityMode>
+        <sinttest.acceptAllCertificates>false</sinttest.acceptAllCertificates>
     </properties>
 
     <licenses>
@@ -111,7 +114,11 @@
                         </systemProperty>
                         <systemProperty>
                             <key>sinttest.securityMode</key>
-                            <value>disabled</value>
+                            <value>${sinttest.securityMode}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>sinttest.acceptAllCertificates</key>
+                            <value>${sinttest.acceptAllCertificates}</value>
                         </systemProperty>
                     </systemProperties>
                 </configuration>

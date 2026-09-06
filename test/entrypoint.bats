@@ -78,3 +78,25 @@ setup() {
   assert_output --partial "Running: java -Dsinttest"
   assert_output --partial "-Dsinttest.failOnImpossibleTest=true"
 }
+
+@test "defaults securityMode to 'disabled' and omits acceptAllCertificates" {
+  run "$SCRIPT"
+  assert_success
+  assert_output --partial "-Dsinttest.securityMode=disabled"
+  refute_output --partial "-Dsinttest.acceptAllCertificates"
+}
+
+@test "successfully applies 'securityMode'" {
+  run "$SCRIPT" --securityMode=required
+  assert_success
+  assert_output --partial "Running: java -Dsinttest"
+  assert_output --partial "-Dsinttest.securityMode=required"
+}
+
+@test "successfully applies 'acceptAllCertificates'" {
+  run "$SCRIPT" --securityMode=required --acceptAllCertificates
+  assert_success
+  assert_output --partial "Running: java -Dsinttest"
+  assert_output --partial "-Dsinttest.securityMode=required"
+  assert_output --partial "-Dsinttest.acceptAllCertificates=true"
+}
