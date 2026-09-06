@@ -358,7 +358,7 @@ public class HttpFileUploadExtIntegrationTest extends AbstractSmackIntegrationTe
         // Setup test fixture.
         final IqProvider<IQ> oldProvider = ProviderManager.getIQProvider("slot", "urn:xmpp:http:upload:0");
         ProviderManager.addIQProvider("slot", "urn:xmpp:http:upload:0", new SlotRawProvider());
-        final ExtensionElementProvider<ExtensionElement> oldExtensionProvider = ProviderManager.getExtensionProvider(RetryError.ELEMENT, RetryError.NAMESPACE);
+        final ExtensionElementProvider<? extends ExtensionElement> oldExtensionProvider = ProviderManager.getExtensionProvider(RetryError.ELEMENT, RetryError.NAMESPACE);
         ProviderManager.addExtensionProvider(RetryError.ELEMENT, RetryError.NAMESPACE, new RetryErrorProvider());
         try {
             // Execute system-under-test (attempt to hit a rate-limit).
