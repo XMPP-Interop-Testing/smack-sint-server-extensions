@@ -69,7 +69,7 @@ public class FastNegotiationIntegrationTest extends AbstractSmackSpecificLowLeve
         return result;
     }
 
-    @SmackIntegrationTest(section = "Server provides token to client", quote =
+    @SmackIntegrationTest(section = "3.3", quote =
         "The <token/> element MUST possess the following attributes: 'token', 'expiry'.")
     public void testTokenElementHasRequiredAttributes() throws Exception
     {
@@ -98,7 +98,7 @@ public class FastNegotiationIntegrationTest extends AbstractSmackSpecificLowLeve
         }
     }
 
-    @SmackIntegrationTest(section = "Client requests token invalidation", quote =
+    @SmackIntegrationTest(section = "3.6", quote =
         "Upon successful authentication with the 'invalidate' attribute set, the server MUST immediately invalidate "
       + "the token and prevent its use for future authentication attempts. The server MUST NOT include a new token "
       + "in the response (even if the token was due for rotation), unless the client also included a FAST "
@@ -163,7 +163,7 @@ public class FastNegotiationIntegrationTest extends AbstractSmackSpecificLowLeve
         }
     }
 
-    @SmackIntegrationTest(section = "Server advertises support for FAST", quote =
+    @SmackIntegrationTest(section = "3.1", quote =
         "There SHOULD be at least one mechanism capable of channel binding [...] A set of compatible mechanisms can "
       + "be found in [XEP-0824: SASL HT].")
     public void testChannelBindingCapableMechanismAuthenticatesSuccessfully() throws Exception

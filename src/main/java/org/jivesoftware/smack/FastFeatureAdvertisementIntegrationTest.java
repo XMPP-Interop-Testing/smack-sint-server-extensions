@@ -52,7 +52,7 @@ public class FastFeatureAdvertisementIntegrationTest extends AbstractSmackSpecif
         }
     }
 
-    @SmackIntegrationTest(section = "Security Considerations", quote =
+    @SmackIntegrationTest(section = "6", quote =
         "FAST authentication MUST only be performed over a secure connection (e.g. using TLS with verified certificates).")
     public void testFastNotOfferedPreTls() throws Exception
     {
@@ -106,7 +106,7 @@ public class FastFeatureAdvertisementIntegrationTest extends AbstractSmackSpecif
         return buffer.toString();
     }
 
-    @SmackIntegrationTest(section = "Server advertises support for FAST", quote =
+    @SmackIntegrationTest(section = "3.1", quote =
         "There SHOULD be at least one mechanism capable of channel binding, and there SHOULD be at least one "
       + "mechanism without channel binding.")
     public void testAdvertisedMechanismsIncludeBothChannelBindingTypes() throws Exception

@@ -132,7 +132,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         return new Sasl2Nonza.UserAgent(UUID.randomUUID().toString(), "smack-sint-server-extensions", null);
     }
 
-    @SmackIntegrationTest(section = "Server provides token to client", quote =
+    @SmackIntegrationTest(section = "3.3", quote =
         "The server MUST NOT provide a token unless the client has been successfully and fully authenticated, "
       + "including any necessary post-authentication tasks (such as multi-factor authentication).")
     public void testTokenNotIssuedOnFailedAuthentication() throws Exception
@@ -160,7 +160,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Client authenticates using FAST", quote =
+    @SmackIntegrationTest(section = "3.4", quote =
         "Servers MUST bind tokens to the mechanism selected by the client in its original request, and reject "
       + "attempts to use them with other mechanisms. For example, if the client selected a mechanism capable of "
       + "channel binding, an attempt to use a mechanism without channel binding MUST fail even if the token would "
@@ -218,7 +218,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Server responsibilities", quote =
+    @SmackIntegrationTest(section = "4.2", quote =
         "If the server no longer trusts a token, it MUST instead fail the authentication (returning the SASL "
       + "'credentials-expired' error condition), and then allow the client to authenticate using other mechanisms "
       + "(e.g. password based).")
@@ -277,7 +277,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Server advertises support for FAST", quote =
+    @SmackIntegrationTest(section = "3.1", quote =
         "These mechanisms MUST support authenticating with a token (instead of a password) [...]")
     public void testEveryAdvertisedNoneMechanismAuthenticatesSuccessfully() throws Exception
     {
@@ -338,7 +338,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Server initiates token rotation", quote =
+    @SmackIntegrationTest(section = "3.5", quote =
         "Upon successful use of any token, the server MUST invalidate all tokens issued to the same client with an "
       + "earlier expiry than the current token (even if those tokens have not yet reached their expiry time).")
     public void testUsingNewerTokenInvalidatesOlderUnusedToken() throws Exception
@@ -401,7 +401,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Client authenticates using FAST", quote =
+    @SmackIntegrationTest(section = "3.4", quote =
         "To indicate that it is providing a token, the client MUST include a <fast/> element qualified by the "
       + "'urn:xmpp:fast:0' namespace, within its SASL2 authentication request.")
     public void testFastMechanismWithoutFastElementFailsWithMalformedRequest() throws Exception
@@ -430,7 +430,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Client responsibilities", quote =
+    @SmackIntegrationTest(section = "4.1", quote =
         "Clients wishing to use FAST authentication MUST provide the authenticating JID in the secure stream's "
       + "'from' attribute. They MUST also provide the a SASL2 <user-agent> element with an 'id' attribute (both "
       + "of these values are discussed in more detail in XEP-0388).")
@@ -463,7 +463,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         }
     }
 
-    @SmackIntegrationTest(section = "Client performs initial authentication", quote =
+    @SmackIntegrationTest(section = "3.2", quote =
         "To request a FAST token, a client MUST include a <request-token/> element qualified by the "
       + "'urn:xmpp:fast:0' namespace. The element MUST contain a 'mechanism' attribute, the value of which MUST "
       + "be one of the FAST mechanisms advertised by the server.")
