@@ -17,16 +17,21 @@ package org.jivesoftware.smack;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import org.jivesoftware.smack.XMPPException.FailedNonzaException;
 import org.jivesoftware.smack.bind2.element.Bind2Elements;
 import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection;
+import org.jivesoftware.smack.filter.StanzaFilter;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.sasl.packet.Sasl2Nonza;
@@ -38,6 +43,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -181,6 +187,49 @@ public class Bind2NegotiationIntegrationTest extends AbstractSmackSpecificLowLev
                 "Expected a '<bound/>' element in the '<success/>' response to a bind request that included a XEP-0352 '<inactive/>' element.");
         } finally {
             connection.disconnect();
+        }
+    }
+
+    @SmackIntegrationTest(section = "3.2", quote =
+        "Clear the offline messages for this user, if any, without sending them (as they will be provided by MAM).")
+    public void testOfflineMessagesNotDeliveredOnBind() throws Exception
+    {
+        final List<ModularXmppClientToServerConnection> connections = getSpecificUnconnectedConnections(2);
+        final ModularXmppClientToServerConnection sender = connections.get(0);
+        final ModularXmppClientToServerConnection recipient = connections.get(1);
+        try {
+            sender.connect();
+            sender.login();
+
+            final EntityBareJid recipientBareJid = JidCreate.entityBareFrom(
+                recipient.getConfiguration().getUsername() + "@" + recipient.getConfiguration().getXMPPServiceDomain());
+
+            // Send a message to the recipient while it is genuinely offline (never yet connected), so the server
+            // has to queue it rather than deliver it live.
+            final String marker = "smack-sint-offline-marker-" + StringUtils.insecureRandomString(16);
+            final Message offlineMessage = sender.getStanzaFactory().buildMessageStanza()
+                .to(recipientBareJid).ofType(Message.Type.chat).setBody(marker).build();
+            sender.sendStanza(offlineMessage);
+            Thread.sleep(1000); // give the server a moment to store the offline message before the recipient binds.
+
+            // Bind the recipient via Bind 2 (this also sends the connection's initial available presence, by
+            // default, as part of login()) and listen for the marker message arriving unprompted - whether
+            // immediately upon bind, or upon presence, which is the classic legacy trigger for an offline-message
+            // flood, in case an implementation only moved *part* of its flush logic to this newer requirement.
+            recipient.connect();
+            final StanzaFilter markerFilter = stanza -> stanza instanceof Message && marker.equals(((Message) stanza).getBody());
+            try (StanzaCollector collector = recipient.createStanzaCollector(markerFilter)) {
+                recipient.login();
+
+                final Stanza delivered = collector.nextResult(5000);
+                assertNull(delivered, "Expected the previously-queued offline message (marker '" + marker + "') to "
+                    + "not be delivered at all as a result of binding via Bind 2 (including the connection's "
+                    + "initial presence, sent automatically as part of login()), since the server MUST clear "
+                    + "queued offline messages without sending them. Received: " + delivered);
+            }
+        } finally {
+            sender.disconnect();
+            recipient.disconnect();
         }
     }
 }
