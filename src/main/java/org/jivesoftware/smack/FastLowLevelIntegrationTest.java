@@ -400,4 +400,105 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
             connection.disconnect();
         }
     }
+
+    @SmackIntegrationTest(section = "Client authenticates using FAST", quote =
+        "To indicate that it is providing a token, the client MUST include a <fast/> element qualified by the "
+      + "'urn:xmpp:fast:0' namespace, within its SASL2 authentication request.")
+    public void testFastMechanismWithoutFastElementFailsWithMalformedRequest() throws Exception
+    {
+        // This exercises the server's enforcement of the quoted client MUST: an HT-mechanism authentication
+        // attempt that omits the required '<fast/>' element altogether. Openfire's FastRequest.from() validates
+        // this before the SASL mechanism itself ever evaluates the initial-response, so the response below need
+        // not be cryptographically meaningful - only well-formed enough to reach that check.
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final CharSequence username = connection.getConfiguration().getUsername();
+
+            final String initialResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(),
+                "irrelevant-token-secret-" + StringUtils.insecureRandomString(16));
+            final Sasl2Nonza.Authenticate authenticate = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", initialResponse, newUserAgent());
+
+            final FailedNonzaException e = assertThrows(FailedNonzaException.class,
+                () -> connection.sendAndWaitForResponse(authenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class),
+                "Expected an HT-mechanism authentication attempt with no '<fast/>' element to be rejected.");
+            final Sasl2Nonza.Failure failure = (Sasl2Nonza.Failure) e.getNonza();
+            assertEquals(SASLError.malformed_request, failure.getSASLError(), "Expected the failure condition to "
+                + "be 'malformed-request' (but it was '" + failure.getSASLErrorString() + "').");
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @SmackIntegrationTest(section = "Client responsibilities", quote =
+        "Clients wishing to use FAST authentication MUST provide the authenticating JID in the secure stream's "
+      + "'from' attribute. They MUST also provide the a SASL2 <user-agent> element with an 'id' attribute (both "
+      + "of these values are discussed in more detail in XEP-0388).")
+    public void testRequestTokenWithoutUserAgentFailsWithMalformedRequest() throws Exception
+    {
+        // Exercises only the '<user-agent/>' half of this MUST: the stream 'from' half is supplied automatically
+        // by Smack's own connection setup for every test in this project (see the raw-nonza test pattern notes),
+        // and there is no straightforward way to suppress it via this connection API without constructing an
+        // entirely separate raw-socket stream (as testFastNotOfferedPreTls does). Both sub-conditions are enforced
+        // by the exact same check server-side (FastRequest.from()'s single 'userAgentId == null || expected.isEmpty()'
+        // guard), so exercising one half is sufficient to confirm that check fires as expected.
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final CharSequence username = connection.getConfiguration().getUsername();
+            final String password = connection.getConfiguration().getPassword();
+
+            final Sasl2Nonza.Authenticate authenticate = new Sasl2Nonza.Authenticate("PLAIN",
+                plainInitialResponse(username, password), null, // no <user-agent/>
+                java.util.Collections.singletonList(new FastElements.RequestToken("HT-SHA-256-NONE")));
+
+            final FailedNonzaException e = assertThrows(FailedNonzaException.class,
+                () -> connection.sendAndWaitForResponse(authenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class),
+                "Expected a FAST '<request-token/>' sent without a '<user-agent/>' element to be rejected.");
+            final Sasl2Nonza.Failure failure = (Sasl2Nonza.Failure) e.getNonza();
+            assertEquals(SASLError.malformed_request, failure.getSASLError(), "Expected the failure condition to "
+                + "be 'malformed-request' (but it was '" + failure.getSASLErrorString() + "').");
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @SmackIntegrationTest(section = "Client performs initial authentication", quote =
+        "To request a FAST token, a client MUST include a <request-token/> element qualified by the "
+      + "'urn:xmpp:fast:0' namespace. The element MUST contain a 'mechanism' attribute, the value of which MUST "
+      + "be one of the FAST mechanisms advertised by the server.")
+    public void testRequestTokenForUnadvertisedMechanismFailsWithInvalidMechanism() throws Exception
+    {
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final FastElements.Fast fast = FastTestUtils.requireFast(connection);
+
+            // A recognised FAST mechanism name (defined by the SASL-HT draft's naming convention), but one this
+            // deployment does not advertise - it does not offer the 'tls-unique' channel-binding type (only NONE
+            // and ENDP mechanisms were observed advertised). Guarded below rather than assumed, since this is an
+            // environment fact, not a protocol guarantee.
+            final String candidateMechanism = "HT-SHA-256-UNIQ";
+            if (fast.getMechanisms().contains(candidateMechanism)) {
+                throw new TestNotPossibleException("Service unexpectedly advertises '" + candidateMechanism
+                    + "'; this test needs a recognised-but-unadvertised FAST mechanism name to name in a "
+                    + "'<request-token/>' request.");
+            }
+
+            final CharSequence username = connection.getConfiguration().getUsername();
+            final String password = connection.getConfiguration().getPassword();
+            final Sasl2Nonza.Authenticate authenticate = new Sasl2Nonza.Authenticate("PLAIN",
+                plainInitialResponse(username, password), newUserAgent(),
+                java.util.Collections.singletonList(new FastElements.RequestToken(candidateMechanism)));
+
+            final FailedNonzaException e = assertThrows(FailedNonzaException.class,
+                () -> connection.sendAndWaitForResponse(authenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class),
+                "Expected a '<request-token/>' naming an unadvertised (but recognised) mechanism to be rejected.");
+            final Sasl2Nonza.Failure failure = (Sasl2Nonza.Failure) e.getNonza();
+            assertEquals(SASLError.invalid_mechanism, failure.getSASLError(), "Expected the failure condition to "
+                + "be 'invalid-mechanism' (but it was '" + failure.getSASLErrorString() + "').");
+        } finally {
+            connection.disconnect();
+        }
+    }
 }
