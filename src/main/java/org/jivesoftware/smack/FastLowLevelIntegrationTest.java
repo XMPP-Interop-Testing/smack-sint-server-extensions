@@ -337,4 +337,67 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
             connection.disconnect();
         }
     }
+
+    @SmackIntegrationTest(section = "Server initiates token rotation", quote =
+        "Upon successful use of any token, the server MUST invalidate all tokens issued to the same client with an "
+      + "earlier expiry than the current token (even if those tokens have not yet reached their expiry time).")
+    public void testUsingNewerTokenInvalidatesOlderUnusedToken() throws Exception
+    {
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final CharSequence username = connection.getConfiguration().getUsername();
+            final String password = connection.getConfiguration().getPassword();
+
+            // The user-agent id must stay stable across every step below, so the server treats every request as
+            // coming from the same "client installation".
+            final Sasl2Nonza.UserAgent userAgent = newUserAgent();
+
+            // Step 1: obtain a first token T1, via a normal password-based login.
+            final Sasl2Nonza.Authenticate requestT1 = new Sasl2Nonza.Authenticate("PLAIN",
+                plainInitialResponse(username, password), userAgent,
+                java.util.Collections.singletonList(new FastElements.RequestToken("HT-SHA-256-NONE")));
+            final Sasl2Nonza.Success successT1 = connection.sendAndWaitForResponse(requestT1, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(successT1, "Expected the service to authenticate '" + username + "' using PLAIN.");
+            final FastElements.Token tokenT1 = successT1.getExtension(FastElements.Token.class);
+            assertNotNull(tokenT1, "Expected a first FAST token (T1) to have been issued.");
+            connection.disconnect();
+
+            // Step 2: redeem T1, and in the same exchange, request a second token T2. T1 is thereby established as
+            // a genuinely-used, verified token, while T2 is issued but not yet used - so at this point both are
+            // live: T1 (used, earlier expiry) and T2 (unused, later expiry, since it was issued afterwards).
+            connection.connect();
+            final String initialResponseT1 = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenT1.getToken());
+            final Sasl2Nonza.Authenticate redeemT1AndRequestT2 = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", initialResponseT1,
+                userAgent, java.util.Arrays.asList(new FastElements.Fast(1L, null), new FastElements.RequestToken("HT-SHA-256-NONE")));
+            final Sasl2Nonza.Success successT2 = connection.sendAndWaitForResponse(redeemT1AndRequestT2, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(successT2, "Expected redemption of T1 (with an inline request for a second token) to succeed.");
+            final FastElements.Token tokenT2 = successT2.getExtension(FastElements.Token.class);
+            assertNotNull(tokenT2, "Expected a second FAST token (T2) to have been issued alongside T1's redemption.");
+            connection.disconnect();
+
+            // Step 3: redeem T2. Per the quoted MUST, this must invalidate T1 - which has an earlier expiry than T2
+            // - even though T1 itself was never misused, and has not yet reached its own expiry time.
+            connection.connect();
+            final String initialResponseT2 = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenT2.getToken());
+            final Sasl2Nonza.Authenticate redeemT2 = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", initialResponseT2,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(1L, null)));
+            final Sasl2Nonza.Success redeemT2Success = connection.sendAndWaitForResponse(redeemT2, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(redeemT2Success, "Expected redemption of T2 to succeed.");
+            connection.disconnect();
+
+            // Step 4: attempt to redeem T1 again. It must now be rejected, since T2 (a token with a later expiry)
+            // has since been successfully used.
+            connection.connect();
+            final String initialResponseT1Again = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenT1.getToken());
+            final Sasl2Nonza.Authenticate redeemT1Again = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", initialResponseT1Again,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(1L, null)));
+            assertThrows(FailedNonzaException.class,
+                () -> connection.sendAndWaitForResponse(redeemT1Again, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class),
+                "Expected token T1 (earlier expiry than T2, which has since been successfully used) to have been "
+                    + "invalidated, and its reuse rejected.");
+        } finally {
+            connection.disconnect();
+        }
+    }
 }
