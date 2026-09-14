@@ -222,8 +222,13 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
         "If the server no longer trusts a token, it MUST instead fail the authentication (returning the SASL "
       + "'credentials-expired' error condition), and then allow the client to authenticate using other mechanisms "
       + "(e.g. password based).")
-    public void testInvalidatedTokenFailsWithCredentialsExpiredAndStreamStaysUsable() throws Exception
+    public void testInvalidatingTokenOnFirstUseFailsWithCredentialsExpiredAndStreamStaysUsable() throws Exception
     {
+        // The token is invalidated the very first time it is ever redeemed - still sitting unpromoted (in
+        // Openfire's terms, the 'N' - "new" - slot) at the moment invalidation is requested, so this exercises
+        // promotion and invalidation happening together in one exchange. Complements
+        // testInvalidatingAlreadyCurrentTokenFailsWithCredentialsExpiredAndStreamStaysUsable, where the token is
+        // already the server's "current" one (no promotion involved) by the time it is invalidated.
         final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
         try {
             connection.connect();
@@ -272,6 +277,145 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
             final Sasl2Nonza.Success success = connection.sendAndWaitForResponse(passwordAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
             assertNotNull(success, "Expected the service to still allow password-based authentication on the same "
                 + "stream, after the earlier FAST attempt failed with 'credentials-expired'.");
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @SmackIntegrationTest(section = "4.2", quote =
+        "If the server no longer trusts a token, it MUST instead fail the authentication (returning the SASL "
+      + "'credentials-expired' error condition), and then allow the client to authenticate using other mechanisms "
+      + "(e.g. password based).")
+    public void testInvalidatingAlreadyCurrentTokenFailsWithCredentialsExpiredAndStreamStaysUsable() throws Exception
+    {
+        // Complements testInvalidatingTokenOnFirstUseFailsWithCredentialsExpiredAndStreamStaysUsable: there, the
+        // token is invalidated on its very first redemption, so promotion (Openfire's 'N' -> 'C' slot move) and
+        // invalidation happen in the same exchange. Here, the token is redeemed once ordinarily first - making it
+        // the server's "current" token, with no promotion pending - and only invalidated in a later, separate
+        // exchange, so this exercises the server's invalidation responsibility on its own.
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final CharSequence username = connection.getConfiguration().getUsername();
+            final String password = connection.getConfiguration().getPassword();
+            final Sasl2Nonza.UserAgent userAgent = newUserAgent();
+
+            // Obtain a token.
+            final Sasl2Nonza.Authenticate requestAuthenticate = new Sasl2Nonza.Authenticate("PLAIN",
+                plainInitialResponse(username, password), userAgent,
+                java.util.Collections.singletonList(new FastElements.RequestToken("HT-SHA-256-NONE")));
+            final Sasl2Nonza.Success requestSuccess = connection.sendAndWaitForResponse(requestAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(requestSuccess, "Expected the service to authenticate '" + username + "' using PLAIN.");
+            final FastElements.Token token = requestSuccess.getExtension(FastElements.Token.class);
+            assertNotNull(token, "Expected a FAST token to have been issued.");
+            connection.disconnect();
+
+            // Redeem it once, ordinarily (no invalidate): this makes it the server's "current" token.
+            connection.connect();
+            final String firstUseInitialResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), token.getToken());
+            final Sasl2Nonza.Authenticate firstUseAuthenticate = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE",
+                firstUseInitialResponse, userAgent, java.util.Collections.singletonList(new FastElements.Fast(1L, null)));
+            final Sasl2Nonza.Success firstUseSuccess = connection.sendAndWaitForResponse(firstUseAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(firstUseSuccess, "Expected the first, ordinary redemption of the token to succeed.");
+            connection.disconnect();
+
+            // Redeem it again - already the "current" token, no promotion needed - this time with invalidate.
+            connection.connect();
+            final String invalidatingInitialResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), token.getToken());
+            final Sasl2Nonza.Authenticate invalidatingAuthenticate = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE",
+                invalidatingInitialResponse, userAgent, java.util.Collections.singletonList(new FastElements.Fast(2L, true)));
+            final Sasl2Nonza.Success invalidatingSuccess = connection.sendAndWaitForResponse(invalidatingAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(invalidatingSuccess, "Expected the token-invalidating authentication attempt to succeed.");
+            connection.disconnect();
+
+            // Reconnect and attempt to reuse the now-invalidated token: the server no longer trusts it.
+            connection.connect();
+            final String reuseInitialResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), token.getToken());
+            final Sasl2Nonza.Authenticate reuseAuthenticate = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", reuseInitialResponse,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(3L, null)));
+
+            final FailedNonzaException e = assertThrows(FailedNonzaException.class,
+                () -> connection.sendAndWaitForResponse(reuseAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class),
+                "Expected authentication with an invalidated FAST token to result in a '<failure/>' element.");
+            final Sasl2Nonza.Failure failure = (Sasl2Nonza.Failure) e.getNonza();
+            assertEquals(SASLError.credentials_expired, failure.getSASLError(), "Expected the failure condition for "
+                + "an invalidated ('no longer trusted') FAST token to be 'credentials-expired' (but it was '" + failure.getSASLErrorString() + "').");
+
+            // The stream must remain usable: a normal password-based attempt should still succeed.
+            final Sasl2Nonza.Authenticate passwordAuthenticate = new Sasl2Nonza.Authenticate("PLAIN", plainInitialResponse(username, password), null);
+            final Sasl2Nonza.Success success = connection.sendAndWaitForResponse(passwordAuthenticate, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(success, "Expected the service to still allow password-based authentication on the same "
+                + "stream, after the earlier FAST attempt failed with 'credentials-expired'.");
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    @SmackIntegrationTest(section = "3.6", quote =
+        "Upon successful authentication with the 'invalidate' attribute set, the server MUST immediately invalidate "
+      + "the token and prevent its use for future authentication attempts.")
+    public void testInvalidatingCurrentTokenDoesNotAffectUnrelatedUnusedToken() throws Exception
+    {
+        // A client's explicit 'invalidate' request applies only to the specific token it just authenticated with
+        // ("the token", singular). It must not collaterally invalidate a *different*, still-unused token issued
+        // earlier for the same client (user-agent id) that simply hasn't been redeemed yet - exactly the
+        // "disconnected before receiving/using the newer token" scenario XEP-0484 § 3.5 protects against, just
+        // approached from the invalidate side rather than the rotation side.
+        final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
+        try {
+            connection.connect();
+            final CharSequence username = connection.getConfiguration().getUsername();
+            final String password = connection.getConfiguration().getPassword();
+            final Sasl2Nonza.UserAgent userAgent = newUserAgent();
+
+            // Obtain T_old.
+            final Sasl2Nonza.Authenticate requestOld = new Sasl2Nonza.Authenticate("PLAIN",
+                plainInitialResponse(username, password), userAgent,
+                java.util.Collections.singletonList(new FastElements.RequestToken("HT-SHA-256-NONE")));
+            final Sasl2Nonza.Success requestOldSuccess = connection.sendAndWaitForResponse(requestOld, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(requestOldSuccess, "Expected the service to authenticate '" + username + "' using PLAIN.");
+            final FastElements.Token tokenOld = requestOldSuccess.getExtension(FastElements.Token.class);
+            assertNotNull(tokenOld, "Expected a first FAST token (T_old) to have been issued.");
+            connection.disconnect();
+
+            // Redeem T_old once, ordinarily, to make it the server's "current" token.
+            connection.connect();
+            final String firstUseResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenOld.getToken());
+            final Sasl2Nonza.Authenticate firstUse = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", firstUseResponse,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(1L, null)));
+            final Sasl2Nonza.Success firstUseSuccess = connection.sendAndWaitForResponse(firstUse, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(firstUseSuccess, "Expected the first, ordinary redemption of T_old to succeed.");
+            connection.disconnect();
+
+            // Redeem T_old again, this time also requesting a second token T_new - which the client then never uses.
+            connection.connect();
+            final String requestNewResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenOld.getToken());
+            final Sasl2Nonza.Authenticate requestNew = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", requestNewResponse,
+                userAgent, java.util.Arrays.asList(new FastElements.Fast(2L, null), new FastElements.RequestToken("HT-SHA-256-NONE")));
+            final Sasl2Nonza.Success requestNewSuccess = connection.sendAndWaitForResponse(requestNew, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(requestNewSuccess, "Expected redemption of T_old (with an inline request for a second token) to succeed.");
+            final FastElements.Token tokenNew = requestNewSuccess.getExtension(FastElements.Token.class);
+            assertNotNull(tokenNew, "Expected a second FAST token (T_new) to have been issued alongside T_old's redemption.");
+            connection.disconnect();
+
+            // Redeem T_old once more, this time with invalidate. T_new is not mentioned in this exchange at all.
+            connection.connect();
+            final String invalidatingResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenOld.getToken());
+            final Sasl2Nonza.Authenticate invalidating = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", invalidatingResponse,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(3L, true)));
+            final Sasl2Nonza.Success invalidatingSuccess = connection.sendAndWaitForResponse(invalidating, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(invalidatingSuccess, "Expected the token-invalidating authentication attempt (using T_old) to succeed.");
+            connection.disconnect();
+
+            // T_new, never mentioned in the invalidating exchange, must still work.
+            connection.connect();
+            final String newUseResponse = htNoneInitialResponse("HT-SHA-256-NONE", username.toString(), tokenNew.getToken());
+            final Sasl2Nonza.Authenticate newUse = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", newUseResponse,
+                userAgent, java.util.Collections.singletonList(new FastElements.Fast(1L, null)));
+            final Sasl2Nonza.Success newUseSuccess = connection.sendAndWaitForResponse(newUse, Sasl2Nonza.Success.class, Sasl2Nonza.Failure.class);
+            assertNotNull(newUseSuccess, "Expected T_new to still be usable after T_old was invalidated in an "
+                + "unrelated exchange - invalidating one token MUST NOT collaterally invalidate a different, "
+                + "unused token issued earlier for the same client.");
         } finally {
             connection.disconnect();
         }
