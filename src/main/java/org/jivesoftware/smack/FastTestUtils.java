@@ -104,7 +104,7 @@ public final class FastTestUtils {
      * (username, mechanism, clientID), so a fresh id on a later call looks like a different, unrelated client.
      */
     public static Sasl2Nonza.UserAgent newUserAgent() {
-        return new Sasl2Nonza.UserAgent(UUID.randomUUID().toString(), "smack-sint-server-extensions", null);
+        return new Sasl2Nonza.UserAgent(UUID.randomUUID(), "smack-sint-server-extensions", null);
     }
 
     /** Builds the base64 SASL PLAIN {@code <initial-response/>}. */

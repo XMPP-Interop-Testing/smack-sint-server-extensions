@@ -129,7 +129,7 @@ public class FastLowLevelIntegrationTest extends AbstractSmackSpecificLowLevelIn
      * {@code UserAgentInfo.extract()}, non-UUID-v4) id is rejected with 'malformed-request'.
      */
     private static Sasl2Nonza.UserAgent newUserAgent() {
-        return new Sasl2Nonza.UserAgent(UUID.randomUUID().toString(), "smack-sint-server-extensions", null);
+        return new Sasl2Nonza.UserAgent(UUID.randomUUID(), "smack-sint-server-extensions", null);
     }
 
     @SmackIntegrationTest(section = "3.3", quote =

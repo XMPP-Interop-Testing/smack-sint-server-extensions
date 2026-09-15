@@ -75,7 +75,7 @@ public class Sasl2UserAgentPrivacyIntegrationTest extends AbstractSmackSpecificL
             connectionOne.connect();
 
             final String marker = "smack-sint-marker-" + StringUtils.insecureRandomString(16);
-            final Sasl2Nonza.UserAgent userAgent = new Sasl2Nonza.UserAgent(UUID.randomUUID().toString(), marker, marker);
+            final Sasl2Nonza.UserAgent userAgent = new Sasl2Nonza.UserAgent(UUID.randomUUID(), marker, marker);
             final CharSequence username = connectionOne.getConfiguration().getUsername();
             final String password = connectionOne.getConfiguration().getPassword();
             final String plainPayload = '\0' + username.toString() + '\0' + password;

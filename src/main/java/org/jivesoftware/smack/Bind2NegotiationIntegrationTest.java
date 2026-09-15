@@ -142,7 +142,7 @@ public class Bind2NegotiationIntegrationTest extends AbstractSmackSpecificLowLev
         try {
             connection.connect();
 
-            final String userAgentId = UUID.randomUUID().toString();
+            final UUID userAgentId = UUID.randomUUID();
             final Sasl2Nonza.UserAgent userAgent = new Sasl2Nonza.UserAgent(userAgentId, "smack-sint-server-extensions", "test-device");
             // No <tag/>, so the resource identifier is fully server-generated.
             final Bind2Elements.Bind bind = new Bind2Elements.Bind(null, null);
@@ -156,7 +156,7 @@ public class Bind2NegotiationIntegrationTest extends AbstractSmackSpecificLowLev
             final Jid jid = JidCreate.from(success.getAuthorizationIdentifier());
             assertTrue(jid.hasResource(), "Test setup error: expected the '<authorization-identifier/>' ('" + jid + "') to have a bound resource.");
             final String resource = jid.getResourceOrEmpty().toString();
-            assertFalse(resource.contains(userAgentId), "Expected the generated resource identifier ('" + resource
+            assertFalse(resource.contains(userAgentId.toString()), "Expected the generated resource identifier ('" + resource
                 + "') to not contain the SASL2 '<user-agent id=\"...\"/>' value ('" + userAgentId + "') supplied during authentication (but it did).");
         } finally {
             connection.disconnect();

@@ -150,7 +150,7 @@ public class FastNegotiationIntegrationTest extends AbstractSmackSpecificLowLeve
             // the same "client installation" that requested and then invalidated the token.
             connection.connect();
             final Sasl2Module sasl2Module = connection.getConnectionModuleFor(Sasl2ModuleDescriptor.class);
-            final Sasl2Nonza.UserAgent userAgent = new Sasl2Nonza.UserAgent(sasl2Module.getUserAgentId(), "Smack", null);
+            final Sasl2Nonza.UserAgent userAgent = new Sasl2Nonza.UserAgent(sasl2Module.getModuleDescriptor().getUserAgent().getId(), "Smack", null);
             final CharSequence username = connection.getConfiguration().getUsername();
             final String initialResponse = FastTestUtils.htInitialResponse("HT-SHA-256-NONE", username.toString(), issuedToken.getToken(), new byte[0]);
             final Sasl2Nonza.Authenticate reuseAuthenticate = new Sasl2Nonza.Authenticate("HT-SHA-256-NONE", initialResponse,
