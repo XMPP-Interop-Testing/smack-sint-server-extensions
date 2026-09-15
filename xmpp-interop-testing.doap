@@ -67,7 +67,7 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0060.html"/>
-                <xmpp:version>1.26.0</xmpp:version>
+                <xmpp:version>1.28.0</xmpp:version>
             </xmpp:SupportedXep>
         </implements>
         <implements>

@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  * @see <a href="https://xmpp.org/extensions/xep-0060.html#entity-features">XEP-0060: Publish-Subscribe</a>
  */
-@SpecificationReference(document = "XEP-0060", version = "1.26.0")
+@SpecificationReference(document = "XEP-0060", version = "1.28.0")
 public class PubSubSection5_1_IntegrationTest extends AbstractSmackIntegrationTest
 {
     protected final DomainBareJid pubsubServiceAddress;
@@ -93,6 +93,7 @@ public class PubSubSection5_1_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service response to a disco#info request contains the 'http://jabber.org/protocol/pubsub' feature that is part of the identification of the service.
      */
+    // FIXME This feature isn't a mandatory feature at all. Possibly remove this test. See https://github.com/xsf/xeps/pull/1468
     @SmackIntegrationTest(section = "5.1", quote = "The \"disco#info\" result returned by a pubsub service MUST indicate the identity of the service")
     public void testDiscoInfoResponseContainsIdentityFeature() throws TestNotPossibleException
     {
@@ -103,6 +104,7 @@ public class PubSubSection5_1_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service response to a disco#info request contains the required 'http://jabber.org/protocol/pubsub#publish' feature.
      */
+    // TODO this is possibly removed as a requirement in future versions of XEP-0060. See https://github.com/xsf/xeps/pull/1467
     @SmackIntegrationTest(section = "5.1", quote = "The \"disco#info\" result returned by a pubsub service MUST indicate [...] which pubsub features are supported. [...] For information regarding which features are required, recommended, and optional, see the Feature Summary section of this document. [...] publish - Publishing items is supported. - REQUIRED")
     public void testDiscoInfoResponseContainsFeaturePublish() throws TestNotPossibleException
     {
@@ -113,6 +115,7 @@ public class PubSubSection5_1_IntegrationTest extends AbstractSmackIntegrationTe
     /**
      * Asserts that the pub/sub service response to a disco#info request contains the required 'http://jabber.org/protocol/pubsub#subscribe' feature.
      */
+    // TODO this is possibly removed as a requirement in future versions of XEP-0060. See https://github.com/xsf/xeps/pull/1467
     @SmackIntegrationTest(section = "5.1", quote = "The \"disco#info\" result returned by a pubsub service MUST indicate [...] which pubsub features are supported. [...] For information regarding which features are required, recommended, and optional, see the Feature Summary section of this document. [...] subscribe - Subscribing and unsubscribing are supported. - REQUIRED")
     public void testDiscoInfoResponseContainsFeatureSubscribe() throws TestNotPossibleException
     {
