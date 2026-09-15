@@ -4,6 +4,8 @@ DOMAIN="example.org"
 HOST="127.0.0.1"
 TIMEOUT=5000
 FAILONIMPOSSIBLETEST=false
+SECURITYMODE="disabled"
+ACCEPTALLCERTIFICATES=false
 
 usage() {
   cat <<EOF
@@ -11,6 +13,11 @@ Usage:
     --domain=DOMAIN                              XMPP domain name of server under test. (default: $DOMAIN)
     --host=HOST                                  IP address or DNS name of the XMPP service to run the tests on. (default: $HOST)
     --timeout=TIMEOUT                            Timeout in milliseconds for any XMPP action (default: $TIMEOUT)
+    --securityMode=SECURITYMODE                  TLS usage: 'disabled', 'ifpossible' or 'required'. (default: $SECURITYMODE)
+                                                 Tests that depend on TLS having been negotiated (e.g. those for
+                                                 XEP-0388: SASL2) are reported as impossible to run while this is 'disabled'.
+    --acceptAllCertificates                      Accept the server's TLS certificate without validating it, e.g. when
+                                                 it is self-signed. Only takes effect when --securityMode is not 'disabled'.
     --adminAccountUsername=ADMINUSERNAME         Admin username for the service, to create test users
     --adminAccountPassword=ADMINPASSWORD         Admin password for the service, as above
     --accountOneUsername=ACCOUNTONEUSERNAME      The first account name of a set of three accounts used for testing.
@@ -95,6 +102,13 @@ while [ $# -gt 0 ]; do
     --failOnImpossibleTest)
       FAILONIMPOSSIBLETEST=true
       ;;
+    --securityMode*)
+      if [[ "$1" != *=* ]]; then shift; fi
+      SECURITYMODE="${1#*=}"
+      ;;
+    --acceptAllCertificates)
+      ACCEPTALLCERTIFICATES=true
+      ;;
     --help|-h)
       usage
       exit 0
@@ -139,7 +153,10 @@ JAVACMD=()
 JAVACMD+=("java")
 JAVACMD+=("-Dsinttest.service=$DOMAIN")
 JAVACMD+=("-Dsinttest.host=$HOST")
-JAVACMD+=("-Dsinttest.securityMode=disabled")
+JAVACMD+=("-Dsinttest.securityMode=$SECURITYMODE")
+if [ "$ACCEPTALLCERTIFICATES" = true ]; then
+    JAVACMD+=("-Dsinttest.acceptAllCertificates=true")
+fi
 JAVACMD+=("-Dsinttest.replyTimeout=$TIMEOUT")
 if [ "$ADMINACCOUNTUSERNAME" != "" ]; then
   JAVACMD+=("-Dsinttest.adminAccountUsername=$ADMINACCOUNTUSERNAME")
