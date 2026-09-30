@@ -18,18 +18,7 @@ package org.jivesoftware.smack;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection;
 import org.jivesoftware.smack.util.StringUtils;
@@ -39,12 +28,13 @@ import org.igniterealtime.smack.inttest.AbstractSmackSpecificLowLevelIntegration
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+import org.igniterealtime.smack.inttest.util.RawXmppConnection;
 
 /**
  * Tests that verify a server's handling of features requested inline in a XEP-0386: Bind 2 {@code <bind/>} request,
  * as defined by XEP-0386's interactions with XEP-0198 (Stream Management) and XEP-0280 (Message Carbons).
  *
- * These tests speak raw XML over a plain socket, rather than using Smack's connection object, because the specific
+ * These tests speak raw XML over a socket, rather than using Smack's connection object, because the specific
  * checks performed here (inspecting the exact content of a {@code <bound/>} response, and observing a Carbons copy
  * arrive out of band) are not representable through Smack's current object model for {@code Bind2Elements.Bound}
  * (which only exposes MAM metadata, discarding other children), and because registering a replacement provider for
@@ -66,7 +56,7 @@ public class Bind2InlineFeatureIntegrationTest extends AbstractSmackSpecificLowL
     }
 
     /** Connects and authenticates using the credentials of a freshly-registered, dedicated test account. */
-    private RawTlsConnection connectAndAuthenticate(String bindInlineXml) throws Exception {
+    private AuthenticatedConnection connectAndAuthenticate(String bindInlineXml) throws Exception {
         final ModularXmppClientToServerConnection connection = getSpecificUnconnectedConnection();
         return connectAndAuthenticate(connection.getConfiguration(), connection.getConfiguration().getUsername(),
             connection.getConfiguration().getPassword(), bindInlineXml);
@@ -78,137 +68,46 @@ public class Bind2InlineFeatureIntegrationTest extends AbstractSmackSpecificLowL
      * returns a distinct, freshly-registered account, so it cannot be used directly to obtain a second resource for
      * an already-used account).
      */
-    private RawTlsConnection connectAndAuthenticate(ConnectionConfiguration configuration, CharSequence username, String password, String bindInlineXml) throws Exception {
-        final int port = configuration.getPort() != null ? configuration.getPort().intValue() : 5222;
-        final String domain = configuration.getXMPPServiceDomain().toString();
-        final InetSocketAddress socketAddress = configuration.getHostAddress() != null
-            ? new InetSocketAddress(configuration.getHostAddress(), port)
-            : new InetSocketAddress(configuration.getHost() != null ? configuration.getHost().toString() : domain, port);
-
-        final Socket plainSocket = new Socket(Proxy.NO_PROXY);
-        plainSocket.connect(socketAddress, 10000);
-        plainSocket.setSoTimeout(10000);
-
-        final String openStream = "<?xml version='1.0'?><stream:stream to='" + domain
-            + "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>";
-        plainSocket.getOutputStream().write(openStream.getBytes(StandardCharsets.UTF_8));
-        plainSocket.getOutputStream().flush();
-        readUntil(plainSocket, "</stream:features>");
-
-        plainSocket.getOutputStream().write("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>".getBytes(StandardCharsets.UTF_8));
-        plainSocket.getOutputStream().flush();
-        readUntil(plainSocket, "proceed");
-
-        final SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, new TrustManager[] {new AcceptAllTrustManager()}, null);
-        final SSLSocket sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(plainSocket, domain, plainSocket.getPort(), true);
-        sslSocket.setSoTimeout(10000);
-        sslSocket.startHandshake();
-
-        final RawTlsConnection raw = new RawTlsConnection(sslSocket);
-        raw.send(openStream);
-        raw.readUntil("</stream:features>");
-
-        final String plainPayload = '\0' + username.toString() + '\0' + password;
-        final String initialResponse = Base64.encodeToString(plainPayload.getBytes(StandardCharsets.UTF_8));
-
-        final String authenticateXml = "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='PLAIN'>"
-            + "<initial-response>" + initialResponse + "</initial-response>"
-            + "<bind xmlns='urn:xmpp:bind:0'>" + bindInlineXml + "</bind>"
-            + "</authenticate>";
-        raw.send(authenticateXml);
-        final String response = raw.readUntil("</success>");
-        raw.jid = username + "@" + domain;
-        raw.lastResponse = response;
-        return raw;
-    }
-
-    private static void readUntil(Socket socket, String marker) throws IOException {
-        final Reader reader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
-        final StringBuilder buffer = new StringBuilder();
-        final char[] chunk = new char[4096];
+    private AuthenticatedConnection connectAndAuthenticate(ConnectionConfiguration configuration, CharSequence username, String password, String bindInlineXml) throws Exception {
+        final RawXmppConnection raw = RawXmppConnection.connect(configuration, sinttestConfiguration);
         try {
-            while (!buffer.toString().contains(marker)) {
-                final int read = reader.read(chunk);
-                if (read < 0) {
-                    break;
-                }
-                buffer.append(chunk, 0, read);
-            }
-        } catch (SocketTimeoutException e) {
-            throw new IOException("Timed out waiting for '" + marker + "'. Data received so far: " + buffer, e);
+            final String plainPayload = '\0' + username.toString() + '\0' + password;
+            final String initialResponse = Base64.encodeToString(plainPayload.getBytes(StandardCharsets.UTF_8));
+
+            final String authenticateXml = "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='PLAIN'>"
+                + "<initial-response>" + initialResponse + "</initial-response>"
+                + "<bind xmlns='urn:xmpp:bind:0'>" + bindInlineXml + "</bind>"
+                + "</authenticate>";
+            raw.send(authenticateXml);
+            final String response = raw.readUntil("</success>");
+            return new AuthenticatedConnection(raw, response);
+        } catch (Exception e) {
+            raw.close();
+            throw e;
         }
     }
 
-    private static final class AcceptAllTrustManager implements X509TrustManager {
-        @Override
-        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
-        }
+    /** A raw connection that has authenticated, together with the {@code <success/>} response of the server. */
+    private static final class AuthenticatedConnection implements AutoCloseable {
+        private final RawXmppConnection raw;
+        final String successResponse;
 
-        @Override
-        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
-        }
-
-        @Override
-        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-            return new java.security.cert.X509Certificate[0];
-        }
-    }
-
-    private static final class RawTlsConnection implements AutoCloseable {
-        private final SSLSocket socket;
-        private final Reader reader;
-        private final StringBuilder buffer = new StringBuilder();
-        String jid;
-        String lastResponse;
-
-        RawTlsConnection(SSLSocket socket) throws IOException {
-            this.socket = socket;
-            this.reader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
+        AuthenticatedConnection(RawXmppConnection raw, String successResponse) {
+            this.raw = raw;
+            this.successResponse = successResponse;
         }
 
         void send(String xml) throws IOException {
-            socket.getOutputStream().write(xml.getBytes(StandardCharsets.UTF_8));
-            socket.getOutputStream().flush();
-        }
-
-        String readUntil(String marker) throws IOException {
-            final char[] chunk = new char[4096];
-            try {
-                while (!buffer.toString().contains(marker)) {
-                    final int read = reader.read(chunk);
-                    if (read < 0) {
-                        break;
-                    }
-                    buffer.append(chunk, 0, read);
-                }
-            } catch (SocketTimeoutException e) {
-                throw new IOException("Timed out waiting for '" + marker + "'. Data received so far: " + buffer, e);
-            }
-            final String result = buffer.toString();
-            buffer.setLength(0);
-            return result;
+            raw.send(xml);
         }
 
         String readWhatArrives(int timeoutMillis) throws IOException {
-            socket.setSoTimeout(timeoutMillis);
-            final char[] chunk = new char[4096];
-            try {
-                final int read = reader.read(chunk);
-                socket.setSoTimeout(10000);
-                if (read < 0) {
-                    return "";
-                }
-                return new String(chunk, 0, read);
-            } catch (SocketTimeoutException e) {
-                socket.setSoTimeout(10000);
-                return "";
-            }
+            return raw.readWhatArrives(timeoutMillis);
         }
 
         @Override
         public void close() throws IOException {
-            socket.close();
+            raw.close();
         }
     }
 
@@ -216,8 +115,8 @@ public class Bind2InlineFeatureIntegrationTest extends AbstractSmackSpecificLowL
         "The <bound/> response MUST contain the resulting XEP-0198 <enabled/> (or <failed/>) element.")
     public void testStreamManagementEnableReflectedInBound() throws Exception
     {
-        try (RawTlsConnection connection = connectAndAuthenticate("<enable xmlns='urn:xmpp:sm:3'/>")) {
-            final String response = connection.lastResponse;
+        try (AuthenticatedConnection connection = connectAndAuthenticate("<enable xmlns='urn:xmpp:sm:3'/>")) {
+            final String response = connection.successResponse;
             final boolean hasEnabled = response.contains("xmlns=\"urn:xmpp:sm:3\"") || response.contains("xmlns='urn:xmpp:sm:3'");
             final boolean hasEnabledOrFailedTag = response.contains("<enabled") || response.contains("<failed");
             assertTrue(hasEnabled && hasEnabledOrFailedTag,
@@ -239,11 +138,11 @@ public class Bind2InlineFeatureIntegrationTest extends AbstractSmackSpecificLowL
         final String recipientPassword = recipientConfiguration.getPassword();
         final String recipientBareJid = recipientUsername + "@" + recipientConfiguration.getXMPPServiceDomain();
 
-        try (RawTlsConnection resourceA = connectAndAuthenticate(recipientConfiguration, recipientUsername, recipientPassword,
+        try (AuthenticatedConnection resourceA = connectAndAuthenticate(recipientConfiguration, recipientUsername, recipientPassword,
                  "<tag>carbons-a</tag><enable xmlns='urn:xmpp:carbons:2'/>");
-             RawTlsConnection resourceB = connectAndAuthenticate(recipientConfiguration, recipientUsername, recipientPassword,
+             AuthenticatedConnection resourceB = connectAndAuthenticate(recipientConfiguration, recipientUsername, recipientPassword,
                  "<tag>carbons-b</tag><enable xmlns='urn:xmpp:carbons:2'/>");
-             RawTlsConnection sender = connectAndAuthenticate("")) {
+             AuthenticatedConnection sender = connectAndAuthenticate("")) {
 
             // Mark all resources available: a Carbons copy is only pushed live to available resources, and RFC 6121
             // bare-JID delivery needs an available resource to route the triggering message to in the first place.

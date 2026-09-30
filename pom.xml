@@ -189,13 +189,14 @@
         </dependency>
     </dependencies>
 
+    <!-- Was used to pull in Smack SNAPSHOT artifacts during development, removed since switching to a proper release of Smack.
     <repositories>
         <repository>
-            <!-- Used to pull in Smack SNAPSHOT artifacts during development. Remove this after switching to a proper release of Smack. -->
             <id>sonatype-snapshot</id>
             <name>Sonatype Snapshots</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
     </repositories>
+    -->
 </project>
